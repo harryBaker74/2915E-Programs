@@ -71,9 +71,7 @@ void opcontrol(void);
 #endif
 
 #ifdef __cplusplus
-/**
- * You can add C++-only headers here
- */
+#include "harryLibHeader/util.hpp"
 //#include <iostream>
 #endif
 
