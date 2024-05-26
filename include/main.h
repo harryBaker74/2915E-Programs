@@ -72,7 +72,7 @@ void opcontrol(void);
 
 #ifdef __cplusplus
 #include "harryLibHeader/util.hpp"
-//#include <iostream>
+#include <iostream>
 #endif
 
 #endif  // _PROS_MAIN_H_
