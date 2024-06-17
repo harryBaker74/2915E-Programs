@@ -41,3 +41,8 @@ double pointToPointDistance(std::vector<double> p1, std::vector<double> p2)
 {
     return sqrt(pow(p2.at(0) - p1.at(0), 2) + pow(p2.at(1) - p1.at(1), 2));
 }
+
+double linearToCubed(double input, double maxInput, double k = 1)
+{
+    return k * (pow(input, 3) / pow(maxInput, 2));
+}

@@ -72,6 +72,7 @@ void opcontrol(void);
 
 #ifdef __cplusplus
 #include "harryLibHeader/util.hpp"
+#include "harryLibHeader/devices.hpp"
 #include <iostream>
 #endif
 
