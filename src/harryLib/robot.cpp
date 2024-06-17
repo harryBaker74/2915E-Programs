@@ -1,7 +1,30 @@
 #include "../include/main.h"
+#include "../include/harryLibHeader/devices.h"
+
+//File for controlling all systems in the robot
 
 namespace drivtrain
 {
+
+    class drivetrain
+    {   
+
+        public:
+        //constructor
+        drivetrain(){};
+
+        
+        void setDriveMotors(int left, int right)
+        {
+            
+        }
+
+        void driverFunctions()
+        {
+
+        }
+
+    };
 
     //Pose struct
     struct pose
@@ -33,5 +56,10 @@ namespace drivtrain
     {
         
     }
+
+}
+
+namespace subsystems
+{
 
 }
