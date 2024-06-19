@@ -2,4 +2,4 @@
 
 int sign(double num);
 
-double linearToCubed(double input, double maxInput, double k = 1);
+double linearToCubed(double input, double maxInput, double k);

@@ -36,8 +36,8 @@ namespace drivetrain
             int leftJoystick = Controller.get_analog(ANALOG_LEFT_Y);
             int rightJoystick = Controller.get_analog(ANALOG_RIGHT_Y);
 
-            int leftOutput = floor(linearToCubed(leftJoystick, 127));
-            int rightOutput = floor(linearToCubed(rightJoystick, 127));
+            int leftOutput = floor(linearToCubed(leftJoystick, 127, 1));
+            int rightOutput = floor(linearToCubed(rightJoystick, 127, 1));
 
             setDriveMotors(leftOutput, rightOutput);
         }

@@ -2,22 +2,22 @@
 
 //Misc
     //Controller
-        pros::Controller Controller;
+        extern pros::Controller Controller;
 
     //IMU
-        pros::IMU IMU;
+        extern pros::IMU IMU;
 //ADI Ports
 
 //Motors
 
     //Drivetrain
-        pros::Motor leftFront;
-        pros::Motor leftMid;
-        pros::Motor leftBack;
+        extern pros::Motor leftFront;
+        extern pros::Motor leftMid;
+        extern pros::Motor leftBack;
 
-        pros::Motor rightFront;
-        pros::Motor rightMid;
-        pros::Motor rightBack;
+        extern pros::Motor rightFront;
+        extern pros::Motor rightMid;
+        extern pros::Motor rightBack;
     
     //Intake
-        pros::Motor intake;
+        extern pros::Motor intake;

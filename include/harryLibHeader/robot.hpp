@@ -1,4 +1,3 @@
-#include "../include/main.h"
 #pragma once
 
 //File for controlling all systems in the robot
@@ -16,8 +15,8 @@ namespace drivetrain
         /**
          * @brief Function to set the voltage applied to all drive motors
          * 
-         * @param left Voltage to left side of the drive(-12000 - 12000)
-         * @param right Voltage to right side of the drive(-12000 - 12000)
+         * @param left Voltage to left side of the drive(-12000 to 12000)
+         * @param right Voltage to right side of the drive(-12000 to 12000)
          */
         void setDriveMotors(int left, int right);
 
@@ -49,5 +48,15 @@ namespace drivetrain
 
 namespace subsystems
 {
+    class intake
+    {
+        //Constructor
+        intake();
 
+        //Function to set intake voltage
+        void setIntakeMotors(int voltage);
+
+        //Function to run intake during driver comtrol
+        void driverFunctions
+    };
 }
