@@ -6,6 +6,9 @@
 //IMU Port
 #define INERTIAL 1
 
+//Mogo Port
+#define MOGO 'A'
+
 //Drivtrain Motor Ports
 #define LEFT_MOTOR_FRONT 1
 #define LEFT_MOTOR_MID 1
@@ -17,3 +20,6 @@
 
 //Intake Port
 #define INTAKE 1
+
+//Plunger Port
+#define PLUNGER 1

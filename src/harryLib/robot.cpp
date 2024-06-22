@@ -14,17 +14,17 @@ namespace drivetrain
          * @param left Voltage to left side of the drive(-12000 - 12000)
          * @param right Voltage to right side of the drive(-12000 - 12000)
          */
-        void drivetrain::setDriveMotors(int left, int right)
+        void drivetrain::setVoltage(double left, double right)
         {
             //Setting Left Motors
-            leftFront.move_voltage(left);
-            leftMid.move_voltage(left);
-            leftBack.move_voltage(left);
+            leftFrontMotor.move_voltage(floor(left));
+            leftMidMotor.move_voltage(floor(left));
+            leftBackMotor.move_voltage(floor(left));
 
             //Setting Right Motors
-            rightFront.move_voltage(right);
-            rightMid.move_voltage(right);
-            rightBack.move_voltage(right);
+            rightFrontMotor.move_voltage(floor(right));
+            rightMidMotor.move_voltage(floor(right));
+            rightBackMotor.move_voltage(floor(right));
         }
 
         /**
@@ -39,12 +39,11 @@ namespace drivetrain
             int leftOutput = floor(linearToCubed(leftJoystick, 127, 1));
             int rightOutput = floor(linearToCubed(rightJoystick, 127, 1));
 
-            setDriveMotors(leftOutput, rightOutput);
+            setVoltage(leftOutput, rightOutput);
         }
 
     //Pose struct
 
-    
         pose::pose(double x, double y, double heading)
         {
             this->x = x;
@@ -71,5 +70,52 @@ namespace drivetrain
 
 namespace subsystems
 {
+    //Intake Class
+        //Constructor
+        intake::intake(){};
 
+        //Function to set intake voltage
+        void intake::setVoltage(double voltage)
+        {
+            intakeMotor.move_voltage(floor(voltage));
+        }
+
+        //Function to run intake during driver control
+        void intake::driverFunctions()
+        {
+            setVoltage((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2)) * 12000);
+        }
+
+    //Plunger Class
+        //Constructor
+        plunger::plunger(){};
+
+        //Function to set plunger voltage
+        void plunger::setVoltage(double voltage)
+        {
+            plungerMotor.move_voltage(floor(voltage));
+        }
+
+        //Function to run plunger during driver control
+        void plunger::driverFunctions()
+        {
+            setVoltage((Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2)) * 12000);
+        }
+
+    //Mogo class
+        //Constructor
+        mogo::mogo(){};
+
+        //Function to set mogo output
+        void mogo::setState(bool state)
+        {
+            mogoSolanoid.set_value(state);
+        }
+
+        //Function to run mogo during driver control
+        void mogo::driverFunctions()
+        {
+            mogoPressCount += Controller.get_digital_new_press(DIGITAL_A);
+            mogoPressCount % 2 == 0 ? setState(false) : setState(true);
+        }
 }

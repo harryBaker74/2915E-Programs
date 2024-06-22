@@ -7,17 +7,23 @@
     //IMU
         extern pros::IMU IMU;
 //ADI Ports
+    //Pistons
+        //Mogo
+            extern pros::adi::Pneumatics mogoSolanoid;
 
 //Motors
 
     //Drivetrain
-        extern pros::Motor leftFront;
-        extern pros::Motor leftMid;
-        extern pros::Motor leftBack;
+        extern pros::Motor leftFrontMotor;
+        extern pros::Motor leftMidMotor;
+        extern pros::Motor leftBackMotor;
 
-        extern pros::Motor rightFront;
-        extern pros::Motor rightMid;
-        extern pros::Motor rightBack;
+        extern pros::Motor rightFrontMotor;
+        extern pros::Motor rightMidMotor;
+        extern pros::Motor rightBackMotor;
     
     //Intake
-        extern pros::Motor intake;
+        extern pros::Motor intakeMotor;
+
+    //Plunger
+        extern pros::Motor plungerMotor;

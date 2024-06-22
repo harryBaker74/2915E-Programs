@@ -8,20 +8,26 @@
     //IMU
         pros::IMU IMU(INERTIAL);
 //ADI Ports
+    //Pneumatics
+        //Mogo
+            pros::adi::Pneumatics mogoSolanoid(MOGO, false);
 
 //Motors
 
     //Drivetrain
-        pros::Motor leftFront(LEFT_MOTOR_FRONT);
-        pros::Motor leftMid(LEFT_MOTOR_MID);
-        pros::Motor leftBack(LEFT_MOTOR_BACK);
+        pros::Motor leftFrontMotor(LEFT_MOTOR_FRONT);
+        pros::Motor leftMidMotor(LEFT_MOTOR_MID);
+        pros::Motor leftBackMotor(LEFT_MOTOR_BACK);
 
-        pros::Motor rightFront(RIGHT_MOTOR_FRONT);
-        pros::Motor rightMid(RIGHT_MOTOR_MID);
-        pros::Motor rightBack(RIGHT_MOTOR_BACK);
+        pros::Motor rightFrontMotor(RIGHT_MOTOR_FRONT);
+        pros::Motor rightMidMotor(RIGHT_MOTOR_MID);
+        pros::Motor rightBackMotor(RIGHT_MOTOR_BACK);
     
     //Intake
-        pros::Motor intake(INTAKE);
+        pros::Motor intakeMotor(INTAKE);
+
+    //Plunger
+        pros::Motor plungerMotor(PLUNGER);
 
 
 
