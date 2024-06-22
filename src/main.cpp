@@ -14,12 +14,22 @@ void autonomous()
 void opcontrol() 
 {   
     //Creating Drivetrain
-    drivetrain::drivetrain robotDrivetrain = drivetrain::drivetrain();
+    drivetrain::drivetrain drivetrain = drivetrain::drivetrain();
+    subsystems::intake intake = subsystems::intake();
+    subsystems::plunger plunger = subsystems::plunger();
+    subsystems::mogo mogo = subsystems::mogo();
 
 	while(true)
     {
         //Controlling Drivetrain
-        robotDrivetrain.driverFunctions();
+        drivetrain.driverFunctions();
+        //Controlling Intake
+        intake.driverFunctions();
+        //Controlling Plunger
+        plunger.driverFunctions();
+        //Controlling Mogo
+        mogo.driverFunctions();
+        
         pros::delay(10);
     }
 }
