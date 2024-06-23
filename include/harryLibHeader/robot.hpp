@@ -5,10 +5,10 @@
 
 
 //File for controlling all systems in the robot
+    
 
-namespace drivetrain
+namespace subsystems
 {
-
     class drivetrain
     {   
 
@@ -20,12 +20,30 @@ namespace drivetrain
         pros::Motor rightMidMotor;
         pros::Motor rightBackMotor;
 
+        pros::MotorGroup leftDriveMotors = pros::MotorGroup(leftFrontMotor);
+        pros::MotorGroup rightDriveMotors = pros::MotorGroup(rightFrontMotor);
+
+        pros::Rotation trackingWheel;
+
+        Pose pose = Pose(0, 0, 0);
+
+        bool odomRunning = false;
+
 
         public:
         //constructor
         drivetrain(int leftFrontMotorPort, int leftMidMotorPort, int leftBackMotorPort,
-                   int rightFrontMotorPort,int rightMidMotorPort,int rightBackMotorPort);
+                   int rightFrontMotorPort,int rightMidMotorPort,int rightBackMotorPort,
+                   int trackingWheelPort);
 
+        //Driver
+        /**
+         * @brief Function that handles controller inputs for drivetrain. Intended to be used during Op Control
+         * 
+         */
+        void driverFunctions();
+
+        //Helper Functions
         /**
          * @brief Function to set the voltage applied to all drive motors
          * 
@@ -34,70 +52,38 @@ namespace drivetrain
          */
         void setVoltage(double left, double right);
 
+        void runOdom(Pose startPose);
+
+        void stopOdom();
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        //AUTON FUNCTIONS
         /**
-         * @brief Function that handles controller inputs for drivetrain. Intended to be used during Op Control
-         * 
+        * @brief Turns the robot on a point to face a direction
+        */
+        void turnToHeading();
+        /**
+         * @brief Function to move the robot from its current pose to a point. First turns, then drives
          */
-        void driverFunctions();
+        void moveToPoint(Point point);
+        /**
+         * @brief Function to move the robot from its current pose to the desired pose
+         * Uses a Boomerang controller
+         */
+        void moveToPose();
+        /**
+         * @brief Function to move the robot from its current pose to the desired pose
+         * Uses an intemediate direction
+         */
+        void moveToPose();
+
+        /**
+         * @brief Function to make the robot follow a desired path from the path generator or path scheduler
+         */
+        void followPath();
 
     };
 
-    //Pose struct
-    struct Pose
-    {
-        double x;
-        double y;
-        double heading;
-
-        public:
-        //Constructor
-        Pose(double x, double y, double heading);
-
-        /**
-         * @brief Function to set this pose to a deisred pose
-         * 
-         * @param x What to set the x value
-         * @param y What to set the y value
-         * @param heading What to set the heading
-         */
-        void set(double x, double y, double heading);
-
-        /**
-         * @brief Function to set this pose to a deisred pose
-         * 
-         * @param pose The pose to set this pose to
-         */
-        void set(Pose pose);
-    };
-
-    /**
-     * @brief Turns the robot on a point to face a direction
-     */
-    void turnToHeading();
-    /**
-     * @brief Function to move the robot from its current pose to a point. First turns, then drives
-     */
-    void moveToPoint(Point point);
-    /**
-     * @brief Function to move the robot from its current pose to the desired pose
-     * Uses a Boomerang controller
-     */
-    void moveToPose();
-    /**
-     * @brief Function to move the robot from its current pose to the desired pose
-     * Uses an intemediate direction
-     */
-    void moveToPose();
-
-    /**
-     * @brief Function to make the robot follow a desired path from the path generator or path scheduler
-     */
-    void followPath();
-
-}
-
-namespace subsystems
-{
     class intake
     {
         pros::Motor intakeMotor;

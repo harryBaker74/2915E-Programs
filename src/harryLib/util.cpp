@@ -60,3 +60,22 @@ void Point::set(double x, double y)
     this->x = x;
     this->y = y;
 }
+
+//Pose Struct
+Pose::Pose(double x, double y, double heading)
+{
+    this->x = x;
+    this->y = y;
+    this->heading = heading;
+}
+void Pose::set(double x, double y, double heading)
+{
+    this->x = x;
+    this->y = y;
+    this->heading = heading;
+}
+void Pose::set(Pose pose)
+{
+    this->x = pose.x;
+    this->y = pose.y;
+}

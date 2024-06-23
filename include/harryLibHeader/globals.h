@@ -6,6 +6,9 @@
 //IMU Port
 #define INERTIAL 1
 
+//Tracking Wheel Port
+#define TRACKING_WHEEL 1
+
 //Mogo Port
 #define MOGO 'A'
 

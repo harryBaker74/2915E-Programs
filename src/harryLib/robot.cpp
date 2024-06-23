@@ -3,17 +3,74 @@
 
 //File for controlling all systems in the robot
 
-namespace drivetrain
-{
+        
+
+namespace subsystems
+{   
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //Drivetrain Class
+        
         //constructor
-        drivetrain::drivetrain(int leftFrontMotorPort, int leftMidMotorPort, int leftBackMotorPort, int rightFrontMotorPort, int rightMidMotorPort, int rightBackMotorPort)
+        drivetrain::drivetrain( int leftFrontMotorPort, int leftMidMotorPort, int leftBackMotorPort,
+                                int rightFrontMotorPort, int rightMidMotorPort, int rightBackMotorPort, 
+                                int trackingWheelPort)
+
         :   leftFrontMotor(pros::Motor (leftBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)), 
             leftMidMotor(pros::Motor (leftMidMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             leftBackMotor(pros::Motor (leftBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             rightFrontMotor(pros::Motor (rightFrontMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             rightMidMotor(pros::Motor (rightMidMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
-            rightBackMotor(pros::Motor (rightBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees))
-        {}
+            rightBackMotor(pros::Motor (rightBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+            trackingWheel(pros::Rotation(trackingWheelPort))
+        {
+            leftDriveMotors.append(leftMidMotor);
+            leftDriveMotors.append(leftBackMotor);
+            rightDriveMotors.append(rightMidMotor);
+            rightDriveMotors.append(rightBackMotor);
+        }
+
+        /**
+         * @brief Function to start running odomentery calculations. 
+         * Does not need to be called as a task, it alrteady has lambda task in it.
+         * 
+         * @param startPose The pose the odometery calculations will start from;
+         */
+        void drivetrain::runOdom(Pose startPose)
+        {   
+            //Setting pose to desired start pose
+            this->pose = startPose;
+
+            //making sure the task actually runs
+            odomRunning = true;
+
+            pros::Task task{[=] {
+                
+                //Doing the Odometery Calculations
+
+                //Setting class variables for other functions to access.
+
+
+                //Stop Odom if its not supposed to be running
+                if(!odomRunning)
+                    pros::Task::current().remove();
+
+                //Delay to give time for other tasks
+                pros::delay(10);
+            }};
+        }
+
+        /**
+         * @brief Function to stop the odometery calculations.
+         * If the Calculations already aren't running, nothing will happen.
+         */
+        void drivetrain::stopOdom()
+        {
+            odomRunning = false;
+        }
+
 
         /**
          * @brief Function to set the voltage applied to all drive motors
@@ -50,39 +107,16 @@ namespace drivetrain
             setVoltage(leftOutput, rightOutput);
         }
 
-    //Pose struct
 
-        Pose::Pose(double x, double y, double heading)
-        {
-            this->x = x;
-            this->y = y;
-            this->heading = heading;
-        }
 
-        void Pose::set(double x, double y, double heading)
-        {
-            this->x = x;
-            this->y = y;
-            this->heading = heading;
-        }
-        void Pose::set(Pose pose)
-        {
-            this->x = pose.x;
-            this->y = pose.y;
-        }
 
-    double distanceTravelled;
-    bool moving;
 
-    void moveToPose()
-    {
-        
-    }
 
-}
 
-namespace subsystems
-{
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //Intake Class
         //Constructor
         intake::intake(int intakeMotorPort)
@@ -100,6 +134,9 @@ namespace subsystems
         {
             setVoltage((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2)) * 12000);
         }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Plunger Class
         //Constructor
@@ -119,6 +156,9 @@ namespace subsystems
             setVoltage((Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2)) * 12000);
         }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //Mogo class
         //Constructor
         mogo::mogo(char mogoSolanoidPort)
@@ -137,4 +177,6 @@ namespace subsystems
             mogoPressCount += Controller.get_digital_new_press(DIGITAL_A);
             mogoPressCount % 2 == 0 ? setState(false) : setState(true);
         }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

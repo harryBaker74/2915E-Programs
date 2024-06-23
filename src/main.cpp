@@ -6,6 +6,17 @@ void initialize()
 {
 	
 }
+class test
+{
+    double num = 0;
+    public:
+    test(){};
+    void testFunct()
+    {
+        num++;
+    }
+};
+
 
 void autonomous() 
 {
@@ -15,13 +26,14 @@ void autonomous()
 void opcontrol() 
 {   
     //Creating Drivetrain
-    drivetrain::drivetrain drivetrain = drivetrain::drivetrain
+    subsystems::drivetrain drivetrain = subsystems::drivetrain
     (   LEFT_MOTOR_FRONT, 
         LEFT_MOTOR_MID, 
         LEFT_MOTOR_BACK, 
         RIGHT_MOTOR_FRONT, 
         RIGHT_MOTOR_MID, 
-        RIGHT_MOTOR_BACK);
+        RIGHT_MOTOR_BACK,
+        TRACKING_WHEEL);
     //Creating intake
     subsystems::intake intake = subsystems::intake(INTAKE);
     //Creating plunger
