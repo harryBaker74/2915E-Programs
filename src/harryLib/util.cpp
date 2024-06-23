@@ -1,4 +1,5 @@
 #include "../include/main.h"
+#include "../include/harryLibHeader/util.hpp"
 #include <vector>
 
 int sign(double num)
@@ -45,4 +46,17 @@ double pointToPointDistance(std::vector<double> p1, std::vector<double> p2)
 double linearToCubed(double input, double maxInput, double k)
 {
     return k * (pow(input, 3) / pow(maxInput, 2));
+}
+
+//Point struct
+Point::Point(double x, double y)
+{
+    this->x = x;
+    this->y = y;
+}
+
+void Point::set(double x, double y)
+{
+    this->x = x;
+    this->y = y;
 }

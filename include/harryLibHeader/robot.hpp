@@ -1,4 +1,6 @@
 #pragma once
+#include "../main.h"
+#include "util.hpp"
 
 
 
@@ -10,9 +12,19 @@ namespace drivetrain
     class drivetrain
     {   
 
+        pros::Motor leftFrontMotor;
+        pros::Motor leftMidMotor;
+        pros::Motor leftBackMotor;
+        
+        pros::Motor rightFrontMotor;
+        pros::Motor rightMidMotor;
+        pros::Motor rightBackMotor;
+
+
         public:
         //constructor
-        drivetrain();
+        drivetrain(int leftFrontMotorPort, int leftMidMotorPort, int leftBackMotorPort,
+                   int rightFrontMotorPort,int rightMidMotorPort,int rightBackMotorPort);
 
         /**
          * @brief Function to set the voltage applied to all drive motors
@@ -31,7 +43,7 @@ namespace drivetrain
     };
 
     //Pose struct
-    struct pose
+    struct Pose
     {
         double x;
         double y;
@@ -39,7 +51,7 @@ namespace drivetrain
 
         public:
         //Constructor
-        pose(double x, double y, double heading);
+        Pose(double x, double y, double heading);
 
         /**
          * @brief Function to set this pose to a deisred pose
@@ -55,10 +67,17 @@ namespace drivetrain
          * 
          * @param pose The pose to set this pose to
          */
-        void set(pose pose);
+        void set(Pose pose);
     };
 
-
+    /**
+     * @brief Turns the robot on a point to face a direction
+     */
+    void turnToHeading();
+    /**
+     * @brief Function to move the robot from its current pose to a point. First turns, then drives
+     */
+    void moveToPoint(Point point);
     /**
      * @brief Function to move the robot from its current pose to the desired pose
      * Uses a Boomerang controller
@@ -81,9 +100,11 @@ namespace subsystems
 {
     class intake
     {
+        pros::Motor intakeMotor;
+
         public:
         //Constructor
-        intake();
+        intake(int intakeMotorPort);
 
         //Function to set intake voltage
         void setVoltage(double voltage);
@@ -94,9 +115,11 @@ namespace subsystems
 
     class plunger
     {
+        pros::Motor plungerMotor;
+
         public:
         //Constructor
-        plunger();
+        plunger(int plungerMotorPort);
 
         //Function to set plunger voltage
         void setVoltage(double voltage);
@@ -107,11 +130,13 @@ namespace subsystems
 
     class mogo
     {
+        pros::adi::Pneumatics mogoSolanoid;
+
         int mogoPressCount = 0;
 
         public:
         //Constructor
-        mogo();
+        mogo(char mogoSolanoidPort);
 
         //Function to set mogo output
         void setState(bool state);

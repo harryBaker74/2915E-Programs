@@ -1,24 +1,9 @@
 #include "../../include/main.h"
+#include "../include/harryLibHeader/pid.hpp"
 
 namespace PID {
 
-class PID
-{
-    //Constants
-    double Kp;
-    double Ki;
-    double Kd;
-    double windupRange;
-    double maxIntegral;
-
-    //Shitass i forgot the name of these
-    double integral;
-    double derivative;
-    double error;
-    double prevError;
-
-    public:
-    PID(double Kp = 0.0, double Ki = 0.0, double Kd = 0.0, double windupRange = 0.0, double maxIntegral = 0.0)
+    PID::PID(double Kp, double Ki, double Kd, double windupRange, double maxIntegral)
     {
         this->Kp = Kp;
         this->Ki = Ki;
@@ -29,20 +14,20 @@ class PID
 
     //Setters
 
-    void setKp(double Kp)
+    void PID::setKp(double Kp)
     {this->Kp = Kp;}
-    void setKi(double Ki)
+    void PID::setKi(double Ki)
     {this->Ki = Ki;}
-    void setKd(double Kd)
+    void PID::setKd(double Kd)
     {this->Kd = Kd;}
-    void setWindupRange(double windupRange)
+    void PID::setWindupRange(double windupRange)
     {this->windupRange = windupRange;}
-    void setMaxIntegral(double maxIntegral)
+    void PID::setMaxIntegral(double maxIntegral)
     {this->maxIntegral = maxIntegral;}
 
     //Pid Calculations
 
-    double getPid(double error)
+    double PID::getPid(double error)
     {
         //Setting data variables
         this->error = error;
@@ -64,16 +49,14 @@ class PID
         return (Kp * this->error) + (Ki * this->integral) + (Kd * derivative);
 
     }
-    double getPid(double currentPosition, double targetPosition)
+    double PID::getPid(double currentPosition, double targetPosition)
     {
         return getPid(targetPosition - currentPosition);
     }
 
     //Getters
-    double getError() {return this->error;}
-    double getIntegral() {return this->integral;}
-    double getDervative() {return this->derivative;}
-
-};
+    double PID::getError() {return this->error;}
+    double PID::getIntegral() {return this->integral;}
+    double PID::getDervative() {return this->derivative;}
 
 }

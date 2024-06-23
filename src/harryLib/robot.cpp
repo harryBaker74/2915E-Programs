@@ -6,7 +6,14 @@
 namespace drivetrain
 {
         //constructor
-        drivetrain::drivetrain(){};
+        drivetrain::drivetrain(int leftFrontMotorPort, int leftMidMotorPort, int leftBackMotorPort, int rightFrontMotorPort, int rightMidMotorPort, int rightBackMotorPort)
+        :   leftFrontMotor(pros::Motor (leftBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)), 
+            leftMidMotor(pros::Motor (leftMidMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+            leftBackMotor(pros::Motor (leftBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+            rightFrontMotor(pros::Motor (rightFrontMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+            rightMidMotor(pros::Motor (rightMidMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+            rightBackMotor(pros::Motor (rightBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees))
+        {}
 
         /**
          * @brief Function to set the voltage applied to all drive motors
@@ -16,7 +23,7 @@ namespace drivetrain
          */
         void drivetrain::setVoltage(double left, double right)
         {
-            //Setting Left Motors
+           //Setting Left Motors
             leftFrontMotor.move_voltage(floor(left));
             leftMidMotor.move_voltage(floor(left));
             leftBackMotor.move_voltage(floor(left));
@@ -25,6 +32,7 @@ namespace drivetrain
             rightFrontMotor.move_voltage(floor(right));
             rightMidMotor.move_voltage(floor(right));
             rightBackMotor.move_voltage(floor(right));
+            
         }
 
         /**
@@ -44,18 +52,23 @@ namespace drivetrain
 
     //Pose struct
 
-        pose::pose(double x, double y, double heading)
+        Pose::Pose(double x, double y, double heading)
         {
             this->x = x;
             this->y = y;
             this->heading = heading;
         }
 
-        void pose::set(double x, double y, double heading)
+        void Pose::set(double x, double y, double heading)
         {
             this->x = x;
             this->y = y;
             this->heading = heading;
+        }
+        void Pose::set(Pose pose)
+        {
+            this->x = pose.x;
+            this->y = pose.y;
         }
 
     double distanceTravelled;
@@ -72,7 +85,9 @@ namespace subsystems
 {
     //Intake Class
         //Constructor
-        intake::intake(){};
+        intake::intake(int intakeMotorPort)
+        :   intakeMotor(pros::Motor (intakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees))
+        {}
 
         //Function to set intake voltage
         void intake::setVoltage(double voltage)
@@ -88,7 +103,9 @@ namespace subsystems
 
     //Plunger Class
         //Constructor
-        plunger::plunger(){};
+        plunger::plunger(int plungerMotorPort)
+        :   plungerMotor(pros::Motor (plungerMotorPort, pros::v5::MotorGearset::red, pros::v5::MotorEncoderUnits::degrees))
+        {}
 
         //Function to set plunger voltage
         void plunger::setVoltage(double voltage)
@@ -104,7 +121,9 @@ namespace subsystems
 
     //Mogo class
         //Constructor
-        mogo::mogo(){};
+        mogo::mogo(char mogoSolanoidPort)
+        :   mogoSolanoid(pros::adi::Pneumatics (mogoSolanoidPort, false, false))
+        {}
 
         //Function to set mogo output
         void mogo::setState(bool state)
