@@ -1,5 +1,6 @@
 #include "../include/main.h"
 #include "../include/harryLibHeader/robot.hpp"
+#include "../include/harryLibHeader/odom.hpp"
 
 //File for controlling all systems in the robot
 
@@ -40,6 +41,11 @@ namespace subsystems
          */
         void drivetrain::runOdom(Pose startPose)
         {   
+            //Resetting position of all motor encoders and tracking wheels to zero
+            leftDriveMotors.tare_position_all();
+            rightDriveMotors.tare_position_all();
+            trackingWheel.reset_position();
+
             //Setting pose to desired start pose
             this->pose = startPose;
 
@@ -48,10 +54,9 @@ namespace subsystems
 
             pros::Task task{[=] {
                 
-                //Doing the Odometery Calculations
-
-                //Setting class variables for other functions to access.
-
+                //Doing the Odometery Calculations and setting the class varibles for other functions to use
+                //Passing in addresses to motor + rotation cause i could'nt figure out how to do it differently
+                Odometery::OdometeryCalculations(&pose, &leftDriveMotors, &rightDriveMotors, &trackingWheel);
 
                 //Stop Odom if its not supposed to be running
                 if(!odomRunning)

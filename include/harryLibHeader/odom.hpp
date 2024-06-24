@@ -2,5 +2,5 @@
 #include "main.h"
 namespace Odometery
 {
-    Pose OdometeryCalculations(Pose robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive);
+    void OdometeryCalculations(Pose* robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive, pros::Rotation* trackingWheel);
 }

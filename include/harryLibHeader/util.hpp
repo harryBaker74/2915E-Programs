@@ -1,5 +1,7 @@
 #pragma once
 
+#define CENTIDEGREES_TO_ENCODER 1/100
+
 int sign(double num);
 
 double linearToCubed(double input, double maxInput, double k);
