@@ -7,6 +7,8 @@ namespace Odometery
     std::vector <std::vector<double>> currentEncoderValues;
     std::vector <std::vector<double>> prevEncoderValues;
 
+    double prevHeading = 0;
+
     //Getters
 
     /**
@@ -30,7 +32,7 @@ namespace Odometery
             case TRACKING_WHEEL: return currentEncoderValues.at(2).at(0);
         }
     }
-
+    //
     std::vector<double> getLeftDriveEncoders()
     {return currentEncoderValues.at(0);}
     std::vector<double> getRightDriveEncoders()
@@ -38,9 +40,19 @@ namespace Odometery
     std::vector<double> getTrackingWheelEncoders()
     {return currentEncoderValues.at(2);}
     
+
+    /**
+     * @brief Function to calculate new robot pose with inputed pose + trackers.
+     * 
+     * @param robotPose Reference to the global pose of the robot
+     * @param leftDrive Reference to the left drive motor group for the robot
+     * @param rightDrive Reference to the right drive motor group for the robot
+     * @param trackingWheel Reference to tracking wheel(s) rotation sensor
+     */
     void OdometeryCalculations(Pose* robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive, pros::Rotation* trackingWheel)
     {
 
+        //Getting current encoder values
         currentEncoderValues = 
         {   {
             leftDrive->get_position(0),
@@ -56,6 +68,29 @@ namespace Odometery
             double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
             }
         };
+
+        //Getting the change in encoder values compared to lass time step
+        double deltaLeft = (
+            (prevEncoderValues.at(0).at(0) - currentEncoderValues.at(0).at(0)) +    //Delta LEFT_MOTOR_FRONT
+            (prevEncoderValues.at(0).at(1) - currentEncoderValues.at(0).at(1)) +    //Delta LEFT_MOTOR_MID
+            (prevEncoderValues.at(0).at(2) - currentEncoderValues.at(0).at(2))      //Delta LEFT_MOTOR_BACK
+        ) / 3;
+        
+        double deltaRight = (
+            (prevEncoderValues.at(1).at(0) - currentEncoderValues.at(1).at(0)) +    //Delta RIGHT_MOTOR_FRONT
+            (prevEncoderValues.at(1).at(1) - currentEncoderValues.at(1).at(1)) +    //Delta RIGHT_MOTOR_MID
+            (prevEncoderValues.at(1).at(2) - currentEncoderValues.at(1).at(2))      //Delta RIGHT_MOTOR_BACK
+        ) / 3;
+
+        double deltaHorizontal = (
+            prevEncoderValues.at(2).at(0) - currentEncoderValues.at(2).at(0)        //Delta TRACKING_WHEEL
+        );
+
+        //Setting the previous encoder values to the current one for next time step
+        prevEncoderValues = currentEncoderValues;
+
+        
+
 
 
     }
