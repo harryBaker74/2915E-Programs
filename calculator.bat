@@ -1,3 +1,2 @@
 a:
-echo "harry!!!!!!!!!!!!!!!!!!!!!!!!!"
-goto a
+echo "calculator.exe"

@@ -1,5 +1,8 @@
 #pragma once
 
+//Tracking wheel offsets(cm)
+#define HORIZONTAL_OFFSET 0
+
 //Controller port
 #define CONTROLLER 1
 

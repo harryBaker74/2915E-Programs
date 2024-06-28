@@ -22,7 +22,6 @@
 
 #include <cstdint>
 #include <iostream>
-
 #include "pros/device.hpp"
 #include "pros/motors.h"
 #include "rtos.hpp"

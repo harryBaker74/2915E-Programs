@@ -5,8 +5,6 @@
     //Controller
         pros::Controller Controller (CONTROLLER_MASTER);
 
-    //IMU
-        pros::IMU IMU(INERTIAL);
 
 
 

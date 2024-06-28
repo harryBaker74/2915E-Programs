@@ -4,6 +4,3 @@
 //Misc
     //Controller
         extern pros::Controller Controller;
-
-    //IMU
-        extern pros::IMU IMU;

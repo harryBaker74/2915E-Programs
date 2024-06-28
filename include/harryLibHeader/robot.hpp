@@ -25,6 +25,8 @@ namespace subsystems
 
         pros::Rotation trackingWheel;
 
+        pros::IMU IMU;
+
         Pose pose = Pose(0, 0, 0);
 
         bool odomRunning = false;
@@ -34,7 +36,7 @@ namespace subsystems
         //constructor
         drivetrain(int leftFrontMotorPort, int leftMidMotorPort, int leftBackMotorPort,
                    int rightFrontMotorPort,int rightMidMotorPort,int rightBackMotorPort,
-                   int trackingWheelPort);
+                   int trackingWheelPort, int inertialPort);
 
         //Driver
         /**

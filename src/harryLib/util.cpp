@@ -38,9 +38,9 @@ double slew(double targetAmount, double currentAmount, double rateOfChange_ms, d
     return fabs(desiredChange) > fabs(maxChange) ? maxChange : desiredChange;
 }
 
-double pointToPointDistance(std::vector<double> p1, std::vector<double> p2)
+double pointToPointDistance(Point p1, Point p2)
 {
-    return sqrt(pow(p2.at(0) - p1.at(0), 2) + pow(p2.at(1) - p1.at(1), 2));
+    return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2));
 }
 
 double linearToCubed(double input, double maxInput, double k)

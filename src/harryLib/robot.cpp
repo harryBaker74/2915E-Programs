@@ -17,7 +17,7 @@ namespace subsystems
         //constructor
         drivetrain::drivetrain( int leftFrontMotorPort, int leftMidMotorPort, int leftBackMotorPort,
                                 int rightFrontMotorPort, int rightMidMotorPort, int rightBackMotorPort, 
-                                int trackingWheelPort)
+                                int trackingWheelPort, int inertialPort)
 
         :   leftFrontMotor(pros::Motor (leftBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)), 
             leftMidMotor(pros::Motor (leftMidMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
@@ -25,10 +25,12 @@ namespace subsystems
             rightFrontMotor(pros::Motor (rightFrontMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             rightMidMotor(pros::Motor (rightMidMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             rightBackMotor(pros::Motor (rightBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
-            trackingWheel(pros::Rotation(trackingWheelPort))
+            trackingWheel(pros::Rotation(trackingWheelPort)),
+            IMU(pros::IMU(inertialPort))
         {
             leftDriveMotors.append(leftMidMotor);
             leftDriveMotors.append(leftBackMotor);
+            
             rightDriveMotors.append(rightMidMotor);
             rightDriveMotors.append(rightBackMotor);
         }
@@ -56,7 +58,7 @@ namespace subsystems
                 
                 //Doing the Odometery Calculations and setting the class varibles for other functions to use
                 //Passing in addresses to motor + rotation cause i could'nt figure out how to do it differently
-                Odometery::OdometeryCalculations(&pose, &leftDriveMotors, &rightDriveMotors, &trackingWheel);
+                Odometery::OdometeryCalculations(&pose, &leftDriveMotors, &rightDriveMotors, &trackingWheel, &IMU);
 
                 //Stop Odom if its not supposed to be running
                 if(!odomRunning)

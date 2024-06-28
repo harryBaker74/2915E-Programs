@@ -7,8 +7,6 @@ namespace Odometery
     std::vector <std::vector<double>> currentEncoderValues;
     std::vector <std::vector<double>> prevEncoderValues;
 
-    double prevHeading = 0;
-
     //Getters
 
     /**
@@ -49,7 +47,7 @@ namespace Odometery
      * @param rightDrive Reference to the right drive motor group for the robot
      * @param trackingWheel Reference to tracking wheel(s) rotation sensor
      */
-    void OdometeryCalculations(Pose* robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive, pros::Rotation* trackingWheel)
+    void OdometeryCalculations(Pose* robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive, pros::Rotation* trackingWheel, pros::IMU* IMU)
     {
 
         //Getting current encoder values
@@ -66,6 +64,9 @@ namespace Odometery
             }, 
             {
             double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
+            },
+            {
+                IMU->get_rotation()
             }
         };
 
@@ -86,10 +87,23 @@ namespace Odometery
             prevEncoderValues.at(2).at(0) - currentEncoderValues.at(2).at(0)        //Delta TRACKING_WHEEL
         );
 
+        double deltaHeading = (
+            prevEncoderValues.at(3).at(0) - currentEncoderValues.at(3).at(0)        //Delta IMU Z-Axis
+        );
+
         //Setting the previous encoder values to the current one for next time step
         prevEncoderValues = currentEncoderValues;
 
-        
+        //Calculating arc length for the vertical tracking wheel arc, and the horizontal tracking wheel arc
+        double verticalArcLength = (deltaLeft + deltaRight)/ 2;
+        double horizontalArcLength = (deltaHorizontal / deltaHeading) + HORIZONTAL_OFFSET;
+
+        //Calculating the arcs chord lengths
+        //Can imagine these as being rotated by theta / 2, with the vertical arc's chord becoming the new y axis, and horizontal arc's chord becoming the new x axis.
+        double localY = 2 * sin(deltaHeading / 2) * verticalArcLength;
+        double localX = 2 * sin(deltaHeading / 2) * horizontalArcLength;
+
+        //Rotataing the local axis back to global
 
 
 
