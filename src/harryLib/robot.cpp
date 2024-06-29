@@ -56,16 +56,18 @@ namespace subsystems
 
             pros::Task task{[=] {
                 
+                while(odomRunning)
+                {
                 //Doing the Odometery Calculations and setting the class varibles for other functions to use
                 //Passing in addresses to motor + rotation cause i couldn't figure out how to do it differently
                 Odometery::OdometeryCalculations(&pose, &leftDriveMotors, &rightDriveMotors, &trackingWheel, &IMU);
 
-                //Stop Odom if its not supposed to be running
-                if(!odomRunning)
-                    pros::Task::current().remove();
-
                 //Delay to give time for other tasks
                 pros::delay(10);
+                }
+
+                //Stop Odom if its not supposed to be running
+                pros::Task::current().remove();
             }};
         }
 
@@ -87,7 +89,7 @@ namespace subsystems
          */
         void drivetrain::setVoltage(double left, double right)
         {
-           //Setting Left Motors
+            //Setting Left Motors
             leftFrontMotor.move_voltage(floor(left));
             leftMidMotor.move_voltage(floor(left));
             leftBackMotor.move_voltage(floor(left));
@@ -96,7 +98,6 @@ namespace subsystems
             rightFrontMotor.move_voltage(floor(right));
             rightMidMotor.move_voltage(floor(right));
             rightBackMotor.move_voltage(floor(right));
-            
         }
 
         /**
@@ -108,10 +109,33 @@ namespace subsystems
             int leftJoystick = Controller.get_analog(ANALOG_LEFT_Y);
             int rightJoystick = Controller.get_analog(ANALOG_RIGHT_Y);
 
-            int leftOutput = floor(linearToCubed(leftJoystick, 127, 1));
-            int rightOutput = floor(linearToCubed(rightJoystick, 127, 1));
+            int leftOutput = linearToCubed(leftJoystick, 127, 1);
+            int rightOutput = linearToCubed(rightJoystick, 127, 1);
 
             setVoltage(leftOutput, rightOutput);
+        }
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        //AUTON FUNCTIONS
+
+        void drivetrain::turnToHeading(double heading, bool radians)
+        {
+            pros::Task task {[=] {
+                double angle = heading;
+                
+                if(!radians)
+                    angle *= M_PI / 180;
+
+                    
+                double targetAngle = pose.rotation + angle;
+
+                while(true)
+                {
+
+                }
+
+                pros::Task::current().remove();
+            }};
         }
 
 

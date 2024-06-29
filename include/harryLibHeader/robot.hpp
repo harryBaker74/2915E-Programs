@@ -63,7 +63,7 @@ namespace subsystems
         /**
         * @brief Turns the robot on a point to face a direction
         */
-        void turnToHeading();
+        void turnToHeading(double heading, bool radians);
         /**
          * @brief Function to move the robot from its current pose to a point. First turns, then drives
          */
