@@ -104,13 +104,21 @@ namespace subsystems
     class plunger
     {
         pros::Motor plungerMotor;
+        pros::adi::Pneumatics armPiston;
+        pros::adi::Pneumatics clampPiston;
+
+        int armPressCount = 0;
+        int clampPressCount = 0;
 
         public:
         //Constructor
-        plunger(int plungerMotorPort);
+        plunger(int plungerMotorPort, char armPistonPort, char clampPistonPort);
 
         //Function to set plunger voltage
         void setVoltage(double voltage);
+
+        void setArmState(bool state);
+        void setClampState(bool state);
 
         //Function to run plunger during driver control
         void driverFunctions();

@@ -6,6 +6,8 @@ int sign(double num);
 
 double linearToCubed(double input, double maxInput, double k);
 
+double boundAngle(double angle, bool raidians);
+
 //Point Struct
 struct Point
 {
@@ -23,6 +25,7 @@ struct Point
         double x;
         double y;
         double heading;
+        double rotation;
 
         public:
         //Constructor

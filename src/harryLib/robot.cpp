@@ -57,7 +57,7 @@ namespace subsystems
             pros::Task task{[=] {
                 
                 //Doing the Odometery Calculations and setting the class varibles for other functions to use
-                //Passing in addresses to motor + rotation cause i could'nt figure out how to do it differently
+                //Passing in addresses to motor + rotation cause i couldn't figure out how to do it differently
                 Odometery::OdometeryCalculations(&pose, &leftDriveMotors, &rightDriveMotors, &trackingWheel, &IMU);
 
                 //Stop Odom if its not supposed to be running
@@ -147,8 +147,10 @@ namespace subsystems
 
     //Plunger Class
         //Constructor
-        plunger::plunger(int plungerMotorPort)
-        :   plungerMotor(pros::Motor (plungerMotorPort, pros::v5::MotorGearset::red, pros::v5::MotorEncoderUnits::degrees))
+        plunger::plunger(int plungerMotorPort, char armpistonPort, char clampPistonPort)
+        :   plungerMotor(pros::Motor (plungerMotorPort, pros::v5::MotorGearset::red, pros::v5::MotorEncoderUnits::degrees)),
+            armPiston(pros::adi::Pneumatics(armpistonPort, false, false)),
+            clampPiston(pros::adi::Pneumatics(clampPistonPort, true, false))
         {}
 
         //Function to set plunger voltage
@@ -156,11 +158,25 @@ namespace subsystems
         {
             plungerMotor.move_voltage(floor(voltage));
         }
+        void plunger::setArmState(bool state)
+        {
+            armPiston.set_value(state);
+        }
+        void plunger::setClampState(bool state)
+        {
+            clampPiston.set_value(state);
+        }
 
         //Function to run plunger during driver control
         void plunger::driverFunctions()
         {
             setVoltage((Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2)) * 12000);
+
+            armPressCount += Controller.get_digital_new_press(DIGITAL_DOWN);
+            clampPressCount += Controller.get_digital_new_press(DIGITAL_LEFT); //JOUZAA!!!!!!
+            armPressCount % 2 == 0 ? setArmState(false) : setArmState(true);
+            clampPressCount % 2 == 0 ? setClampState(true) : setClampState(false);
+
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,22 @@ int sign(double num)
         return -1;
 }
 
+double boundAngle(double angle, bool raidians)
+{
+    if (raidians)
+    {
+        while ((angle > M_PI) || (angle < -1 * M_PI))
+            angle = -1 * sign(angle) * ((2 * M_PI) - fabs(angle));
+    }
+    if(!raidians)
+    {
+        while((angle > 180) || (angle < -180))
+            angle = -1 * sign(angle) * (360 - fabs(angle));
+    }
+
+    return angle;
+}
+
 double getMinAngle(double targetAngle, double currentAngle, bool radians)
 {
     double angleDifference;
@@ -17,14 +33,12 @@ double getMinAngle(double targetAngle, double currentAngle, bool radians)
     if (radians)//Radians
     {
         angleDifference = targetAngle - currentAngle;
-        if ((angleDifference > M_PI) || (angleDifference < -1 * M_PI))
-            angleDifference = -1 * sign(angleDifference) * ((2 * M_PI) - fabs(angleDifference));
+        boundAngle(angleDifference, radians);
     }
     else//Degrees
     {
         double angleDifference = targetAngle - currentAngle;
-        if ((angleDifference > 180) || (angleDifference < -1 * 180))
-            angleDifference = -1 * sign(angleDifference) * (360 - fabs(angleDifference));
+        boundAngle(angleDifference, radians);
     }
     
     return angleDifference;

@@ -33,11 +33,12 @@ void opcontrol()
         RIGHT_MOTOR_FRONT, 
         RIGHT_MOTOR_MID, 
         RIGHT_MOTOR_BACK,
-        TRACKING_WHEEL);
+        TRACKING_WHEEL,
+        INERTIAL);
     //Creating intake
     subsystems::intake intake = subsystems::intake(INTAKE);
     //Creating plunger
-    subsystems::plunger plunger = subsystems::plunger(PLUNGER);
+    subsystems::plunger plunger = subsystems::plunger(PLUNGER, ARM_PISTON, CLAMP_PISTON);
     //Creating Mogo
     subsystems::mogo mogo = subsystems::mogo(MOGO);
 

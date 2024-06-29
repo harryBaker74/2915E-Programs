@@ -15,6 +15,12 @@
 //Mogo Port
 #define MOGO 'A'
 
+//Arm Piston Port
+#define ARM_PISTON 'A'
+
+//Clamp Piston Port
+#define CLAMP_PISTON 'A'
+
 //Drivtrain Motor Ports
 #define LEFT_MOTOR_FRONT 4
 #define LEFT_MOTOR_MID 5
