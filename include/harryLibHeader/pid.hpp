@@ -29,14 +29,16 @@ class PID
 
     //Pid Calculations
 
-    double getPid(double error);
-    double getPid(double currentPosition, double targetPosition);
+    double const getPid(double error);
+    double const getPid(double currentPosition, double targetPosition);
 
     //Getters
-    double getError();
-    double getIntegral();
-    double getDervative();
+    double const getError();
+    double const getIntegral();
+    double const getDervative();
 
+    //Reset Pid For Future Uses
+    void reset();
 };
 
 }

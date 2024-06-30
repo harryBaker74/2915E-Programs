@@ -25,6 +25,8 @@ namespace Odometery
             case TRACKING_WHEEL: return currentEncoderValues.at(2).at(0);
 
             case INERTIAL: return currentEncoderValues.at(3).at(0);
+
+            default: return 0;
         }
     }
     //Specific getters

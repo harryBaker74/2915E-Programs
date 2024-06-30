@@ -8,6 +8,8 @@ double linearToCubed(double input, double maxInput, double k);
 
 double boundAngle(double angle, bool raidians);
 
+double slew(double targetAmount, double currentAmount, double rateOfChange_ms, double timeStep_ms);
+
 //Point Struct
 struct Point
 {

@@ -27,7 +27,7 @@ namespace PID {
 
     //Pid Calculations
 
-    double PID::getPid(double error)
+    double const PID::getPid(double error)
     {
         //Setting data variables
         this->error = error;
@@ -49,14 +49,23 @@ namespace PID {
         return (Kp * this->error) + (Ki * this->integral) + (Kd * derivative);
 
     }
-    double PID::getPid(double currentPosition, double targetPosition)
+    double const PID::getPid(double currentPosition, double targetPosition)
     {
         return getPid(targetPosition - currentPosition);
     }
 
     //Getters
-    double PID::getError() {return this->error;}
-    double PID::getIntegral() {return this->integral;}
-    double PID::getDervative() {return this->derivative;}
+    double const PID::getError() {return this->error;}
+    double const PID::getIntegral() {return this->integral;}
+    double const PID::getDervative() {return this->derivative;}
+
+    //Reset
+    void PID::reset()
+    {
+        error = 0;
+        integral = 0;
+        derivative = 0;
+        prevError = 0;
+    }
 
 }

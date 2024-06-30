@@ -73,11 +73,6 @@ namespace subsystems
          * Uses a Boomerang controller
          */
         void moveToPose();
-        /**
-         * @brief Function to move the robot from its current pose to the desired pose
-         * Uses an intemediate direction
-         */
-        void moveToPose();
 
         /**
          * @brief Function to make the robot follow a desired path from the path generator or path scheduler

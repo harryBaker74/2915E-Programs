@@ -1,6 +1,8 @@
 #include "../include/main.h"
 #include "../include/harryLibHeader/robot.hpp"
 #include "../include/harryLibHeader/odom.hpp"
+#include "../include/harryLibHeader/pid.hpp"
+#include"../include/harryLibHeader/velocityController.hpp"
 
 //File for controlling all systems in the robot
 
@@ -54,7 +56,7 @@ namespace subsystems
             //making sure the task actually runs
             odomRunning = true;
 
-            pros::Task task{[=] {
+            pros::Task task{[=, this] {
                 
                 while(odomRunning)
                 {
@@ -120,18 +122,46 @@ namespace subsystems
 
         void drivetrain::turnToHeading(double heading, bool radians)
         {
-            pros::Task task {[=] {
-                double angle = heading;
-                
-                if(!radians)
-                    angle *= M_PI / 180;
+            pros::Task task {[=, this] {
 
-                    
-                double targetAngle = pose.rotation + angle;
+                PID::PID pid(
+                    0.0,    //Kp
+                    0.0,    //Ki
+                    0.0,    //Kd
+                    0.0,    //Windup Range
+                    0.0     //Max Intergal
+                );
+
+                vController::vController vCon;
+
+                double angle = heading;
+                double prevOutput; //For slew
+                
+                if(!radians) angle *= M_PI / 180;  //Converting to radians if needed
+
+                double targetRotation = pose.rotation + angle; //Finding the target rotation
 
                 while(true)
                 {
+                    //Pid Velocity Calculations
+                    double output = pid.getPid(pose.rotation, targetRotation);
+                    //Giving a slew(rate limiter) to the output, so we dont accel to fast
+                    double velocity = slew(output, prevOutput, 0, 10);
+                    prevOutput = output;
 
+
+                    //Getting current motor velocity
+                    std::vector <double> leftVels = leftDriveMotors.get_actual_velocity_all();
+                    double averageVel = (leftVels.at(0) + leftVels.at(1) + leftVels.at(2)) / 3; //Not divided by 2 becasue the slew is standard
+                    //Velocity controller converting desired motor velocity into voltage
+                    double voltage = vCon.rpmVelToVoltage(averageVel, velocity);  
+                    //Setting drivetrain voltage based on Pid Output, Slew, and Velocity controller output
+                    this->setVoltage(voltage, -voltage);
+
+                    //Exit Conditions
+
+                    
+                    pros::delay(10);
                 }
 
                 pros::Task::current().remove();
