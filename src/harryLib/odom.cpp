@@ -96,7 +96,7 @@ namespace Odometery
         double localX = 2 * sin(deltaHeading / 2) * horizontalArcLength;
 
         //Rotataing the local axis back to global
-        double averageHeading = currentEncoderValues.at(3).at(0) + (deltaHeading / 2); //Amount to rotate by
+        double averageHeading = robotPose->rotation + (deltaHeading / 2); //Amount to rotate by
 
         robotPose->x += localX * cos(averageHeading) - localY * sin(averageHeading);    //Applying rotation matrix
         robotPose->y += localX * sin(averageHeading) + localY * cos(averageHeading);    //Applying rotation matrix
