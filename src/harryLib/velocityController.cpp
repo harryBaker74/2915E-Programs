@@ -3,6 +3,7 @@
 #include "../include/harryLibHeader/globals.h"
 #include "../include/harryLibHeader/velocityController.hpp"
 
+//Wrapper for a PID with the right constants to convert desired motor RPM into Voltage.
 namespace vController
 {
         vController::vController(){};

@@ -44,6 +44,16 @@ double getMinAngle(double targetAngle, double currentAngle, bool radians)
     return angleDifference;
 }
 
+double inToCm(double inch)
+{
+    return inch * 2.54;
+}
+
+double cmToIn(double centimeter)
+{
+    return centimeter / 2.54;
+}
+
 double slew(double targetAmount, double currentAmount, double rateOfChange_ms, double timeStep_ms)
 {
     double desiredChange = targetAmount - currentAmount;

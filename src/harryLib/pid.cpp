@@ -40,7 +40,7 @@ namespace PID {
                 this->integral = 0;
             //Clamping
             if(fabs(this->integral) > fabs(this->maxIntegral))
-                this->integral = 0;
+                this->integral = sign(this->integral) * maxIntegral;
 
             //Sign-Flip Reset
             if(sign(prevError) != sign(error))

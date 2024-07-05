@@ -4,6 +4,13 @@
 
 namespace Odometery
 {
+    //Values for the robot model
+    const float DRIVE_WHEEL_DIAMETER = 3.25;
+    const float TRACKING_WHEEL_DIAMETER = 2.75;
+    const float DRIVE_GEAR_RATIO = 4/5;
+    const float TRACKING_GEAR_RATIO = 1/1;
+
+
     std::vector <std::vector<double>> currentEncoderValues;
     std::vector <std::vector<double>> prevEncoderValues;
 
@@ -41,6 +48,9 @@ namespace Odometery
     
     void OdometeryCalculations(Pose* robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive, pros::Rotation* trackingWheel, pros::IMU* IMU)
     {
+
+
+        //Updating model values
 
         //Getting current encoder values
         currentEncoderValues = 
@@ -86,6 +96,15 @@ namespace Odometery
         //Setting the previous encoder values to the current one for next time step
         prevEncoderValues = currentEncoderValues;
 
+        //Converting Delta Encoders into cm moved
+        deltaLeft = ((deltaLeft * M_PI / 180) * DRIVE_GEAR_RATIO) * inToCm(DRIVE_WHEEL_DIAMETER) / 2;
+        deltaRight = ((deltaRight * M_PI / 180) * DRIVE_GEAR_RATIO) * inToCm(DRIVE_WHEEL_DIAMETER) / 2;
+        deltaHorizontal = ((deltaHorizontal * M_PI / 180) * TRACKING_GEAR_RATIO) * inToCm(TRACKING_WHEEL_DIAMETER) / 2;
+
+
+
+        //Odom Calculations
+
         //Calculating arc length for the vertical tracking wheel arc, and the horizontal tracking wheel arc
         double verticalArcLength = (deltaLeft + deltaRight)/ 2;
         double horizontalArcLength = (deltaHorizontal / (deltaHeading + 0.00000001)) + HORIZONTAL_OFFSET; //Preventing divide by zero if deltaHeading is zero
@@ -94,6 +113,10 @@ namespace Odometery
         //Can imagine these as being rotated by theta / 2, with the vertical arc's chord becoming the new y axis, and horizontal arc's chord becoming the new x axis.
         double localY = 2 * sin(deltaHeading / 2) * verticalArcLength;
         double localX = 2 * sin(deltaHeading / 2) * horizontalArcLength;
+
+
+
+        //Updating position
 
         //Rotataing the local axis back to global
         double averageHeading = robotPose->rotation + (deltaHeading / 2); //Amount to rotate by

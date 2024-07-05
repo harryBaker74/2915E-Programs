@@ -8,6 +8,10 @@ double linearToCubed(double input, double maxInput, double k);
 
 double boundAngle(double angle, bool raidians);
 
+double inToCm(double inch);
+
+double cmToIn(double centimeter);
+
 double slew(double targetAmount, double currentAmount, double rateOfChange_ms, double timeStep_ms);
 
 //Point Struct
