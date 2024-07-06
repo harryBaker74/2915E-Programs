@@ -118,20 +118,56 @@ namespace subsystems
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////
         //AUTON FUNCTIONS
 
         void drivetrain::turnToHeading(double heading, bool radians)
         {
             pros::Task task {[=, this] {
+                
+                //TUNING
+                    
+                    //Guide to tuning
+                    //Setup
+                    //Set all pid variables to zero, and comment out the break in the exit condition if statement
+                    //Run this function whenever you change the constants and take the error value to graph(print it or something)
+                    //Give the function something like 90 degrees everytime you run so it actually has time to work
+                    //Alrtenatively, give it random targets each time so your constants work better over multiple different target ranges
+                    //
+                    //Pid Tuning
+                    //Start off by increasing Kp until you get 2-4 oscillations
+                    //Then increase kd until the oscilattions stop, the graph should look like one sloped line curving into a straight horizontal line
+                    //Set windup range to a bit above the current steady state error
+                    //Set max integral to whatever you want honestly you prob dont need it
+                    //Start increasing Ki very slowly until steady state error dissapears quickly.
+                    //
+                    //At this point un-comment the break in the exit condition if statement
+                    //
+                    //Exit Conditions Tuning
+                    //(Note these values are in rad, rad/s, and rad/(s*s), so convert from deg if needed)
+                    //Set the error exit to something like 0.1 degrees if your confident, or 0.25 if your not. Maybe go even lower if its really good
+                    //Change around vel exit and accel exit to see what works best.(Aut Student Jordan D'Souza)
+                    //In theory, vel exit should be about 1/100 error exit, and accel exit should be 1/10000 of error exit. but this might be wrong idk
 
-                PID::PID pid(
-                    0.0,    //Kp
-                    0.0,    //Ki
-                    0.0,    //Kd
-                    0.0,    //Windup Range
-                    0.0     //Max Intergal
-                );
+                    //Pid for turning 
+                    PID::PID pid(
+                        0.0,    //Kp
+                        0.0,    //Ki
+                        0.0,    //Kd
+                        0.0,    //Windup Range
+                        0.0     //Max Intergal
+                    );
 
+                    //Exit conditions
+                    double errorExit = 0;
+                    double velExit = 0;
+                    double accelExit = 0;
+
+
+                //Everything else
+
+                //Velocity controller instance
                 vController::vController vCon;
 
                 double angle = heading;
@@ -139,7 +175,16 @@ namespace subsystems
                 
                 if(!radians) angle *= M_PI / 180;  //Converting to radians if needed
 
-                double targetRotation = pose.rotation + angle; //Finding the target rotation
+                //Finding the target rotation
+                //Gets the difference between the desired bounded heading and the current bounded heading, then bounds this angle, then gets the current rotation added to it
+                //In a roundabout way because we dont want to do turns bigger than 180 deg/1 pi, and its easier to track because the values cant overflow due to using rotation
+                double targetRotation = pose.rotation + (boundAngle(angle - pose.heading, true));
+
+                //Static Variables for Exit conditions
+                double error;
+                double errorVel;
+                double prevErrorVel;
+                double errorAccel;
 
                 while(true)
                 {
@@ -159,14 +204,34 @@ namespace subsystems
                     this->setVoltage(voltage, -voltage);
 
                     //Exit Conditions
+                    //Error, Velocity, and Acceleration based(only exit when all 3 are low) so we dont need to worry about waiting with low error for a certain amount of time
+                    //Because error is in rad: vel is rad/s, and accel is rad/s*s
+                    error = pid.getError();
+                    errorVel = pid.getDervative() / 0.01; //Derivative is already just the rate of change
+                    errorAccel = (errorVel - prevErrorVel) / 0.01;
+                    prevErrorVel = errorVel; //Wont be using prev vel anymore so update it here
 
+                    //Checking if all these values are below a certain threshold
+                    if (fabs(error) < errorExit)
+                    {   
+                        //In 2 if statements so that it will only need to do a simple comparison if the error is too big,
+                        //rather than 3 comparisons every loop. Its called weight saving
+                        if((fabs(errorVel) < velExit) && (fabs(errorAccel) < accelExit))
+                            break; //Comment this break out if tuning
+                    }
                     
+                    //Delay for scheduling
                     pros::delay(10);
                 }
 
+                this->setVoltage(0, 0);
                 pros::Task::current().remove();
             }};
         }
+
+
+
+
 
 
 
