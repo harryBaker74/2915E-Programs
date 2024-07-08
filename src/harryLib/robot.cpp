@@ -3,6 +3,7 @@
 #include "../include/harryLibHeader/odom.hpp"
 #include "../include/harryLibHeader/pid.hpp"
 #include"../include/harryLibHeader/velocityController.hpp"
+#include "../include/harryLibHeader/util.hpp"
 
 //File for controlling all systems in the robot
 
@@ -122,10 +123,17 @@ namespace subsystems
         //////////////////////////////////////////////////////////////////////////////////////////
         //AUTON FUNCTIONS
 
-        void drivetrain::turnToHeading(double heading, bool radians)
+        void drivetrain::turnToHeading(double heading, bool radians, bool async)
         {
-            pros::Task task {[=, this] {
-                
+            if (async)
+            {
+                pros::Task task {[=, this] {
+                    turnToHeading(heading, radians, false);
+                    pros::Task::current().remove();
+                }};
+            }
+            else
+            {      
                 //TUNING
                     
                     //Guide to tuning
@@ -162,7 +170,6 @@ namespace subsystems
                     //Exit conditions
                     double errorExit = 0;
                     double velExit = 0;
-                    double accelExit = 0;
 
 
                 //Everything else
@@ -181,17 +188,13 @@ namespace subsystems
                 double targetRotation = pose.rotation + (boundAngle(angle - pose.heading, true));
 
                 //Static Variables for Exit conditions
-                double error;
-                double errorVel;
-                double prevErrorVel;
-                double errorAccel;
 
                 while(true)
                 {
                     //Pid Velocity Calculations
                     double output = pid.getPid(pose.rotation, targetRotation);
                     //Giving a slew(rate limiter) to the output, so we dont accel to fast
-                    double velocity = slew(output, prevOutput, 0, 10);
+                    double velocity = slew(output, prevOutput, MAX_RPMPS / 1000, 10);
                     prevOutput = output;
 
 
@@ -204,29 +207,108 @@ namespace subsystems
                     this->setVoltage(voltage, -voltage);
 
                     //Exit Conditions
-                    //Error, Velocity, and Acceleration based(only exit when all 3 are low) so we dont need to worry about waiting with low error for a certain amount of time
-                    //Because error is in rad: vel is rad/s, and accel is rad/s*s
-                    error = pid.getError();
-                    errorVel = pid.getDervative() / 0.01; //Derivative is already just the rate of change
-                    errorAccel = (errorVel - prevErrorVel) / 0.01;
-                    prevErrorVel = errorVel; //Wont be using prev vel anymore so update it here
+                    //Error, and Velocity based(only exit when both are low) so we dont need to worry about waiting with low error for a certain amount of time
+                    //Because error is in rad: vel is rad/s
+                    double error = pid.getError();
+                    double errorVel = pid.getDervative() / 0.01; //Derivative is already just the rate of change
 
                     //Checking if all these values are below a certain threshold
                     if (fabs(error) < errorExit)
                     {   
                         //In 2 if statements so that it will only need to do a simple comparison if the error is too big,
-                        //rather than 3 comparisons every loop. Its called weight saving
-                        if((fabs(errorVel) < velExit) && (fabs(errorAccel) < accelExit))
+                        //rather than 2 comparisons every loop. Its called weight saving
+                        if(fabs(errorVel) < velExit)
                             break; //Comment this break out if tuning
                     }
                     
                     //Delay for scheduling
                     pros::delay(10);
                 }
-
                 this->setVoltage(0, 0);
-                pros::Task::current().remove();
-            }};
+                
+            };
+        }
+
+        void drivetrain::moveToPoint(Point point, bool async)
+        {
+            if(async)
+            {
+                pros::Task task {[=, this] {
+                    moveToPoint(point, false);
+                    pros::Task::current().remove();
+                }};
+            }
+            else
+            {
+                    PID::PID angPid = PID::PID(
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    );
+
+                    PID::PID linPid = PID::PID(
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    );
+
+                    //Exit conditions
+                    double errorExit = 0;
+                    double velExit = 0;
+
+                vController::vController leftVCon;
+                vController::vController notLeftVCon;
+
+                double prevLeftVel;
+                double prevRightVel;
+
+                while(true)
+                {
+
+                //Calculating delta cartesian offesets
+                double deltaX = point.x - pose.x;
+                double deltaY = point.y - pose.y;
+
+                //Converts delta cartesian coordinates to polar coordinates, than takes theta and adds pi/2 to it to convert it to +y = 0, then bounds the angle;
+                double targetHeading = boundAngle(M_PI_2 + atan2(deltaY, deltaX), true);
+                double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
+
+                //Calculating distance to point
+                double hypot = sqrt(pow(deltaX, 2) + pow(deltaY, 2));
+
+                //Calculating velocities
+                double angVel = angPid.getPid(pose.rotation, targetRotation);
+                double linVel = linPid.getPid(hypot);
+                double leftVel = slew(linVel + angVel, prevLeftVel, MAX_RPMPS / 1000, 10);
+                double rightVel = slew(linVel - angVel, prevRightVel, MAX_RPMPS / 1000, 10);
+
+                prevLeftVel = leftVel;
+                prevRightVel = rightVel;
+
+                //Converting Velocities to voltage
+                double leftVoltage = leftVCon.rpmVelToVoltage(leftFrontMotor.get_actual_velocity(), leftVel);
+                double rightVoltage = notLeftVCon.rpmVelToVoltage(rightFrontMotor.get_actual_velocity(), rightVel);
+
+                this->setVoltage(leftVoltage, rightVoltage);
+
+                //Exit Conditions
+                //Only exit when the average error, and average velcoty of the error of the 2 pids is low, which means its stopped
+                //Both these pids are just creating rpms for the wheels, so their magnitude should be really similar, 
+                double avgError = (fabs(linPid.getError()) + fabs(angPid.getError())) / 2;
+                double avgVelError = (fabs(linPid.getDervative()) + fabs(angPid.getDervative())) / 0.01 / 2;
+                if(avgError < errorExit)
+                {
+                    if(avgVelError < velExit)
+                        break; //Comment out for tuning
+                }
+
+                pros::delay(10);
+                }
+            }
         }
 
 

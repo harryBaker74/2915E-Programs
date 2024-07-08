@@ -63,11 +63,11 @@ namespace subsystems
         /**
         * @brief Turns the robot on a point to face a direction
         */
-        void turnToHeading(double heading, bool radians = false);
+        void turnToHeading(double heading, bool radians = false, bool async = true);
         /**
          * @brief Function to move the robot from its current pose to a point. First turns, then drives
          */
-        void moveToPoint(Point point);
+        void moveToPoint(Point point, bool async = true);
         /**
          * @brief Function to move the robot from its current pose to the desired pose
          * Uses a Boomerang controller
