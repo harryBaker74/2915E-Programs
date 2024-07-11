@@ -83,11 +83,12 @@ namespace subsystems
 
     class intake
     {
-        pros::Motor intakeMotor;
+        pros::Motor topIntakeMotor;
+        pros::Motor bottomIntakeMotor;
 
         public:
         //Constructor
-        intake(int intakeMotorPort);
+        intake(int bottomIntakeMotorPort, int topIntakeMotorPort);
 
         //Function to set intake voltage
         void setVoltage(double voltage);

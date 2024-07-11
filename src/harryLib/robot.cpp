@@ -5,9 +5,10 @@
 #include"../include/harryLibHeader/velocityController.hpp"
 #include "../include/harryLibHeader/util.hpp"
 
+
 //File for controlling all systems in the robot
 
-        
+
 
 namespace subsystems
 {   
@@ -22,7 +23,7 @@ namespace subsystems
                                 int rightFrontMotorPort, int rightMidMotorPort, int rightBackMotorPort, 
                                 int trackingWheelPort, int inertialPort)
 
-        :   leftFrontMotor(pros::Motor (leftBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)), 
+        :   leftFrontMotor(pros::Motor (leftFrontMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)), 
             leftMidMotor(pros::Motor (leftMidMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             leftBackMotor(pros::Motor (leftBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             rightFrontMotor(pros::Motor (rightFrontMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
@@ -36,6 +37,7 @@ namespace subsystems
             
             rightDriveMotors.append(rightMidMotor);
             rightDriveMotors.append(rightBackMotor);
+
         }
 
         /**
@@ -56,6 +58,19 @@ namespace subsystems
 
             //making sure the task actually runs
             odomRunning = true;
+            //Setting prev encoder values
+            Odometery::prevEncoderValues =
+                {
+                    {
+                        0, 0, 0
+                    },
+                    {
+                        0, 0, 0
+                    },
+                    {
+                        this->IMU.get_rotation() * M_PI / 180
+                    }
+                };
 
             pros::Task task{[=, this] {
                 
@@ -115,7 +130,7 @@ namespace subsystems
             int leftOutput = linearToCubed(leftJoystick, 127, 1);
             int rightOutput = linearToCubed(rightJoystick, 127, 1);
 
-            setVoltage(leftOutput, rightOutput);
+            this->setVoltage(leftOutput * 12000/127, rightOutput * 12000/127);
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////
@@ -160,25 +175,26 @@ namespace subsystems
 
                     //Pid for turning 
                     PID::PID pid(
-                        0.0,    //Kp
+                        400.0,    //Kp
                         0.0,    //Ki
-                        0.0,    //Kd
+                        3500.0,    //Kd
                         0.0,    //Windup Range
                         0.0     //Max Intergal
                     );
 
                     //Exit conditions
-                    double errorExit = 0;
-                    double velExit = 0;
+                    double errorExit = 0.05;
+                    double velExit = 0.1;
 
 
                 //Everything else
 
                 //Velocity controller instance
-                vController::vController vCon;
+                vController::vController vCon(false);
 
                 double angle = heading;
-                double prevOutput; //For slew
+                double prevVel = 0;
+                int counter = 0;
                 
                 if(!radians) angle *= M_PI / 180;  //Converting to radians if needed
 
@@ -187,22 +203,18 @@ namespace subsystems
                 //In a roundabout way because we dont want to do turns bigger than 180 deg/1 pi, and its easier to track because the values cant overflow due to using rotation
                 double targetRotation = pose.rotation + (boundAngle(angle - pose.heading, true));
 
-                //Static Variables for Exit conditions
-
                 while(true)
                 {
                     //Pid Velocity Calculations
-                    double output = pid.getPid(pose.rotation, targetRotation);
-                    //Giving a slew(rate limiter) to the output, so we dont accel to fast
-                    double velocity = slew(output, prevOutput, MAX_RPMPS / 1000, 10);
-                    prevOutput = output;
-
+                    double velocity = pid.getPid(pose.rotation, targetRotation);
 
                     //Getting current motor velocity
                     std::vector <double> leftVels = leftDriveMotors.get_actual_velocity_all();
-                    double averageVel = (leftVels.at(0) + leftVels.at(1) + leftVels.at(2)) / 3; //Not divided by 2 becasue the slew is standard
+                    double averageVel = (leftVels.at(0) + leftVels.at(1) + leftVels.at(2)) / 3;
+                    
                     //Velocity controller converting desired motor velocity into voltage
-                    double voltage = vCon.rpmVelToVoltage(averageVel, velocity);  
+                    double voltage = vCon.rpmVelToVoltage(averageVel, prevVel, velocity);  
+                    
                     //Setting drivetrain voltage based on Pid Output, Slew, and Velocity controller output
                     this->setVoltage(voltage, -voltage);
 
@@ -216,10 +228,14 @@ namespace subsystems
                     if (fabs(error) < errorExit)
                     {   
                         //In 2 if statements so that it will only need to do a simple comparison if the error is too big,
-                        //rather than 2 comparisons every loop. Its called weight saving
+                        //rather than 2 comparisons every loop.
                         if(fabs(errorVel) < velExit)
-                            break; //Comment this break out if tuning
+                           break; //Comment this break out if tuning
                     }
+
+
+                    printf("(%d, %f, %f)\n", counter, error, errorVel);
+                    counter++;
                     
                     //Delay for scheduling
                     pros::delay(10);
@@ -260,11 +276,20 @@ namespace subsystems
                     double errorExit = 0;
                     double velExit = 0;
 
-                vController::vController leftVCon;
-                vController::vController notLeftVCon;
+                    //Angular Falloff Parameter
+                    //Smaller number means more abrupt falloff, with 0 being no fall off
+                    //Angular speed will be half when distance is at angK.
+                    //Eg:   angK = 1, angVel *= 0.5 for hypot = 1;
+                    //      angK = 2, angVel *= 0.5 for hypot = 2;
+                    //      angK = 3: angVel *= 0.5 for hypot = 3;
+                    //      etc.
+                    double angK = 1;
 
-                double prevLeftVel;
-                double prevRightVel;
+                vController::vController leftVCon(false);
+                vController::vController notLeftVCon(false);
+
+                double prevLeftVel = 0;
+                double prevRightVel = 0;
 
                 while(true)
                 {
@@ -280,18 +305,26 @@ namespace subsystems
                 //Calculating distance to point
                 double hypot = sqrt(pow(deltaX, 2) + pow(deltaY, 2));
 
+                //Calculating angular velocity multiplier
+                //Makes angular velocity weaker the closer you are to the point, eventually becoming zero when on the point
+                //Stops spinning in circles, idea from Genesis/Daniel
+                double angMultiplier = fabs(hypot) / (fabs(hypot) + angK);
+
                 //Calculating velocities
                 double angVel = angPid.getPid(pose.rotation, targetRotation);
                 double linVel = linPid.getPid(hypot);
-                double leftVel = slew(linVel + angVel, prevLeftVel, MAX_RPMPS / 1000, 10);
-                double rightVel = slew(linVel - angVel, prevRightVel, MAX_RPMPS / 1000, 10);
+                double leftVel = linVel + angVel;
+                double rightVel = linVel - angVel;
+
+                double currentLeftVel = leftFrontMotor.get_actual_velocity();
+                double currentRightVel = rightFrontMotor.get_actual_velocity();
+
+                //Converting Velocities to voltage
+                double leftVoltage = leftVCon.rpmVelToVoltage(currentLeftVel, prevLeftVel, leftVel);
+                double rightVoltage = notLeftVCon.rpmVelToVoltage(currentRightVel, prevRightVel, rightVel);
 
                 prevLeftVel = leftVel;
                 prevRightVel = rightVel;
-
-                //Converting Velocities to voltage
-                double leftVoltage = leftVCon.rpmVelToVoltage(leftFrontMotor.get_actual_velocity(), leftVel);
-                double rightVoltage = notLeftVCon.rpmVelToVoltage(rightFrontMotor.get_actual_velocity(), rightVel);
 
                 this->setVoltage(leftVoltage, rightVoltage);
 
@@ -327,14 +360,16 @@ namespace subsystems
 
     //Intake Class
         //Constructor
-        intake::intake(int intakeMotorPort)
-        :   intakeMotor(pros::Motor (intakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees))
+        intake::intake(int bottomIntakeMotorPort, int topIntakeMotorPort)
+        :   bottomIntakeMotor(pros::Motor (bottomIntakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+            topIntakeMotor(pros::Motor (topIntakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees))
         {}
 
         //Function to set intake voltage
         void intake::setVoltage(double voltage)
         {
-            intakeMotor.move_voltage(floor(voltage));
+            bottomIntakeMotor.move_voltage(floor(voltage));
+            topIntakeMotor.move_voltage(floor(voltage));
         }
 
         //Function to run intake during driver control
@@ -398,7 +433,7 @@ namespace subsystems
         //Function to run mogo during driver control
         void mogo::driverFunctions()
         {
-            mogoPressCount += Controller.get_digital_new_press(DIGITAL_A);
+            mogoPressCount += Controller.get_digital_new_press(DIGITAL_L1);
             mogoPressCount % 2 == 0 ? setState(false) : setState(true);
         }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

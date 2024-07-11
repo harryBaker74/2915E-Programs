@@ -17,7 +17,7 @@ class PID
     double prevError;
 
     public:
-    PID(double Kp = 0.0, double Ki = 0.0, double Kd = 0.0, double windupRange = 0.0, double maxIntegral = 0.0);
+    PID(double Kp, double Ki, double Kd, double windupRange, double maxIntegral);
 
     //Setters
 

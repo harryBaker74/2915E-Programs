@@ -6,20 +6,32 @@
 //Wrapper for a PID with the right constants to convert desired motor RPM into Voltage.
 namespace vController
 {
-        vController::vController(){};
-
-        double vController::rpmVelToVoltage(double currentVelocity, double targetVelocity)
+        vController::vController(bool Ks)
         {
-            return rpmPid.getPid(currentVelocity, targetVelocity);
+            this->Kv = 20;
+            this->Ka = 10;
+            this->Ks = Ks ? 1000 : 0;
+        };
+
+        double vController::rpmVelToVoltage(double a, double b)
+        {
+            int i =0;
+            return i;
         }
 
-        void vController::reset()
+        double vController::rpmVelToVoltage(double currentVelocity, double prevVelocity, double targetVelocity)
         {
-            rpmPid.reset();
+            double derivative = currentVelocity - prevVelocity;
+
+            double output = Kv * targetVelocity + this->Ka * derivative;
+            output += sign(output) * Ks;
+
+            return output;
         }
 
         void vController::startTuner(double velocity)
         {
+
             pros::Task task {[=, this]{
 
                 runTuner = true;
@@ -32,8 +44,14 @@ namespace vController
                 leftDrive.append(leftMotor2);
                 leftDrive.append(leftMotor3);
 
-                //Counter so we can plot values on graph
+                //Counter to plot values on graph
                 int counter = 0;
+
+                double prevAvergeVelocity = 0;
+
+                double Kv = 20;
+                double Ka = 10;
+                double Ks = 1000;
 
                 //Controller Loop
                 while(runTuner)
@@ -41,14 +59,20 @@ namespace vController
                     //Getting current Velocities
                     std::vector <double> currentVelocities = leftDrive.get_actual_velocity_all();
                     double averageVelocity = (currentVelocities.at(0) + currentVelocities.at(1) + currentVelocities.at(2)) / 3;
+                    double change = averageVelocity - prevAvergeVelocity;
+                    prevAvergeVelocity = averageVelocity;
+
+                    double output = Kv * velocity + this->Ka * change;
+                    output += sign(output) * Ks;
 
                     //Getting Pid Ouput and changing plant based on that
-                    double output = rpmPid.getPid(averageVelocity, velocity);
                     leftDrive.move_voltage(output);
 
                     //Getting current error and printing it
-                    double error = rpmPid.getError();
-                    printf("(%d, %d)", counter, error);
+                    double error = velocity - averageVelocity;
+                    printf("(%d, %f)\n", counter, error);
+
+                    counter++;
 
                     //Delay so we can stop this task in the main task
                     pros::delay(10);

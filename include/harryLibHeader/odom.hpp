@@ -5,6 +5,8 @@
 namespace Odometery
 {
 
+    extern std::vector<std::vector<double>> prevEncoderValues;
+
     //Getters
     /**
      * @brief Gets the currently tracked encoder value from the inputted port.

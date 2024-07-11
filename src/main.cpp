@@ -1,6 +1,7 @@
 #include "../include/main.h"
 #include "../include/harryLibHeader/robot.hpp"
 #include "../include/harryLibHeader/globals.h"
+#include "../include/harryLibHeader/velocityController.hpp"
 
  //Creating Drivetrain
     subsystems::drivetrain drivetrain = subsystems::drivetrain
@@ -13,7 +14,7 @@
         TRACKING_WHEEL,
         INERTIAL);
     //Creating intake
-    subsystems::intake intake = subsystems::intake(INTAKE);
+    subsystems::intake intake = subsystems::intake(INTAKE_B, INTAKE_T);
     //Creating plunger
     subsystems::plunger plunger = subsystems::plunger(PLUNGER, ARM_PISTON, CLAMP_PISTON);
     //Creating Mogo
@@ -21,33 +22,29 @@
 
 void initialize() 
 {
-	
+	pros::IMU imu = pros::IMU(INERTIAL);
+
+    imu.reset();
 }
-class test
-{
-    double num = 0;
-    public:
-    test(){};
-    void testFunct()
-    {
-        num++;
-    }
-};
 
 
 void autonomous() 
-{
-Pose robotStartingPosition (0, 0, 0);
+{   
+    drivetrain.runOdom({0, 0, 0});
 
-drivetrain.runOdom(robotStartingPosition);
-
-
+    drivetrain.turnToHeading(90, false, false);
+    drivetrain.turnToHeading(90, false, false);
+    drivetrain.turnToHeading(90, false, false);
+    drivetrain.turnToHeading(90, false, false);
 }
 
 void opcontrol() 
 { 
+    
+    
 	while(true)
     {
+
         //Controlling Drivetrain
         drivetrain.driverFunctions();
         //Controlling Intake

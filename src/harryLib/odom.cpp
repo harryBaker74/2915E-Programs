@@ -7,12 +7,12 @@ namespace Odometery
     //Values for the robot model
     const float DRIVE_WHEEL_DIAMETER = 3.25;
     const float TRACKING_WHEEL_DIAMETER = 2.75;
-    const float DRIVE_GEAR_RATIO = 4/5;
+    const float DRIVE_GEAR_RATIO = 0.8;
     const float TRACKING_GEAR_RATIO = 1/1;
 
 
     std::vector <std::vector<double>> currentEncoderValues;
-    std::vector <std::vector<double>> prevEncoderValues;
+    std::vector <std::vector<double>> prevEncoderValues = {{}};
 
     //Getters
 
@@ -49,7 +49,6 @@ namespace Odometery
     void OdometeryCalculations(Pose* robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive, pros::Rotation* trackingWheel, pros::IMU* IMU)
     {
 
-
         //Updating model values
 
         //Getting current encoder values
@@ -64,33 +63,33 @@ namespace Odometery
             rightDrive->get_position(1),
             rightDrive->get_position(2)
             }, 
+            //{
+            //double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
+            //},
             {
-            double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
-            },
-            {
-                IMU->get_rotation()
+                IMU->get_rotation() * M_PI / 180
             }
         };
 
         //Getting the change in encoder values compared to lass time step
         double deltaLeft = (
-            (prevEncoderValues.at(0).at(0) - currentEncoderValues.at(0).at(0)) +    //Delta LEFT_MOTOR_FRONT
-            (prevEncoderValues.at(0).at(1) - currentEncoderValues.at(0).at(1)) +    //Delta LEFT_MOTOR_MID
-            (prevEncoderValues.at(0).at(2) - currentEncoderValues.at(0).at(2))      //Delta LEFT_MOTOR_BACK
+            (currentEncoderValues.at(0).at(0) - prevEncoderValues.at(0).at(0)) +    //Delta LEFT_MOTOR_FRONT
+            (currentEncoderValues.at(0).at(1) - prevEncoderValues.at(0).at(1)) +    //Delta LEFT_MOTOR_MID
+            (currentEncoderValues.at(0).at(2) - prevEncoderValues.at(0).at(2))      //Delta LEFT_MOTOR_BACK
         ) / 3;
         
         double deltaRight = (
-            (prevEncoderValues.at(1).at(0) - currentEncoderValues.at(1).at(0)) +    //Delta RIGHT_MOTOR_FRONT
-            (prevEncoderValues.at(1).at(1) - currentEncoderValues.at(1).at(1)) +    //Delta RIGHT_MOTOR_MID
-            (prevEncoderValues.at(1).at(2) - currentEncoderValues.at(1).at(2))      //Delta RIGHT_MOTOR_BACK
+            (currentEncoderValues.at(1).at(0) - prevEncoderValues.at(1).at(0)) +    //Delta RIGHT_MOTOR_FRONT
+            (currentEncoderValues.at(1).at(1) - prevEncoderValues.at(1).at(1)) +    //Delta RIGHT_MOTOR_MID
+            (currentEncoderValues.at(1).at(2) - prevEncoderValues.at(1).at(2))      //Delta RIGHT_MOTOR_BACK
         ) / 3;
 
-        double deltaHorizontal = (
-            prevEncoderValues.at(2).at(0) - currentEncoderValues.at(2).at(0)        //Delta TRACKING_WHEEL
-        );
+        //double deltaHorizontal = (
+          //  prevEncoderValues.at(2).at(0) - currentEncoderValues.at(2).at(0)       //Delta TRACKING_WHEEL
+        //);
 
         double deltaHeading = (
-            prevEncoderValues.at(3).at(0) - currentEncoderValues.at(3).at(0)        //Delta IMU Z-Axis
+            currentEncoderValues.at(2).at(0) - prevEncoderValues.at(2).at(0)         //Delta IMU Z-Axis
         );
 
         //Setting the previous encoder values to the current one for next time step
@@ -99,32 +98,31 @@ namespace Odometery
         //Converting Delta Encoders into cm moved
         deltaLeft = ((deltaLeft * M_PI / 180) * DRIVE_GEAR_RATIO) * inToCm(DRIVE_WHEEL_DIAMETER) / 2;
         deltaRight = ((deltaRight * M_PI / 180) * DRIVE_GEAR_RATIO) * inToCm(DRIVE_WHEEL_DIAMETER) / 2;
-        deltaHorizontal = ((deltaHorizontal * M_PI / 180) * TRACKING_GEAR_RATIO) * inToCm(TRACKING_WHEEL_DIAMETER) / 2;
-
-
+        //deltaHorizontal = ((deltaHorizontal * M_PI / 180) * TRACKING_GEAR_RATIO) * inToCm(TRACKING_WHEEL_DIAMETER) / 2;
 
         //Odom Calculations
 
-        //Calculating arc length for the vertical tracking wheel arc, and the horizontal tracking wheel arc
-        double verticalArcLength = (deltaLeft + deltaRight)/ 2;
-        double horizontalArcLength = (deltaHorizontal / (deltaHeading + 0.00000001)) + HORIZONTAL_OFFSET; //Preventing divide by zero if deltaHeading is zero
+        //Calculating radius length for the vertical arc and horiontal arc
+        //Preventing divide by zero if deltaHeading is zero
+        deltaHeading = (deltaHeading == 0) ? deltaHeading = 0.00000001 : deltaHeading;
+        double verticalArcRadius = std::max(((deltaLeft / deltaHeading) - VERTICAL_OFFSET), ((deltaRight / deltaHeading) + VERTICAL_OFFSET));
+        //double horizontalArcRadius = (deltaHorizontal / (deltaHeading) + HORIZONTAL_OFFSET; 
+
 
         //Calculating the arcs chord lengths
-        //Can imagine these as being rotated by theta / 2, with the vertical arc's chord becoming the new y axis, and horizontal arc's chord becoming the new x axis.
-        double localY = 2 * sin(deltaHeading / 2) * verticalArcLength;
-        double localX = 2 * sin(deltaHeading / 2) * horizontalArcLength;
-
-
+        //Can imagine these as being rotated by theta / 2, 
+        //with the vertical arc's chord becoming the new y axis, and horizontal arc's chord becoming the new x axis.
+        double localY = 2 * sin(deltaHeading / 2) * verticalArcRadius;
+        //double localX = 2 * sin(deltaHeading / 2) * horizontalArcLength;
 
         //Updating position
 
         //Rotataing the local axis back to global
-        double averageHeading = robotPose->rotation + (deltaHeading / 2); //Amount to rotate by
+        double averageHeading = robotPose->rotation + deltaHeading / 2; //Amount to rotate by
 
-        robotPose->x += localX * cos(averageHeading) - localY * sin(averageHeading);    //Applying rotation matrix
-        robotPose->y += localX * sin(averageHeading) + localY * cos(averageHeading);    //Applying rotation matrix
-        robotPose->rotation = currentEncoderValues.at(3).at(0);                         //Pure rotation amount no bounding, in rad
+        robotPose->x += /*localX * cos(averageHeading) */ localY * sin(averageHeading);   //Applying rotation matrix
+        robotPose->y += /*localX * sin(averageHeading) + */localY * cos(averageHeading);    //Applying rotation matrix
+        robotPose->rotation = currentEncoderValues.at(2).at(0);                         //Pure rotation amount no bounding, in rad
         robotPose->heading = boundAngle(robotPose->heading + deltaHeading, true);       //Heading bounded between -pi and pi, in rad
-
     }
 }

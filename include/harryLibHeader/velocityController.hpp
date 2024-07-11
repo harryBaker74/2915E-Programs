@@ -4,25 +4,19 @@ namespace vController
 {
     class vController
     {
+        double Kv;
+        double Ka;
+        double Ks;
 
         bool runTuner = false;
 
-        //Pid for converting wheel rpm to motor voltage
-        PID::PID rpmPid = PID::PID(
-            0.0,    //Kp
-            0.0,    //Ki
-            0.0,    //Kd
-            0.0,    //Windup Range
-            0.0     //Max Intergal
-        );
-
         public:
 
-        vController();  
+        vController(bool Ks);
 
-        double rpmVelToVoltage(double currentVelocity, double targetVelocity);
+        double rpmVelToVoltage(double a, double b);
 
-        void reset();
+        double rpmVelToVoltage(double currentVelocity, double prevVelocity, double targetVelocity);
 
         void startTuner(double velocity);
 

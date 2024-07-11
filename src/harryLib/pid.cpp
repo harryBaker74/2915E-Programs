@@ -31,7 +31,7 @@ namespace PID {
     {
         //Setting data variables
         this->error = error;
-        this->derivative = this->error - prevError;
+        this->derivative = this->error - this->prevError;
         this->integral += this->error;
 
         //Anti windup
@@ -43,9 +43,10 @@ namespace PID {
                 this->integral = sign(this->integral) * maxIntegral;
 
             //Sign-Flip Reset
-            if(sign(prevError) != sign(error))
+            if(sign(this->prevError) != sign(this->error))
                 this->integral = 0;
         
+        this->prevError = this->error;
         return (Kp * this->error) + (Ki * this->integral) + (Kd * derivative);
 
     }
