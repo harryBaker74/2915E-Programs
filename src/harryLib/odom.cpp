@@ -104,7 +104,7 @@ namespace Odometery
 
         //Calculating radius length for the vertical arc and horiontal arc
         //Preventing divide by zero if deltaHeading is zero
-        deltaHeading = (deltaHeading == 0) ? deltaHeading = 0.00000001 : deltaHeading;
+        deltaHeading += (deltaHeading == 0) * 0.000000001;
         double verticalArcRadius = std::max(((deltaLeft / deltaHeading) - VERTICAL_OFFSET), ((deltaRight / deltaHeading) + VERTICAL_OFFSET));
         //double horizontalArcRadius = (deltaHorizontal / (deltaHeading) + HORIZONTAL_OFFSET; 
 
@@ -120,6 +120,8 @@ namespace Odometery
         //Rotataing the local axis back to global
         double averageHeading = robotPose->rotation + deltaHeading / 2; //Amount to rotate by
 
+
+        //This rotation matrix might still be wrong i will see on friday
         robotPose->x += /*localX * cos(averageHeading) */ localY * sin(averageHeading);   //Applying rotation matrix
         robotPose->y += /*localX * sin(averageHeading) + */localY * cos(averageHeading);    //Applying rotation matrix
         robotPose->rotation = currentEncoderValues.at(2).at(0);                         //Pure rotation amount no bounding, in rad

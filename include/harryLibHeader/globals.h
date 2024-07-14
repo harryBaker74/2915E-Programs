@@ -31,7 +31,7 @@ pros::ADIDigitalOut mogo('g');
 #define CLAMP_PISTON 'A'
 
 //Drivtrain Motor Ports
-#define LEFT_MOTOR_FRONT 10
+#define LEFT_MOTOR_FRONT 7
 #define LEFT_MOTOR_MID -18
 #define LEFT_MOTOR_BACK -19
 

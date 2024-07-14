@@ -10,7 +10,9 @@ namespace vController
         {
             this->Kv = 20;
             this->Ka = 10;
-            this->Ks = Ks ? 1000 : 0;
+            this->Ks = 1000 * Ks;
+            //Reason for toggleable Ks is that ks pretty much makes the drive have zero friction, which means that there is
+            //a lot of oscillation when tuning some controllers like 1d pids, however its still useful for other controllers
         };
 
         double vController::rpmVelToVoltage(double a, double b)
