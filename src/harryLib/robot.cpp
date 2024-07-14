@@ -344,6 +344,31 @@ namespace subsystems
             }
         }
 
+        void drivetrain::moveToPose(Pose targetPose, bool async)
+        {
+            if (async)
+            {
+                pros::Task task {[=, this] {
+                    moveToPose(targetPose, false);
+                    pros::Task::current().remove();
+                }};
+            }
+            else
+            {   
+                //Initializing delta pose, which will contain all the delta values in one pose
+                Pose deltaPose = Pose (0, 0, 0);
+
+                //Initializing carrot point
+                Point carrot = Point (0, 0); 
+                
+                while(true)
+                {
+
+                    pros::delay(10);
+                }
+            }
+        }
+
 
 
 
