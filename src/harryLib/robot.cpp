@@ -4,6 +4,7 @@
 #include "../include/harryLibHeader/pid.hpp"
 #include"../include/harryLibHeader/velocityController.hpp"
 #include "../include/harryLibHeader/util.hpp"
+#include "../include/harryLibHeader/boomerang.hpp"
 
 
 //File for controlling all systems in the robot
@@ -344,7 +345,7 @@ namespace subsystems
             }
         }
 
-        void drivetrain::moveToPose(Pose targetPose, bool async)
+        void drivetrain::moveToPose(Pose targetPose, double dLead, double gLead, bool radians, bool async)
         {
             if (async)
             {
@@ -355,14 +356,88 @@ namespace subsystems
             }
             else
             {   
-                //Initializing delta pose, which will contain all the delta values in one pose
-                Pose deltaPose = Pose (0, 0, 0);
+                //PID's
+                PID::PID angPid = PID::PID(
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                );
 
-                //Initializing carrot point
-                Point carrot = Point (0, 0); 
+                PID::PID linPid = PID::PID(
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                );
+
+                //Switch conditions
+                //The distance at which the robot needs to be from the current target point, in order to move onto the next target point
+                double switchDistance = 5;
+                //Radius of exit semicircle, prob should be automatic
+                double exitRadius = 10;
+
+                //Exit conditions
+                double errorExit = 0;
+                double velExit = 0;
+
+                //Angular Falloff Parameter
+                //In the context of boomerang, this parameter decides when to switch from facing the carrot point to facing the heading
+                //Lower values means that the switch will happen quicker, with 0 being no switch
+                //Eg:   angK = 1, 50, 50 weighted for hypot = 1;
+                //      angK = 2, 50, 50 weighted for hypot = 2;
+                double angK = 1;
+
+                //Converting to radians if needed
+                if(!radians) targetPose.heading *= M_PI / 180;  //Converting to radians if needed
+
+                //Caluclating initial carrot point
+                Point initialCarrot = boomerang::getCarrot(this->pose, targetPose, dLead);
+
+                //Initialixing carrot point
+                Point carrot = initialCarrot;
+
+                //Switch booleans
+                bool followGhost = true;
                 
                 while(true)
-                {
+                {  
+                    //Deciding what carrot point to use
+                    //Inspired by https://github.com/Pixel-Lib/Pixel/blob/main/src/pxl/movements/boomerang.cpp
+                    if(followGhost)
+                    {
+                        carrot = boomerang::getGhost(initialCarrot, carrot, gLead);
+                    }
+                    else
+                    {
+                        carrot = boomerang::getCarrot(this->pose, targetPose, dLead);
+                    }
+
+                    //Calculating offset from carrot point
+                    Point deltaPos(carrot.x - this->pose.x, carrot.y - this->pose.y);
+
+                    double distance = sqrt(pow(deltaPos.x, 2) + pow(deltaPos.y, 2));
+
+                    //Converts delta cartesian coordinates to polar coordinates, than takes theta and adds pi/2 to it to convert it to +y = 0, then bounds the angle to -pi/pi;
+                    double targetHeading = boundAngle(M_PI_2 + atan2(deltaPos.y, deltaPos.x), true);
+                    //Figures out the nearest multiple of the difference between the target heading and current heading, to the current rotation
+                    double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
+                    //Setting the target pose' rotation the same way
+                    targetPose.rotation = pose.rotation + boundAngle(targetPose.heading - pose.heading, true);
+                    
+                    //Figuring out what part of the movement the robot is in
+                    if(boomerang::semiCircleCheck(this->pose, initialCarrot, targetHeading, exitRadius))
+                    {
+                        followGhost = false;
+                    }
+                    
+                    
+
+                    
+
+
 
                     pros::delay(10);
                 }
