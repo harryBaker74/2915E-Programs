@@ -78,7 +78,7 @@ double slew(double targetAmount, double currentAmount, double rateOfChange_ms, d
     double desiredChange = targetAmount - currentAmount;
     double maxChange = rateOfChange_ms * timeStep_ms;
 
-    return fabs(desiredChange) > fabs(maxChange) ? maxChange : desiredChange;
+    return fabs(desiredChange) > fabs(maxChange) ? (sign(desiredChange) * maxChange) + currentAmount: targetAmount;
 }
 
 double pointToPointDistance(Point p1, Point p2)
