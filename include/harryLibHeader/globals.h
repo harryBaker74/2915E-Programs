@@ -10,7 +10,7 @@ pros::ADIDigitalOut mogo('g');
 
 //Tracking wheel offsets(cm)
 #define HORIZONTAL_OFFSET 0
-#define VERTICAL_OFFSET 0
+#define VERTICAL_OFFSET 13
 
 //Controller port
 #define CONTROLLER 1

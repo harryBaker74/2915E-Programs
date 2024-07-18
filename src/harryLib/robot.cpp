@@ -2,7 +2,7 @@
 #include "../include/harryLibHeader/robot.hpp"
 #include "../include/harryLibHeader/odom.hpp"
 #include "../include/harryLibHeader/pid.hpp"
-#include"../include/harryLibHeader/velocityController.hpp"
+#include "../include/harryLibHeader/velocityController.hpp"
 #include "../include/harryLibHeader/util.hpp"
 
 
@@ -175,16 +175,16 @@ namespace subsystems
 
                     //Pid for turning 
                     PID::PID pid(
-                        400.0,    //Kp
-                        0.0,    //Ki
-                        3500.0,    //Kd
-                        0.0,    //Windup Range
-                        0.0     //Max Intergal
+                        650.0,    //Kp
+                        50.0,    //Ki
+                        4600.0,    //Kd
+                        0.06,    //Windup Range
+                        4000.0     //Max Intergal
                     );
 
                     //Exit conditions
-                    double errorExit = 0.05;
-                    double velExit = 0.1;
+                    double errorExit = 0.03;
+                    double velExit = 0.01;
 
 
                 //Everything else
@@ -230,11 +230,11 @@ namespace subsystems
                         //In 2 if statements so that it will only need to do a simple comparison if the error is too big,
                         //rather than 2 comparisons every loop.
                         if(fabs(errorVel) < velExit)
-                           break; //Comment this break out if tuning
+                            break; //Comment this break out if tuning
                     }
 
 
-                    printf("(%d, %f, %f)\n", counter, error, errorVel);
+                    printf("(%d, %f)\n", counter, error);
                     counter++;
                     
                     //Delay for scheduling
@@ -257,7 +257,7 @@ namespace subsystems
             else
             {
                     PID::PID angPid = PID::PID(
-                        0.0,
+                        1200.0,
                         0.0,
                         0.0,
                         0.0,
@@ -265,7 +265,7 @@ namespace subsystems
                     );
 
                     PID::PID linPid = PID::PID(
-                        0.0,
+                        10.0,
                         0.0,
                         0.0,
                         0.0,
@@ -283,7 +283,7 @@ namespace subsystems
                     //      angK = 2, angVel *= 0.5 for hypot = 2;
                     //      angK = 3: angVel *= 0.5 for hypot = 3;
                     //      etc.
-                    double angK = 1;
+                    double angK = 10;
 
                 vController::vController leftVCon(false);
                 vController::vController notLeftVCon(false);
@@ -299,7 +299,8 @@ namespace subsystems
                 double deltaY = point.y - pose.y;
 
                 //Converts delta cartesian coordinates to polar coordinates, than takes theta and adds pi/2 to it to convert it to +y = 0, then bounds the angle;
-                double targetHeading = boundAngle(M_PI_2 + atan2(deltaY, deltaX), true);
+                double targetHeading = atan3(deltaY, deltaX);
+                Controller.print(0, 0, "%.0f, %.0f, %.1f", deltaX, deltaY, targetHeading * 180 / M_PI);
                 double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
 
                 //Calculating distance to point
@@ -311,10 +312,14 @@ namespace subsystems
                 double angMultiplier = fabs(hypot) / (fabs(hypot) + angK);
 
                 //Calculating velocities
-                double angVel = angPid.getPid(pose.rotation, targetRotation);
+                double angVel = angPid.getPid(pose.rotation, targetRotation) * angMultiplier;
                 double linVel = linPid.getPid(hypot);
                 double leftVel = linVel + angVel;
                 double rightVel = linVel - angVel;
+
+                
+
+                //printf("(X:%.3f, Y: %.3f), (A:%.3f, L:%.3f)\n", pose.x, pose.y, angPid.getError(), linPid.getError());
 
                 double currentLeftVel = leftFrontMotor.get_actual_velocity();
                 double currentRightVel = rightFrontMotor.get_actual_velocity();
@@ -336,7 +341,8 @@ namespace subsystems
                 if(avgError < errorExit)
                 {
                     if(avgVelError < velExit)
-                        break; //Comment out for tuning
+                        int i;
+                        //break; //Comment out for tuning
                 }
 
                 pros::delay(10);

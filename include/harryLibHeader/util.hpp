@@ -10,6 +10,8 @@
 
 int sign(double num);
 
+double atan3(double y, double x);
+
 double linearToCubed(double input, double maxInput, double k);
 
 double boundAngle(double angle, bool raidians);

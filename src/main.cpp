@@ -32,10 +32,8 @@ void autonomous()
 {   
     drivetrain.runOdom({0, 0, 0});
 
-    drivetrain.turnToHeading(90, false, false);
-    drivetrain.turnToHeading(90, false, false);
-    drivetrain.turnToHeading(90, false, false);
-    drivetrain.turnToHeading(90, false, false);
+    drivetrain.moveToPoint(Point(80, 80));
+
 }
 
 void opcontrol() 

@@ -115,11 +115,8 @@ namespace Odometery
         double localY = 2 * sin(deltaHeading / 2) * verticalArcRadius;
         //double localX = 2 * sin(deltaHeading / 2) * horizontalArcLength;
 
-        //Updating position
-
         //Rotataing the local axis back to global
         double averageHeading = robotPose->rotation + deltaHeading / 2; //Amount to rotate by
-
 
         //This rotation matrix might still be wrong i will see on friday
         robotPose->x += /*localX * cos(averageHeading) */ localY * sin(averageHeading);   //Applying rotation matrix

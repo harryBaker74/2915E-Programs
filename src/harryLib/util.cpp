@@ -10,6 +10,25 @@ int sign(double num)
         return -1;
 }
 
+double atan3(double y, double x)
+{
+    if (y > 0)//Top 2 qudrants
+    {
+        return atan(x / y);
+    }
+    else if(x > 0 && y < 0)//Lower right quadrant
+    {
+        return atan(x / y) + M_PI;
+    }
+    else if(x < 0 && y < 0)//Lower LEFT!!!!!! quadrant
+    {
+        return atan(x / y) - M_PI;
+    }
+    
+    //Undefined
+    return 0;
+}
+
 double boundAngle(double angle, bool raidians)
 {
     if (raidians)
