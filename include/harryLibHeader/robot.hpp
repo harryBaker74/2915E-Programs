@@ -65,7 +65,7 @@ namespace subsystems
         //////////////////////////////////////////////////////////////////////////////////////////
         //AUTON FUNCTIONS
         /**
-         * @brief Function that returns after a certain distance has been covered
+         * @brief Function that returns after a certain distance has been covered, or once a motion is done
          * @param distance The distance to return at, in Centimeters from target point for 2d movements, and radians for 1d turning
         */
         void waitUntil(double distance);

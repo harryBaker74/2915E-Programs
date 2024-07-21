@@ -143,6 +143,18 @@ namespace subsystems
         //////////////////////////////////////////////////////////////////////////////////////////
         //AUTON FUNCTIONS
 
+        void drivetrain::waitUntil(double distance)
+        {
+            while ((this->distanceTraveled < distance) && (this->inMotion))
+                pros::delay(10);
+        }
+
+        void drivetrain::waitUntilEnd()
+        {
+            while(this->inMotion)
+                pros::delay(10);
+        }
+
         void drivetrain::turnToHeading(double heading, bool radians, bool async)
         {   
             //Prevent this motion from starting if the robot is already in a motion
