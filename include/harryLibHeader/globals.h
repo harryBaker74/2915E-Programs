@@ -24,12 +24,6 @@ pros::ADIDigitalOut mogo('g');
 //Mogo Port
 #define MOGO 'G'
 
-//Arm Piston Port
-#define ARM_PISTON 'A'
-
-//Clamp Piston Port
-#define CLAMP_PISTON 'A'
-
 //Drivtrain Motor Ports
 #define LEFT_MOTOR_FRONT 7
 #define LEFT_MOTOR_MID -18
@@ -43,5 +37,6 @@ pros::ADIDigitalOut mogo('g');
 #define INTAKE_T 12
 #define INTAKE_B 11
 
-//Plunger Port
-#define PLUNGER 1
+//Basket Port
+#define BASKET_L 13
+#define BASKET_R -14

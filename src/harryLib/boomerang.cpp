@@ -41,8 +41,10 @@ namespace boomerang
             return false;
         
         //Caluclate angle from target to robot
-        double angle = boundAngle(atan2(deltaPos.y, deltaPos.x),true);
+        double angle = atan3(deltaPos.y, deltaPos.x);
+        printf("Angle:%f", angle * 180 / M_PI);
+        printf("Shiatss:%f", (targetHeading - angle) * 180 / M_PI);
 
-        return fabs(targetHeading - angle) <= M_PI;
+        return fabs(angle - targetHeading) <= M_PI;
     }
 }

@@ -16,7 +16,7 @@
     //Creating intake
     subsystems::intake intake = subsystems::intake(INTAKE_B, INTAKE_T);
     //Creating plunger
-    subsystems::plunger plunger = subsystems::plunger(PLUNGER, ARM_PISTON, CLAMP_PISTON);
+    subsystems::basket basket = subsystems::basket(BASKET_L, BASKET_R);
     //Creating Mogo
     subsystems::mogo mogo = subsystems::mogo(MOGO);
 
@@ -32,8 +32,11 @@ void autonomous()
 {   
     drivetrain.runOdom({0, 0, 0});
 
-    drivetrain.moveToPoint(Point(80, 80));
-
+    drivetrain.moveToPoint(Point(80, 80), false, false);
+    drivetrain.moveToPoint(Point(90, 220), false, false);
+    drivetrain.moveToPoint(Point(90, 80), true, false);
+    drivetrain.moveToPoint(Point(0, 0), true, false);
+    drivetrain.turnToHeading(0, false, false);
 }
 
 void opcontrol() 
@@ -48,7 +51,7 @@ void opcontrol()
         //Controlling Intake
         intake.driverFunctions();
         //Controlling Plunger
-        plunger.driverFunctions();
+        basket.driverFunctions();
         //Controlling Mogo
         mogo.driverFunctions();
         

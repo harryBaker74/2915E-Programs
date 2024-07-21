@@ -9,7 +9,7 @@ namespace PID {
         this->Ki = Ki;
         this->Kd = Kd;
         this->windupRange = windupRange;
-        this->maxIntegral = maxIntegral;
+        this->maxIntegral = maxIntegral == 0 ? MAXFLOAT : maxIntegral;
     }
 
     //Setters

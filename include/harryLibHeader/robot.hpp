@@ -61,13 +61,22 @@ namespace subsystems
         //////////////////////////////////////////////////////////////////////////////////////////
         //AUTON FUNCTIONS
         /**
+         * @brief Function that returns after a certain distance has been covered
+         * @param distance The distance to return at, in Centimeters
+        */
+        void waitUntil(double distance);
+        /**
+         * @brief Function that returns once a motion is done
+        */
+        void waitUntilEnd();
+        /**
         * @brief Turns the robot on a point to face a direction
         */
         void turnToHeading(double heading, bool radians = false, bool async = true);
         /**
          * @brief Function to move the robot from its current pose to a point. First turns, then drives
          */
-        void moveToPoint(Point point, bool async = true);
+        void moveToPoint(Point point, bool backwards = false, bool async = true);
         /**
          * @brief Function to move the robot from its current pose to the desired pose
          * Uses a Boomerang controller
@@ -97,26 +106,19 @@ namespace subsystems
         void driverFunctions();
     };
 
-    class plunger
+    class basket
     {
-        pros::Motor plungerMotor;
-        pros::adi::Pneumatics armPiston;
-        pros::adi::Pneumatics clampPiston;
-
-        int armPressCount = 0;
-        int clampPressCount = 0;
+        pros::Motor basketLeftMotor;
+        pros::Motor basketRightMotor;
 
         public:
         //Constructor
-        plunger(int plungerMotorPort, char armPistonPort, char clampPistonPort);
+        basket(int basketLeftMotorPort, int basketRightMotorPort);
 
-        //Function to set plunger voltage
+        //Function to set basket voltage
         void setVoltage(double voltage);
 
-        void setArmState(bool state);
-        void setClampState(bool state);
-
-        //Function to run plunger during driver control
+        //Function to run basket during driver control
         void driverFunctions();
     };
 

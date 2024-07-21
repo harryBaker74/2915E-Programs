@@ -177,14 +177,14 @@ namespace subsystems
                     //Pid for turning 
                     PID::PID pid(
                         650.0,    //Kp
-                        50.0,    //Ki
-                        4600.0,    //Kd
+                        120.0,    //Ki
+                        6500.0,    //Kd
                         0.06,    //Windup Range
-                        4000.0     //Max Intergal
+                        0.0     //Max Intergal
                     );
 
                     //Exit conditions
-                    double errorExit = 0.03;
+                    double errorExit = 0.015;
                     double velExit = 0.01;
 
 
@@ -246,7 +246,7 @@ namespace subsystems
             };
         }
 
-        void drivetrain::moveToPoint(Point point, bool async)
+        void drivetrain::moveToPoint(Point point, bool backwards, bool async)
         {
             if(async)
             {
@@ -258,24 +258,24 @@ namespace subsystems
             else
             {
                     PID::PID angPid = PID::PID(
-                        1200.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
+                        2000.0,    //Kp
+                        0.0,    //Ki
+                        6000.0,    //Kd
+                        0.0,    //Windup Range
+                        0.0     //Max Intergal
                     );
 
                     PID::PID linPid = PID::PID(
                         10.0,
                         0.0,
-                        0.0,
+                        125.0,
                         0.0,
                         0.0
                     );
 
                     //Exit conditions
-                    double errorExit = 0;
-                    double velExit = 0;
+                    double errorExit = 1.75;
+                    double velExit = 10;
 
                     //Angular Falloff Parameter
                     //Smaller number means more abrupt falloff, with 0 being no fall off
@@ -286,11 +286,17 @@ namespace subsystems
                     //      etc.
                     double angK = 10;
 
-                vController::vController leftVCon(false);
-                vController::vController notLeftVCon(false);
+                vController::vController leftVCon(true);
+                vController::vController notLeftVCon(true);
 
+
+                //Prev velocities for velocity controllers
                 double prevLeftVel = 0;
                 double prevRightVel = 0;
+
+                int linMultiplier = backwards ? -1 : 1;
+
+                int counter = 0;
 
                 while(true)
                 {
@@ -301,7 +307,9 @@ namespace subsystems
 
                 //Converts delta cartesian coordinates to polar coordinates, than takes theta and adds pi/2 to it to convert it to +y = 0, then bounds the angle;
                 double targetHeading = atan3(deltaY, deltaX);
-                Controller.print(0, 0, "%.0f, %.0f, %.1f", deltaX, deltaY, targetHeading * 180 / M_PI);
+
+                targetHeading = backwards ? boundAngle(targetHeading + M_PI, false) : targetHeading;
+
                 double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
 
                 //Calculating distance to point
@@ -314,13 +322,14 @@ namespace subsystems
 
                 //Calculating velocities
                 double angVel = angPid.getPid(pose.rotation, targetRotation) * angMultiplier;
-                double linVel = linPid.getPid(hypot);
+                double linVel = linPid.getPid(hypot) *  linMultiplier;
                 double leftVel = linVel + angVel;
                 double rightVel = linVel - angVel;
 
                 
 
-                //printf("(X:%.3f, Y: %.3f), (A:%.3f, L:%.3f)\n", pose.x, pose.y, angPid.getError(), linPid.getError());
+                printf("(%d, %f)\n", counter, linPid.getError());
+                counter++;
 
                 double currentLeftVel = leftFrontMotor.get_actual_velocity();
                 double currentRightVel = rightFrontMotor.get_actual_velocity();
@@ -337,17 +346,20 @@ namespace subsystems
                 //Exit Conditions
                 //Only exit when the average error, and average velcoty of the error of the 2 pids is low, which means its stopped
                 //Both these pids are just creating rpms for the wheels, so their magnitude should be really similar, 
-                double avgError = (fabs(linPid.getError()) + fabs(angPid.getError())) / 2;
-                double avgVelError = (fabs(linPid.getDervative()) + fabs(angPid.getDervative())) / 0.01 / 2;
-                if(avgError < errorExit)
-                {
-                    if(avgVelError < velExit)
-                        int i;
+                double error = linPid.getError();
+                double velError = linPid.getDervative() / 0.01;
+                //if(fabs(error) < errorExit)
+                //{
+                    //if(fabs(velError) < velExit)
                         //break; //Comment out for tuning
-                }
+                //}
+
+                if(boomerang::semiCircleCheck(this->pose, point, this->pose.heading , errorExit))
+                    break;
 
                 pros::delay(10);
                 }
+                this->setVoltage(0, 0);
             }
         }
 
@@ -487,38 +499,28 @@ namespace subsystems
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    //Plunger Class
+    //Basket Class
         //Constructor
-        plunger::plunger(int plungerMotorPort, char armpistonPort, char clampPistonPort)
-        :   plungerMotor(pros::Motor (plungerMotorPort, pros::v5::MotorGearset::red, pros::v5::MotorEncoderUnits::degrees)),
-            armPiston(pros::adi::Pneumatics(armpistonPort, false, false)),
-            clampPiston(pros::adi::Pneumatics(clampPistonPort, true, false))
-        {}
+        basket::basket(int basketLeftMotorPort, int basketRightMotorPort)
+        :   basketLeftMotor(pros::Motor (basketLeftMotorPort, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees)),
+            basketRightMotor(pros::Motor (basketRightMotorPort, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees))
+        {
 
-        //Function to set plunger voltage
-        void plunger::setVoltage(double voltage)
-        {
-            plungerMotor.move_voltage(floor(voltage));
-        }
-        void plunger::setArmState(bool state)
-        {
-            armPiston.set_value(state);
-        }
-        void plunger::setClampState(bool state)
-        {
-            clampPiston.set_value(state);
+            basketLeftMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
+            basketRightMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
         }
 
-        //Function to run plunger during driver control
-        void plunger::driverFunctions()
+        //Function to set basket voltage
+        void basket::setVoltage(double voltage)
         {
-            setVoltage((Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2)) * 12000);
+            basketLeftMotor.move_voltage(floor(voltage));
+            basketRightMotor.move_voltage(floor(voltage));
+        }
 
-            armPressCount += Controller.get_digital_new_press(DIGITAL_DOWN);
-            clampPressCount += Controller.get_digital_new_press(DIGITAL_LEFT); //JOUZAA!!!!!!
-            armPressCount % 2 == 0 ? setArmState(false) : setArmState(true);
-            clampPressCount % 2 == 0 ? setClampState(true) : setClampState(false);
-
+        //Function to run basket during driver control
+        void basket::driverFunctions()
+        {
+            setVoltage((Controller.get_digital(DIGITAL_A) - Controller.get_digital(DIGITAL_B)) * 12000);
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
