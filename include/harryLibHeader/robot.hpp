@@ -115,6 +115,11 @@ namespace subsystems
         pros::Motor basketLeftMotor;
         pros::Motor basketRightMotor;
 
+        double targetPosition = 0;
+        double Kp = 0;
+        double Kg = 0;
+        double speed = 1; //In deg per 10ms
+
         public:
         //Constructor
         basket(int basketLeftMotorPort, int basketRightMotorPort);

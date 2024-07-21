@@ -594,9 +594,8 @@ namespace subsystems
         :   basketLeftMotor(pros::Motor (basketLeftMotorPort, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees)),
             basketRightMotor(pros::Motor (basketRightMotorPort, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees))
         {
-
-            basketLeftMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
-            basketRightMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
+            basketLeftMotor.tare_position();
+            basketRightMotor.tare_position();
         }
 
         //Function to set basket voltage
@@ -609,7 +608,15 @@ namespace subsystems
         //Function to run basket during driver control
         void basket::driverFunctions()
         {
-            setVoltage((Controller.get_digital(DIGITAL_A) - Controller.get_digital(DIGITAL_B)) * 12000);
+            //Just a P loop with gravity coefficient to help out
+            //Holds the position better than MOTOR_BRAKE_HOLD
+
+            double currentPosition = (basketLeftMotor.get_position() + basketRightMotor.get_position()) / 2;
+
+            targetPosition += (Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2)) * speed;
+
+            double error = targetPosition - currentPosition;
+            setVoltage((error * Kp) + Kg);
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -630,7 +637,7 @@ namespace subsystems
         //Function to run mogo during driver control
         void mogo::driverFunctions()
         {
-            mogoPressCount += Controller.get_digital_new_press(DIGITAL_L1);
+            mogoPressCount += Controller.get_digital_new_press(DIGITAL_A);
             mogoPressCount % 2 == 0 ? setState(false) : setState(true);
         }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
