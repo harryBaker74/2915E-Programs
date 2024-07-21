@@ -28,8 +28,12 @@ namespace subsystems
         pros::IMU IMU;
 
         Pose pose = Pose(0, 0, 0);
+        Pose prevPose = pose;
 
         bool odomRunning = false;
+
+        bool inMotion = false;
+        double distanceTraveled = 0;
 
 
         public:
@@ -62,7 +66,7 @@ namespace subsystems
         //AUTON FUNCTIONS
         /**
          * @brief Function that returns after a certain distance has been covered
-         * @param distance The distance to return at, in Centimeters
+         * @param distance The distance to return at, in Centimeters from target point for 2d movements, and radians for 1d turning
         */
         void waitUntil(double distance);
         /**
@@ -81,7 +85,7 @@ namespace subsystems
          * @brief Function to move the robot from its current pose to the desired pose
          * Uses a Boomerang controller
          */
-        void moveToPose(Pose pose, double dLead = 0.5, double gLead = 0.5, bool radians = false, bool async = true);
+        void moveToPose(Pose pose, double dLead = 0.5, double gLead = 0.5, bool backwards, bool radians = false, bool async = true);
 
         /**
          * @brief Function to make the robot follow a desired path from the path generator or path scheduler

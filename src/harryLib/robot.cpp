@@ -77,6 +77,10 @@ namespace subsystems
                 
                 while(odomRunning)
                 {
+                //Setting previous pose to current pose
+                this->prevPose = this->pose;
+                
+                //Updating current pose
                 //Doing the Odometery Calculations and setting the class varibles for other functions to use
                 //Passing in addresses to motor + rotation cause i couldn't figure out how to do it differently
                 Odometery::OdometeryCalculations(&pose, &leftDriveMotors, &rightDriveMotors, &trackingWheel, &IMU);
@@ -140,7 +144,12 @@ namespace subsystems
         //AUTON FUNCTIONS
 
         void drivetrain::turnToHeading(double heading, bool radians, bool async)
-        {
+        {   
+            //Prevent this motion from starting if the robot is already in a motion
+            while(inMotion)
+                pros::delay(10);
+            
+            //Run function in a task if it is supposed to be async
             if (async)
             {
                 pros::Task task {[=, this] {
@@ -149,7 +158,10 @@ namespace subsystems
                 }};
             }
             else
-            {      
+            {
+                this->distanceTraveled = 0;
+                this->inMotion = true;
+
                 //TUNING
                     
                     //Guide to tuning
@@ -234,20 +246,30 @@ namespace subsystems
                             break; //Comment this break out if tuning
                     }
 
-
+                    //Debug Printing
+                    /*
                     printf("(%d, %f)\n", counter, error);
                     counter++;
+                    */
+
+                    //Updating distance traveled for async functions
+                    this->distanceTraveled += this->pose.rotation - this->prevPose.rotation;
                     
                     //Delay for scheduling
                     pros::delay(10);
                 }
+                this->inMotion = false;
                 this->setVoltage(0, 0);
-                
             };
         }
 
         void drivetrain::moveToPoint(Point point, bool backwards, bool async)
         {
+            //Prevent this motion from starting if the robot is already in a motion
+            while(inMotion)
+                pros::delay(10);
+
+
             if(async)
             {
                 pros::Task task {[=, this] {
@@ -257,34 +279,36 @@ namespace subsystems
             }
             else
             {
-                    PID::PID angPid = PID::PID(
-                        2000.0,    //Kp
-                        0.0,    //Ki
-                        6000.0,    //Kd
-                        0.0,    //Windup Range
-                        0.0     //Max Intergal
-                    );
+                this->distanceTraveled = 0;
+                this->inMotion = true;
 
-                    PID::PID linPid = PID::PID(
-                        10.0,
-                        0.0,
-                        125.0,
-                        0.0,
-                        0.0
-                    );
+                PID::PID angPid = PID::PID(
+                    2000.0,    //Kp
+                    0.0,    //Ki
+                    6000.0,    //Kd
+                    0.0,    //Windup Range
+                    0.0     //Max Intergal
+                );
+                PID::PID linPid = PID::PID(
+                    10.0,
+                    0.0,
+                    125.0,
+                    0.0,
+                    0.0
+                );
 
-                    //Exit conditions
-                    double errorExit = 1.75;
-                    double velExit = 10;
+                //Exit conditions
+                double errorExit = 1.75;
+                double velExit = 10;
 
-                    //Angular Falloff Parameter
-                    //Smaller number means more abrupt falloff, with 0 being no fall off
-                    //Angular speed will be half when distance is at angK.
-                    //Eg:   angK = 1, angVel *= 0.5 for hypot = 1;
-                    //      angK = 2, angVel *= 0.5 for hypot = 2;
-                    //      angK = 3: angVel *= 0.5 for hypot = 3;
-                    //      etc.
-                    double angK = 10;
+                //Angular Falloff Parameter
+                //Smaller number means more abrupt falloff, with 0 being no fall off
+                //Angular speed will be half when distance is at angK.
+                //Eg:   angK = 1, angVel *= 0.5 for hypot = 1;
+                //      angK = 2, angVel *= 0.5 for hypot = 2;
+                //      angK = 3: angVel *= 0.5 for hypot = 3;
+                //      etc.
+                double angK = 10;
 
                 vController::vController leftVCon(true);
                 vController::vController notLeftVCon(true);
@@ -308,7 +332,7 @@ namespace subsystems
                 //Converts delta cartesian coordinates to polar coordinates, than takes theta and adds pi/2 to it to convert it to +y = 0, then bounds the angle;
                 double targetHeading = atan3(deltaY, deltaX);
 
-                targetHeading = backwards ? boundAngle(targetHeading + M_PI, false) : targetHeading;
+                targetHeading = backwards ? boundAngle(targetHeading + M_PI, true) : targetHeading;
 
                 double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
 
@@ -326,8 +350,7 @@ namespace subsystems
                 double leftVel = linVel + angVel;
                 double rightVel = linVel - angVel;
 
-                
-
+                //Debug prints
                 printf("(%d, %f)\n", counter, linPid.getError());
                 counter++;
 
@@ -343,28 +366,29 @@ namespace subsystems
 
                 this->setVoltage(leftVoltage, rightVoltage);
 
-                //Exit Conditions
-                //Only exit when the average error, and average velcoty of the error of the 2 pids is low, which means its stopped
-                //Both these pids are just creating rpms for the wheels, so their magnitude should be really similar, 
-                double error = linPid.getError();
-                double velError = linPid.getDervative() / 0.01;
-                //if(fabs(error) < errorExit)
-                //{
-                    //if(fabs(velError) < velExit)
-                        //break; //Comment out for tuning
-                //}
-
+                //Exit Conditions, Semi circle exit
+                //Should add velocity exit here in the future
                 if(boomerang::semiCircleCheck(this->pose, point, this->pose.heading , errorExit))
                     break;
 
+                //Updating distance traveled for async functions
+                this->distanceTraveled += sqrt(pow(this->pose.x - this->prevPose.x, 2) + pow(this->pose.y - this->prevPose.y, 2));
+
+                //Delay for other tasks
                 pros::delay(10);
                 }
+                this->inMotion = false;
                 this->setVoltage(0, 0);
             }
         }
 
-        void drivetrain::moveToPose(Pose targetPose, double dLead, double gLead, bool radians, bool async)
+        void drivetrain::moveToPose(Pose targetPose, double dLead, double gLead, bool backwards, bool radians, bool async)
         {
+            //Prevent this motion from starting if the robot is already in a motion
+            while(inMotion)
+                pros::delay(10);
+
+
             if (async)
             {
                 pros::Task task {[=, this] {
@@ -374,6 +398,9 @@ namespace subsystems
             }
             else
             {   
+                this->distanceTraveled = 0;
+                this->inMotion = true;
+
                 //PID's
                 PID::PID angPid = PID::PID(
                     0.0,
@@ -395,18 +422,18 @@ namespace subsystems
                 //The distance at which the robot needs to be from the current target point, in order to move onto the next target point
                 double switchDistance = 5;
                 //Radius of exit semicircle, prob should be automatic
-                double exitRadius = 10;
-
-                //Exit conditions
-                double errorExit = 0;
+                double exitDistance = 10;
                 double velExit = 0;
 
                 //Angular Falloff Parameter
-                //In the context of boomerang, this parameter decides when to switch from facing the carrot point to facing the heading
-                //Lower values means that the switch will happen quicker, with 0 being no switch
-                //Eg:   angK = 1, 50, 50 weighted for hypot = 1;
-                //      angK = 2, 50, 50 weighted for hypot = 2;
                 double angK = 1;
+
+                //Angular switch parameter
+                //This parameter decides when to switch from facing the carrot point to facing the heading
+                //Lower values means that the switch will happen quicker, with 0 being no switch
+                //Eg:   angSwitch = 1, 50, 50 weighted for hypot = 1;
+                //      angSwitch = 2, 50, 50 weighted for hypot = 2;
+                double angSwitch = 1;
 
                 //Converting to radians if needed
                 if(!radians) targetPose.heading *= M_PI / 180;  //Converting to radians if needed
@@ -417,8 +444,20 @@ namespace subsystems
                 //Initialixing carrot point
                 Point carrot = initialCarrot;
 
-                //Switch booleans
+                //Switch boolean
                 bool followGhost = true;
+
+                //Initializing Velocity Controllers
+                vController::vController leftVCon(true);
+                vController::vController notLeftVCon(true);
+
+                //Prev velocities for velocity controllers
+                double prevLeftVel = 0;
+                double prevRightVel = 0;
+
+                //Updating varibales for bakwards movement
+                int linMultiplier = backwards ? -1 : 1;
+                targetPose.heading = backwards ? boundAngle(targetPose.heading + M_PI, true) : targetPose.heading;
                 
                 while(true)
                 {  
@@ -436,29 +475,67 @@ namespace subsystems
                     //Calculating offset from carrot point
                     Point deltaPos(carrot.x - this->pose.x, carrot.y - this->pose.y);
 
+                    //Converts delta cartesian coordinates to polar coordinates, than takes theta and adds pi/2 to it to convert it to +y = 0, then bounds the angle to -pi/pi;
+                    double targetHeading = atan3(deltaPos.y, deltaPos.x);
+                    //Adding 180 deg to target heading if we're driving backwards
+                    targetHeading = backwards ? boundAngle(targetHeading + M_PI, true) : targetHeading;
+                    
+                    //Checking if the robot has reached the ghost point, indicating it to switch target to the end point
+                    if(boomerang::semiCircleCheck(this->pose, initialCarrot, targetHeading, switchDistance))
+                    {
+                        followGhost = false;
+                    }
+
+                    //Caluclating distance to carrot
                     double distance = sqrt(pow(deltaPos.x, 2) + pow(deltaPos.y, 2));
 
-                    //Converts delta cartesian coordinates to polar coordinates, than takes theta and adds pi/2 to it to convert it to +y = 0, then bounds the angle to -pi/pi;
-                    double targetHeading = boundAngle(M_PI_2 + atan2(deltaPos.y, deltaPos.x), true);
                     //Figures out the nearest multiple of the difference between the target heading and current heading, to the current rotation
                     double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
                     //Setting the target pose' rotation the same way
                     targetPose.rotation = pose.rotation + boundAngle(targetPose.heading - pose.heading, true);
                     
-                    //Figuring out what part of the movement the robot is in
-                    if(boomerang::semiCircleCheck(this->pose, initialCarrot, targetHeading, exitRadius))
-                    {
-                        followGhost = false;
-                    }
+                    //Setting the target rotation to a weighted average between the rotation to the carrot, and the end target rotation
+                    //Based off of angSwitch;
+                    targetRotation = getWeightedAverage(targetRotation, targetPose.rotation, fabs(distance) / (fabs(distance) + angSwitch));
+
+                    //Calculating angMultiplier
+                    //Lowers the angular velocity the closer you get to the end point, preventing spinning in circles
+                    double angMultiplier = fabs(distance) / (fabs(distance) + angK);
+
+                    //Calculate velocities
+                    double angVel = angPid.getPid(this->pose.rotation, targetRotation) * angMultiplier;
+                    double linVel = linPid.getPid(distance) * linMultiplier;
+                    double leftVel = linVel + angVel;
+                    double rightVel = linVel - angVel;
+
+                    //Getting current velocities
+                    double currentLeftVel = leftFrontMotor.get_actual_velocity();
+                    double currentRightVel = rightFrontMotor.get_actual_velocity();
+
+                    //Converting Velocities to voltage
+                    double leftVoltage = leftVCon.rpmVelToVoltage(currentLeftVel, prevLeftVel, leftVel);
+                    double rightVoltage = notLeftVCon.rpmVelToVoltage(currentRightVel, prevRightVel, rightVel);
+                    //Updating prev Velocities
+                    prevLeftVel = leftVel;
+                    prevRightVel = rightVel;
+
+                    //Setting the motors voltage
+                    this->setVoltage(leftVoltage, rightVoltage);
+
+                    //Exit Conditions, Semi circle exit
+                    //Should add velocity exit here in the future
+                    if(boomerang::semiCircleCheck(this->pose, Point(targetPose.x, targetPose.y), targetPose.heading, exitDistance))
+                        break; //Comment out for tuning maybe
+
+
+                    //Updating distance traveled for async functions
+                    this->distanceTraveled += sqrt(pow(this->pose.x - this->prevPose.x, 2) + pow(this->pose.y - this->prevPose.y, 2));
                     
-                    
-
-                    
-
-
-
+                    //Delay for other tasks
                     pros::delay(10);
                 }
+                this->inMotion = false;
+                this->setVoltage(0, 0);
             }
         }
 

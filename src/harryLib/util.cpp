@@ -91,6 +91,11 @@ double linearToCubed(double input, double maxInput, double k)
     return k * (pow(input, 3) / pow(maxInput, 2));
 }
 
+double getWeightedAverage(double numA, double numB, double decimalWeight)
+{
+    return (numA * decimalWeight) + (numB * (1 - decimalWeight));
+}
+
 //Point struct
 Point::Point(double x, double y)
 {

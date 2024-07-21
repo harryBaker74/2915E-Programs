@@ -22,6 +22,15 @@ double cmToIn(double centimeter);
 
 double slew(double targetAmount, double currentAmount, double rateOfChange_ms, double timeStep_ms);
 
+/**
+ * @brief Returns the weighted average between 2 numbers
+ * 
+ * @param numA The first number, a weight of 1 would be fully favouring this number
+ * @param numB The second number, a weight of 0 would be fully favouring this number
+ * @param decimalWeight A number between {1, 0} that decides which number to favour more
+ */
+double getWeightedAverage(double numA, double numB, double decimalWeight);
+
 //Point Struct
 struct Point
 {
