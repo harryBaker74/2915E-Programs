@@ -43,7 +43,7 @@ namespace subsystems
 
         /**
          * @brief Function to start running odomentery calculations. 
-         * Does not need to be called as a task, it alrteady has lambda task in it.
+         * Does not need to be called as a task, it already has lambda task in it.
          * 
          * @param startPose The pose the odometery calculations will start from;
          */
