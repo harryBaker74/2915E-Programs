@@ -518,7 +518,7 @@ namespace subsystems
 
                     //Calculate velocities
                     double angVel = angPid.getPid(this->pose.rotation, targetRotation) * angMultiplier;
-                    double linVel = linPid.getPid(distance) * linMultiplier * cos(targetRotation - this->pose.rotation);
+                    double linVel = linPid.getPid(distance) * linMultiplier * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90));
                     double leftVel = linVel + angVel;
                     double rightVel = linVel - angVel;
                     //Getting current velocities
