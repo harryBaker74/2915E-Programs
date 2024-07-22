@@ -85,7 +85,7 @@ namespace subsystems
          * @brief Function to move the robot from its current pose to the desired pose
          * Uses a Boomerang controller
          */
-        void moveToPose(Pose pose, double dLead = 0.5, double gLead = 0.5, bool backwards, bool radians = false, bool async = true);
+        void moveToPose(Pose pose, double dLead, double gLead, bool backwards, bool radians = false, bool async = true);
 
         /**
          * @brief Function to make the robot follow a desired path from the path generator or path scheduler
@@ -115,10 +115,11 @@ namespace subsystems
         pros::Motor basketLeftMotor;
         pros::Motor basketRightMotor;
 
-        double targetPosition = 0;
-        double Kp = 0;
-        double Kg = 0;
-        double speed = 1; //In deg per 10ms
+        double currentPosition = 0;
+        double prevPosition = 0;
+        double Kg = 500;
+        double Kd = 200;
+        double speed = 12000; //In deg per 10ms
 
         public:
         //Constructor

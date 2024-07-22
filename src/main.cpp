@@ -32,10 +32,11 @@ void autonomous()
 {   
     drivetrain.runOdom({0, 0, 0});
 
-    drivetrain.moveToPoint(Point(80, 80), false, false);
-    drivetrain.moveToPoint(Point(90, 220), false, false);
-    drivetrain.moveToPoint(Point(90, 80), true, false);
-    drivetrain.moveToPoint(Point(0, 0), true, false);
+    drivetrain.moveToPose(Pose(60, 60, 150), 0.5, 0, false, false, false);
+    drivetrain.moveToPose(Pose(0, 0, -90), 0.8, 0, false, false, false);
+    drivetrain.turnToHeading(0, false, false);
+    drivetrain.moveToPose(Pose(60, 60, 150), 0.5, 0, false, false, false);
+    drivetrain.moveToPose(Pose(0, 0, -90), 0.8, 0, false, false, false);
     drivetrain.turnToHeading(0, false, false);
 }
 

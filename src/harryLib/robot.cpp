@@ -132,8 +132,8 @@ namespace subsystems
             int leftJoystick = Controller.get_analog(ANALOG_LEFT_Y);
             int rightJoystick = Controller.get_analog(ANALOG_RIGHT_Y);
 
-            int leftOutput = linearToCubed(leftJoystick, 127, 1);
-            int rightOutput = linearToCubed(rightJoystick, 127, 1);
+            int leftOutput = lineartoSquared(leftJoystick, 127, 1);
+            int rightOutput = lineartoSquared(rightJoystick, 127, 1);
 
             this->setVoltage(leftOutput * 12000/127, rightOutput * 12000/127);
         }
@@ -404,7 +404,7 @@ namespace subsystems
             if (async)
             {
                 pros::Task task {[=, this] {
-                    moveToPose(targetPose, false);
+                    moveToPose(targetPose, dLead, gLead, backwards, radians, false);
                     pros::Task::current().remove();
                 }};
             }
@@ -415,37 +415,43 @@ namespace subsystems
 
                 //PID's
                 PID::PID angPid = PID::PID(
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0
+                    320.0,    //Kp
+                    0.0,    //Ki
+                    500.0,    //Kd
+                    0.0,    //Windup Range
+                    0.0     //Max Intergal
                 );
-
                 PID::PID linPid = PID::PID(
+                    20.0,
                     0.0,
-                    0.0,
-                    0.0,
+                    150.0,
                     0.0,
                     0.0
                 );
 
                 //Switch conditions
                 //The distance at which the robot needs to be from the current target point, in order to move onto the next target point
-                double switchDistance = 5;
+                double switchDistance = 10;
                 //Radius of exit semicircle, prob should be automatic
                 double exitDistance = 10;
                 double velExit = 0;
 
                 //Angular Falloff Parameter
-                double angK = 1;
+                double angK = 2;
 
                 //Angular switch parameter
                 //This parameter decides when to switch from facing the carrot point to facing the heading
                 //Lower values means that the switch will happen quicker, with 0 being no switch
                 //Eg:   angSwitch = 1, 50, 50 weighted for hypot = 1;
                 //      angSwitch = 2, 50, 50 weighted for hypot = 2;
-                double angSwitch = 1;
+                double angSwitch = 8;
+
+
+
+                //Updating varibales for bakwards movement
+                int linMultiplier = backwards ? -1 : 1;
+
+                targetPose.heading = backwards ? boundAngle(targetPose.heading + M_PI, true) : targetPose.heading;
 
                 //Converting to radians if needed
                 if(!radians) targetPose.heading *= M_PI / 180;  //Converting to radians if needed
@@ -466,10 +472,6 @@ namespace subsystems
                 //Prev velocities for velocity controllers
                 double prevLeftVel = 0;
                 double prevRightVel = 0;
-
-                //Updating varibales for bakwards movement
-                int linMultiplier = backwards ? -1 : 1;
-                targetPose.heading = backwards ? boundAngle(targetPose.heading + M_PI, true) : targetPose.heading;
                 
                 while(true)
                 {  
@@ -516,10 +518,9 @@ namespace subsystems
 
                     //Calculate velocities
                     double angVel = angPid.getPid(this->pose.rotation, targetRotation) * angMultiplier;
-                    double linVel = linPid.getPid(distance) * linMultiplier;
+                    double linVel = linPid.getPid(distance) * linMultiplier * cos(targetRotation - this->pose.rotation);
                     double leftVel = linVel + angVel;
                     double rightVel = linVel - angVel;
-
                     //Getting current velocities
                     double currentLeftVel = leftFrontMotor.get_actual_velocity();
                     double currentRightVel = rightFrontMotor.get_actual_velocity();
@@ -594,8 +595,8 @@ namespace subsystems
         :   basketLeftMotor(pros::Motor (basketLeftMotorPort, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees)),
             basketRightMotor(pros::Motor (basketRightMotorPort, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees))
         {
-            basketLeftMotor.tare_position();
-            basketRightMotor.tare_position();
+            basketLeftMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
+            basketRightMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
         }
 
         //Function to set basket voltage
@@ -608,15 +609,13 @@ namespace subsystems
         //Function to run basket during driver control
         void basket::driverFunctions()
         {
-            //Just a P loop with gravity coefficient to help out
-            //Holds the position better than MOTOR_BRAKE_HOLD
+            currentPosition = basketLeftMotor.get_position();
 
-            double currentPosition = (basketLeftMotor.get_position() + basketRightMotor.get_position()) / 2;
+            double slowdown = (prevPosition - currentPosition) * Kd;
 
-            targetPosition += (Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2)) * speed;
+            this->setVoltage(((Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2)) * speed ) + Kg + slowdown);
 
-            double error = targetPosition - currentPosition;
-            setVoltage((error * Kp) + Kg);
+            prevPosition = currentPosition;
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

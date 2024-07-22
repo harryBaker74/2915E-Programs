@@ -14,6 +14,8 @@ double atan3(double y, double x);
 
 double linearToCubed(double input, double maxInput, double k);
 
+double lineartoSquared(double input, double maxInput, double k);
+
 double boundAngle(double angle, bool raidians);
 
 double inToCm(double inch);
