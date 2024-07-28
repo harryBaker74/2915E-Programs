@@ -27,80 +27,9 @@ void initialize()
     imu.reset();
 }
 
-enum side
-{
-    BLUE = false,
-    RED = true
-};
-
-bool autonSide = RED;
-
 void autonomous() 
 {   
-    if(!autonSide)
-    {
-    drivetrain.runOdom({0, 0, 0});
-
-    drivetrain.drive(-40, false);
-    drivetrain.turnToHeading(45, 1000, false, false);
-    drivetrain.drive(-50, false);
-
-    mogo.setState(true);
-    intake.setVoltage(8000);
-
-    pros::delay(1000);
-
-    drivetrain.turnToHeading(90, 1000, false, false);
-
-    drivetrain.drive(85, false);
-    pros::delay(2000);
-    intake.setVoltage(-8000);
-
-    drivetrain.turnToHeading(90, 1000, false, false);
-
-    mogo.setState(false);
-
-    drivetrain.drive(-80, false);
-
-    drivetrain.turnToHeading(180, 1000, false, false);
-
-    intake.setVoltage(0);
-
-    drivetrain.drive(40, false);
-
-    return;
-    }
-    else
-    {
-    drivetrain.runOdom({0, 0, 0});
-
-    drivetrain.drive(-40, false);
-    drivetrain.turnToHeading(-45, 1000, false, false);
-    drivetrain.drive(-50, false);
-
-    mogo.setState(true);
-    intake.setVoltage(8000);
-
-    pros::delay(1000);
-
-    drivetrain.turnToHeading(-90, 1000, false, false);
-
-    drivetrain.drive(85, false);
-    pros::delay(2000);
-    intake.setVoltage(-8000);
-
-    drivetrain.turnToHeading(-90, 1000, false, false);
-
-    mogo.setState(false);
-
-    drivetrain.drive(-80, false);
-
-    drivetrain.turnToHeading(-180, 1000, false, false);
-
-    intake.setVoltage(0);
-
-    drivetrain.drive(40, false);
-    }
+    
 }
 
 void opcontrol() 
