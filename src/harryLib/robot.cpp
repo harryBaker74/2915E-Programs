@@ -155,7 +155,7 @@ namespace subsystems
                 pros::delay(10);
         }
 
-        void drivetrain::turnToHeading(double heading, bool radians, bool async)
+        void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, bool async)
         {   
             //Prevent this motion from starting if the robot is already in a motion
             while(inMotion)
@@ -171,6 +171,7 @@ namespace subsystems
             }
             else
             {
+                int endTime = pros::millis() + timeout_ms;
                 this->distanceTraveled = 0;
                 this->inMotion = true;
 
@@ -200,16 +201,16 @@ namespace subsystems
 
                     //Pid for turning 
                     PID::PID pid(
-                        650.0,    //Kp
+                        600.0,    //Kp
                         120.0,    //Ki
                         6500.0,    //Kd
-                        0.06,    //Windup Range
+                        0.07,    //Windup Range
                         0.0     //Max Intergal
                     );
 
                     //Exit conditions
                     double errorExit = 0.015;
-                    double velExit = 0.01;
+                    double velExit = 0.008;
 
 
                 //Everything else
@@ -228,7 +229,7 @@ namespace subsystems
                 //In a roundabout way because we dont want to do turns bigger than 180 deg/1 pi, and its easier to track because the values cant overflow due to using rotation
                 double targetRotation = pose.rotation + (boundAngle(angle - pose.heading, true));
 
-                while(true)
+                while(pros::millis() < endTime)
                 {
                     //Pid Velocity Calculations
                     double velocity = pid.getPid(pose.rotation, targetRotation);
@@ -275,6 +276,13 @@ namespace subsystems
             };
         }
 
+        void drivetrain::drive(double distance, bool async)
+        {
+            double startHeading = pose.heading;
+
+            this->moveToPoint(Point(pose.x + (distance * sin(pose.heading)), pose.y + (distance * cos(pose.heading))), distance < 0, async);
+        }
+
         void drivetrain::moveToPoint(Point point, bool backwards, bool async)
         {
             //Prevent this motion from starting if the robot is already in a motion
@@ -295,9 +303,9 @@ namespace subsystems
                 this->inMotion = true;
 
                 PID::PID angPid = PID::PID(
-                    2000.0,    //Kp
+                    1000.0,    //Kp
                     0.0,    //Ki
-                    6000.0,    //Kd
+                    2000.0,    //Kd
                     0.0,    //Windup Range
                     0.0     //Max Intergal
                 );
@@ -310,7 +318,7 @@ namespace subsystems
                 );
 
                 //Exit conditions
-                double errorExit = 1.75;
+                double errorExit = 2.5;
                 double velExit = 10;
 
                 //Angular Falloff Parameter
@@ -358,7 +366,7 @@ namespace subsystems
 
                 //Calculating velocities
                 double angVel = angPid.getPid(pose.rotation, targetRotation) * angMultiplier;
-                double linVel = linPid.getPid(hypot) *  linMultiplier;
+                double linVel = std::fmin(linPid.getPid(hypot), 600 * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90)) - angVel) * linMultiplier;
                 double leftVel = linVel + angVel;
                 double rightVel = linVel - angVel;
 
@@ -415,14 +423,14 @@ namespace subsystems
 
                 //PID's
                 PID::PID angPid = PID::PID(
-                    320.0,    //Kp
+                    700.0,    //Kp
                     0.0,    //Ki
-                    500.0,    //Kd
+                    1000.0,    //Kd
                     0.0,    //Windup Range
                     0.0     //Max Intergal
                 );
                 PID::PID linPid = PID::PID(
-                    20.0,
+                    15.0,
                     0.0,
                     150.0,
                     0.0,
@@ -433,11 +441,11 @@ namespace subsystems
                 //The distance at which the robot needs to be from the current target point, in order to move onto the next target point
                 double switchDistance = 10;
                 //Radius of exit semicircle, prob should be automatic
-                double exitDistance = 10;
+                double exitDistance = 3.5;
                 double velExit = 0;
 
                 //Angular Falloff Parameter
-                double angK = 2;
+                double angK = 13;
 
                 //Angular switch parameter
                 //This parameter decides when to switch from facing the carrot point to facing the heading
@@ -446,15 +454,13 @@ namespace subsystems
                 //      angSwitch = 2, 50, 50 weighted for hypot = 2;
                 double angSwitch = 8;
 
-
+                //Converting to radians if needed
+                if(!radians) targetPose.heading *= M_PI / 180;  //Converting to radians if needed
 
                 //Updating varibales for bakwards movement
                 int linMultiplier = backwards ? -1 : 1;
 
                 targetPose.heading = backwards ? boundAngle(targetPose.heading + M_PI, true) : targetPose.heading;
-
-                //Converting to radians if needed
-                if(!radians) targetPose.heading *= M_PI / 180;  //Converting to radians if needed
 
                 //Caluclating initial carrot point
                 Point initialCarrot = boomerang::getCarrot(this->pose, targetPose, dLead);
@@ -477,14 +483,7 @@ namespace subsystems
                 {  
                     //Deciding what carrot point to use
                     //Inspired by https://github.com/Pixel-Lib/Pixel/blob/main/src/pxl/movements/boomerang.cpp
-                    if(followGhost)
-                    {
-                        carrot = boomerang::getGhost(initialCarrot, carrot, gLead);
-                    }
-                    else
-                    {
-                        carrot = boomerang::getCarrot(this->pose, targetPose, dLead);
-                    }
+                    carrot = boomerang::getCarrot(this->pose, targetPose, dLead);
 
                     //Calculating offset from carrot point
                     Point deltaPos(carrot.x - this->pose.x, carrot.y - this->pose.y);
@@ -493,12 +492,6 @@ namespace subsystems
                     double targetHeading = atan3(deltaPos.y, deltaPos.x);
                     //Adding 180 deg to target heading if we're driving backwards
                     targetHeading = backwards ? boundAngle(targetHeading + M_PI, true) : targetHeading;
-                    
-                    //Checking if the robot has reached the ghost point, indicating it to switch target to the end point
-                    if(boomerang::semiCircleCheck(this->pose, initialCarrot, targetHeading, switchDistance))
-                    {
-                        followGhost = false;
-                    }
 
                     //Caluclating distance to carrot
                     double distance = sqrt(pow(deltaPos.x, 2) + pow(deltaPos.y, 2));
@@ -518,7 +511,7 @@ namespace subsystems
 
                     //Calculate velocities
                     double angVel = angPid.getPid(this->pose.rotation, targetRotation) * angMultiplier;
-                    double linVel = linPid.getPid(distance) * linMultiplier * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90));
+                    double linVel = std::fmin(linPid.getPid(distance) * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90) * angMultiplier), 600 - angVel) * linMultiplier;
                     double leftVel = linVel + angVel;
                     double rightVel = linVel - angVel;
                     //Getting current velocities
@@ -539,6 +532,8 @@ namespace subsystems
                     //Should add velocity exit here in the future
                     if(boomerang::semiCircleCheck(this->pose, Point(targetPose.x, targetPose.y), targetPose.heading, exitDistance))
                         break; //Comment out for tuning maybe
+
+                        
 
 
                     //Updating distance traveled for async functions
