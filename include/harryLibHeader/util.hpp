@@ -24,6 +24,8 @@ double cmToIn(double centimeter);
 
 double slew(double targetAmount, double currentAmount, double rateOfChange_ms, double timeStep_ms);
 
+double pointToPointDistance(Point p1, Point p2);
+
 /**
  * @brief Returns the weighted average between 2 numbers
  * 

@@ -5,10 +5,7 @@
 namespace Odometery
 {
     //Values for the robot model
-    const float DRIVE_WHEEL_DIAMETER = 3.25;
-    const float TRACKING_WHEEL_DIAMETER = 2.75;
-    const float DRIVE_GEAR_RATIO = 0.8;
-    const float TRACKING_GEAR_RATIO = 1/1;
+    
 
 
     std::vector <std::vector<double>> currentEncoderValues;

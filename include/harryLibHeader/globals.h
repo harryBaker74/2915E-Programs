@@ -8,6 +8,12 @@ pros::ADIDigitalOut mogo('g');
 */
 #pragma once
 
+//Wheel Size
+#define DRIVE_WHEEL_DIAMETER 2.75
+#define TRACKING_WHEEL_DIAMETER 2.75
+#define DRIVE_GEAR_RATIO 0.8
+#define TRACKING_GEAR_RATIO 1
+
 //Tracking wheel offsets(cm)
 #define HORIZONTAL_OFFSET 0
 #define VERTICAL_OFFSET 13

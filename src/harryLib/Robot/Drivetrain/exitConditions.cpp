@@ -19,4 +19,11 @@ namespace exitConditions
 
         return fabs(angle - targetHeading) <= M_PI;
     }
+
+    bool rangeExit(double input, double exitRange)
+    {
+        if(fabs(input) < exitRange)
+            return true;
+        return false;
+    }
 }

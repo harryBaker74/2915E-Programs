@@ -33,6 +33,9 @@ namespace subsystems
         bool inMotion = false;
         double distanceTraveled = 0;
 
+        //Max voltage rate of change per ms, used for a few algorithms
+        const double voltageSlew = 40;
+
 
         public:
         //constructor
