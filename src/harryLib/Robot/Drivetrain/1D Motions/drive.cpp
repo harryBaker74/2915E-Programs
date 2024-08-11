@@ -8,7 +8,7 @@
 
 namespace subsystems
 {
-    //Should be changed to a real 1 dimensional controller
+    //A REAL 1D CONTROLLER!!!??!
     void drivetrain::drive(double distance, bool async)
     {
         //Prevent multiple motions from running at once
@@ -41,7 +41,6 @@ namespace subsystems
             double velExit = 0;
 
             //Static variables for derivatives
-            double prevOutput = 0;
             Pose prevPose = this->pose;
 
             //Calculating Target Encoder amounts
@@ -57,11 +56,8 @@ namespace subsystems
                 double output = pid.getPid(
                 (Odometery::getEncoder(LEFT_MOTOR_FRONT) + Odometery::getEncoder(RIGHT_MOTOR_FRONT) - targetEncoderValues.first - targetEncoderValues.second) / 2);
 
-                //Slewing output to prevent wheel slipage
-                output = slew(output, prevOutput, this->voltageSlew, 10);
-                prevOutput = output;
-
-                this->setVoltage(output, output);
+                //Outputting voltage into motors and slewing
+                this->setVoltage(output, output, true, 10);
 
                 //Updating async variables
                 this->distanceTraveled += pointToPointDistance(Point(pose.x, pose.y), Point(prevPose.x, prevPose.y));
@@ -77,7 +73,6 @@ namespace subsystems
                 pros::delay(10);
             }
             this->inMotion = false;
-            this->setVoltage(0, 0);
         }
     };
 }

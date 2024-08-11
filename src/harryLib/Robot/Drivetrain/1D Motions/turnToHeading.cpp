@@ -1,6 +1,7 @@
 #include "harryLibHeader/robot.hpp"
 #include "harryLibHeader/pid.hpp"
 #include "harryLibHeader/velocityController.hpp"
+#include "harryLibHeader/exitConditions.hpp"
 namespace subsystems
 {
 
@@ -63,10 +64,6 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
 
             
         //Everything else
-
-        //Velocity controller instance
-        vController::vController vCon(false);
-
         double angle = heading;
         double prevVel = 0;
         int counter = 0;
@@ -80,18 +77,11 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
 
         while(pros::millis() < endTime)
         {
-            //Pid Velocity Calculations
-            double velocity = pid.getPid(pose.rotation, targetRotation);
-
-            //Getting current motor velocity
-            std::vector <double> leftVels = leftDriveMotors.get_actual_velocity_all();
-            double averageVel = (leftVels.at(0) + leftVels.at(1) + leftVels.at(2)) / 3;
+            //Pid Voltage Calculations
+            double output = pid.getPid(pose.rotation, targetRotation);
             
-            //Velocity controller converting desired motor velocity into voltage
-            double voltage = vCon.rpmVelToVoltage(averageVel, prevVel, velocity);  
-            
-            //Setting drivetrain voltage based on Pid Output, Slew, and Velocity controller output
-            this->setVoltage(voltage, -voltage);
+            //Setting drivetrain voltage based on Pid Output and Slewing
+            this->setVoltage(output, -output, true, 10);
 
             //Exit Conditions
             //Error, and Velocity based(only exit when both are low) so we dont need to worry about waiting with low error for a certain amount of time
@@ -100,19 +90,8 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             double errorVel = pid.getDervative() / 0.01; //Derivative is already just the rate of change
 
             //Checking if all these values are below a certain threshold
-            if (fabs(error) < errorExit)
-            {   
-                //In 2 if statements so that it will only need to do a simple comparison if the error is too big,
-                //rather than 2 comparisons every loop.
-                if(fabs(errorVel) < velExit)
-                    break; //Comment this break out if tuning
-            }
-
-            //Debug Printing
-            /*
-            printf("(%d, %f)\n", counter, error);
-            counter++;
-            */
+            if (exitConditions::rangeExit(error, errorExit) && exitConditions::rangeExit(errorVel, velExit))
+                break;
 
             //Updating distance traveled for async functions
             this->distanceTraveled += this->pose.rotation - this->prevPose.rotation;
@@ -121,7 +100,6 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             pros::delay(10);
         }
         this->inMotion = false;
-        this->setVoltage(0, 0);
     };
 }
 

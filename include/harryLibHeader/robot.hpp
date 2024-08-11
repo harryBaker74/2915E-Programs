@@ -36,6 +36,9 @@ namespace subsystems
         //Max voltage rate of change per ms, used for a few algorithms
         const double voltageSlew = 40;
 
+        double prevLeftVoltage = 0;
+        double prevRightVoltage = 0;
+
 
         public:
         //constructor
@@ -56,8 +59,10 @@ namespace subsystems
          * 
          * @param left Voltage to left side of the drive(-12000 to 12000)
          * @param right Voltage to right side of the drive(-12000 to 12000)
+         * @param slew Whether or not to limit the rate of change of the voltage, aimed at preventing wheel slippage
+         * @param timestep The timestep between this call, and the previous call. Only matters if using slew
          */
-        void setVoltage(double left, double right);
+        void setVoltage(double left, double right, bool doSlew = false, double timestep = 10);
 
         void runOdom(Pose startPose);
 

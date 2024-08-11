@@ -6,66 +6,62 @@
 namespace subsystems
 {
     void drivetrain::moveToPoint(Point point, bool backwards, bool async)
+    {
+        //Prevent this motion from starting if the robot is already in a motion
+        while(inMotion)
+            pros::delay(10);
+
+
+        if(async)
         {
-            //Prevent this motion from starting if the robot is already in a motion
-            while(inMotion)
-                pros::delay(10);
+            pros::Task task {[=, this] {
+                moveToPoint(point, false);
+                pros::Task::current().remove();
+            }};
+        }
+        else
+        {
+            this->distanceTraveled = 0;
+            this->inMotion = true;
 
+            PID::PID angPid = PID::PID(
+                1000.0,    //Kp
+                0.0,    //Ki
+                2000.0,    //Kd
+                0.0,    //Windup Range
+                0.0     //Max Intergal
+            );
+            PID::PID linPid = PID::PID(
+                10.0,
+                0.0,
+                125.0,
+                0.0,
+                0.0
+            );
 
-            if(async)
+            //Exit conditions
+            double errorExit = 2.5;
+            double velExit = 10;
+
+            //Angular Falloff Parameter
+            //Smaller number means more abrupt falloff, with 0 being no fall off
+            //Angular speed will be half when distance is at angK.
+            //Eg:   angK = 1, angVel *= 0.5 for hypot = 1;
+            //      angK = 2, angVel *= 0.5 for hypot = 2;
+            //      angK = 3: angVel *= 0.5 for hypot = 3;
+            //      etc.
+            double angK = 10;
+
+            //Prev velocities for velocity controllers
+            double prevLeftVel = 0;
+            double prevRightVel = 0;
+
+            int linMultiplier = backwards ? -1 : 1;
+
+            int counter = 0;
+
+            while(true)
             {
-                pros::Task task {[=, this] {
-                    moveToPoint(point, false);
-                    pros::Task::current().remove();
-                }};
-            }
-            else
-            {
-                this->distanceTraveled = 0;
-                this->inMotion = true;
-
-                PID::PID angPid = PID::PID(
-                    1000.0,    //Kp
-                    0.0,    //Ki
-                    2000.0,    //Kd
-                    0.0,    //Windup Range
-                    0.0     //Max Intergal
-                );
-                PID::PID linPid = PID::PID(
-                    10.0,
-                    0.0,
-                    125.0,
-                    0.0,
-                    0.0
-                );
-
-                //Exit conditions
-                double errorExit = 2.5;
-                double velExit = 10;
-
-                //Angular Falloff Parameter
-                //Smaller number means more abrupt falloff, with 0 being no fall off
-                //Angular speed will be half when distance is at angK.
-                //Eg:   angK = 1, angVel *= 0.5 for hypot = 1;
-                //      angK = 2, angVel *= 0.5 for hypot = 2;
-                //      angK = 3: angVel *= 0.5 for hypot = 3;
-                //      etc.
-                double angK = 10;
-
-                vController::vController leftVCon(true);
-                vController::vController notLeftVCon(true);
-
-
-                //Prev velocities for velocity controllers
-                double prevLeftVel = 0;
-                double prevRightVel = 0;
-
-                int linMultiplier = backwards ? -1 : 1;
-
-                int counter = 0;
-
-                while(true)
-                {
 
                 //Calculating delta cartesian offesets
                 double deltaX = point.x - pose.x;
@@ -86,27 +82,18 @@ namespace subsystems
                 //Stops spinning in circles, idea from Genesis/Daniel
                 double angMultiplier = fabs(hypot) / (fabs(hypot) + angK);
 
-                //Calculating velocities
-                double angVel = angPid.getPid(pose.rotation, targetRotation) * angMultiplier;
-                double linVel = std::fmin(linPid.getPid(hypot), 600 * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90)) - angVel) * linMultiplier;
-                double leftVel = linVel + angVel;
-                double rightVel = linVel - angVel;
+                //Calculating voltage
+                double angOutput = angPid.getPid(pose.rotation, targetRotation) * angMultiplier;
+                double linOutput = std::fmin(linPid.getPid(hypot), 12000 * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90)) - angOutput) * linMultiplier;
 
-                //Debug prints
-                printf("(%d, %f)\n", counter, linPid.getError());
-                counter++;
-
-                double currentLeftVel = leftFrontMotor.get_actual_velocity();
-                double currentRightVel = rightFrontMotor.get_actual_velocity();
-
-                //Converting Velocities to voltage
-                double leftVoltage = leftVCon.rpmVelToVoltage(currentLeftVel, prevLeftVel, leftVel);
-                double rightVoltage = notLeftVCon.rpmVelToVoltage(currentRightVel, prevRightVel, rightVel);
-
-                prevLeftVel = leftVel;
-                prevRightVel = rightVel;
-
-                this->setVoltage(leftVoltage, rightVoltage);
+                //Preventing over saturation, prioritising turning over driving
+                if((fabs(linOutput) + fabs(angOutput)) > 12000)
+                    linOutput = (12000 - fabs(angOutput)) * linMultiplier;
+                
+                //Powering motors with slewing
+                double leftVoltage = linOutput + angOutput;
+                double rightVoltage = linOutput - angOutput;
+                this->setVoltage(leftVoltage, rightVoltage, true, 10);
 
                 //Exit Conditions, Semi circle exit
                 //Should add velocity exit here in the future
@@ -118,9 +105,8 @@ namespace subsystems
 
                 //Delay for other tasks
                 pros::delay(10);
-                }
-                this->inMotion = false;
-                this->setVoltage(0, 0);
             }
+            this->inMotion = false;
         }
+    }
 }

@@ -97,23 +97,31 @@ namespace subsystems
         }
 
 
-        /**
-         * @brief Function to set the voltage applied to all drive motors
-         * 
-         * @param left Voltage to left side of the drive(-12000 - 12000)
-         * @param right Voltage to right side of the drive(-12000 - 12000)
-         */
-        void drivetrain::setVoltage(double left, double right)
-        {
+        void drivetrain::setVoltage(double left, double right, bool doSlew = false, double timestep = 10)
+        {      
+            //COnverting the double inputs to ints
+            int leftVoltage = floor(left);
+            int rightVoltage = floor(right);
+            //Slewing voltage if specified
+            if(doSlew)
+            {
+                leftVoltage = floor(slew(left, prevLeftVoltage, voltageSlew, timestep));
+                rightVoltage = floor(slew(right, prevRightVoltage, voltageSlew, timestep));
+            }
+
             //Setting Left Motors
-            leftFrontMotor.move_voltage(floor(left));
-            leftMidMotor.move_voltage(floor(left));
-            leftBackMotor.move_voltage(floor(left));
+            leftFrontMotor.move_voltage(leftVoltage);
+            leftMidMotor.move_voltage(leftVoltage);
+            leftBackMotor.move_voltage(leftVoltage);
 
             //Setting Right Motors
-            rightFrontMotor.move_voltage(floor(right));
-            rightMidMotor.move_voltage(floor(right));
-            rightBackMotor.move_voltage(floor(right));
+            rightFrontMotor.move_voltage(rightVoltage);
+            rightMidMotor.move_voltage(rightVoltage);
+            rightBackMotor.move_voltage(rightVoltage);
+
+            //Updating static variables
+            prevLeftVoltage = leftVoltage;
+            prevRightVoltage = rightVoltage;
         }
 
         /**
