@@ -19,10 +19,10 @@ pros::ADIDigitalOut mogo('g');
 #define VERTICAL_OFFSET 13
 
 //Controller port
-#define CONTROLLER 1
+#define CONTROLLER 5
 
 //IMU Port
-#define INERTIAL 17
+#define INERTIAL 4
 
 //Tracking Wheel Port
 #define TRACKING_WHEEL 3
@@ -31,18 +31,17 @@ pros::ADIDigitalOut mogo('g');
 #define MOGO 'G'
 
 //Drivtrain Motor Ports
-#define LEFT_MOTOR_FRONT 7
-#define LEFT_MOTOR_MID -18
+#define LEFT_MOTOR_FRONT -1
+#define LEFT_MOTOR_MID 12
 #define LEFT_MOTOR_BACK -19
 
-#define RIGHT_MOTOR_FRONT 8
-#define RIGHT_MOTOR_MID 9
-#define RIGHT_MOTOR_BACK -20
+#define RIGHT_MOTOR_FRONT 13
+#define RIGHT_MOTOR_MID -18
+#define RIGHT_MOTOR_BACK 2
 
 //Intake Port
-#define INTAKE_T 12
-#define INTAKE_B 11
+#define INTAKE -17
 
 //Basket Port
-#define BASKET_L 13
-#define BASKET_R -14
+#define BASKET 16
+#define BASKET_PISTONS 'H'

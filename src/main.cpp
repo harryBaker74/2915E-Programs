@@ -14,9 +14,9 @@
         TRACKING_WHEEL,
         INERTIAL);
     //Creating intake
-    subsystems::intake intake = subsystems::intake(INTAKE_B, INTAKE_T);
+    subsystems::intake intake = subsystems::intake(INTAKE);
     //Creating plunger
-    subsystems::basket basket = subsystems::basket(BASKET_L, BASKET_R);
+    subsystems::basket basket = subsystems::basket(BASKET, BASKET_PISTONS);
     //Creating Mogo
     subsystems::mogo mogo = subsystems::mogo(MOGO);
 

@@ -8,16 +8,14 @@ namespace subsystems
 
     //Intake Class
         //Constructor
-        intake::intake(int bottomIntakeMotorPort, int topIntakeMotorPort)
-        :   bottomIntakeMotor(pros::Motor (bottomIntakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
-            topIntakeMotor(pros::Motor (topIntakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees))
+        intake::intake(int intakeMotorPort)
+        :   intakeMotor(pros::Motor (intakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees))
         {}
 
         //Function to set intake voltage
         void intake::setVoltage(double voltage)
         {
-            bottomIntakeMotor.move_voltage(floor(voltage));
-            topIntakeMotor.move_voltage(floor(voltage));
+            intakeMotor.move_voltage(floor(voltage));
         }
 
         //Function to run intake during driver control
@@ -31,31 +29,30 @@ namespace subsystems
 
     //Basket Class
         //Constructor
-        basket::basket(int basketLeftMotorPort, int basketRightMotorPort)
-        :   basketLeftMotor(pros::Motor (basketLeftMotorPort, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees)),
-            basketRightMotor(pros::Motor (basketRightMotorPort, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees))
+        basket::basket(int basketMotorPort, char basketPistonsPort)
+        :   basketMotor(pros::Motor (basketMotorPort, pros::v5::MotorGearset::red, pros::v5::MotorEncoderUnits::degrees)),
+            basketPistons(pros::adi::Pneumatics (basketPistonsPort, false, false))
         {
-            basketLeftMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
-            basketRightMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
+            basketMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
         }
 
         //Function to set basket voltage
         void basket::setVoltage(double voltage)
         {
-            basketLeftMotor.move_voltage(floor(voltage));
-            basketRightMotor.move_voltage(floor(voltage));
+            basketMotor.move_voltage(floor(voltage));
+        }
+
+        void basket::setState(bool state)
+        {
+            basketPistons.set_value(state);
         }
 
         //Function to run basket during driver control
         void basket::driverFunctions()
         {
-            currentPosition = basketLeftMotor.get_position();
-
-            double slowdown = (prevPosition - currentPosition) * Kd;
-
-            this->setVoltage(((Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2)) * speed ) + Kg + slowdown);
-
-            prevPosition = currentPosition;
+            basketPressCount += Controller.get_digital_new_press(DIGITAL_LEFT);
+            basketPressCount % 2 == 0 ? setState(false) : setState(true);
+            this->setVoltage((Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2)) * 12000);
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

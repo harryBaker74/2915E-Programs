@@ -104,12 +104,11 @@ namespace subsystems
 
     class intake
     {
-        pros::Motor topIntakeMotor;
-        pros::Motor bottomIntakeMotor;
+        pros::Motor intakeMotor;
 
         public:
         //Constructor
-        intake(int bottomIntakeMotorPort, int topIntakeMotorPort);
+        intake(int intakeMotorPort);
 
         //Function to set intake voltage
         void setVoltage(double voltage);
@@ -120,21 +119,19 @@ namespace subsystems
 
     class basket
     {
-        pros::Motor basketLeftMotor;
-        pros::Motor basketRightMotor;
+        pros::Motor basketMotor;
+        pros::adi::Pneumatics basketPistons;
 
-        double currentPosition = 0;
-        double prevPosition = 0;
-        double Kg = 500;
-        double Kd = 200;
-        double speed = 12000; //In deg per 10ms
+        int basketPressCount = 0;
 
         public:
         //Constructor
-        basket(int basketLeftMotorPort, int basketRightMotorPort);
+        basket(int basketMotorPort, char basketPistonsPort);
 
         //Function to set basket voltage
         void setVoltage(double voltage);
+
+        void setState(bool state);
 
         //Function to run basket during driver control
         void driverFunctions();

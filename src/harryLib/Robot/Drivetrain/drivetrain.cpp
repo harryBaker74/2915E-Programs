@@ -97,7 +97,7 @@ namespace subsystems
         }
 
 
-        void drivetrain::setVoltage(double left, double right, bool doSlew = false, double timestep = 10)
+        void drivetrain::setVoltage(double left, double right, bool doSlew, double timestep)
         {      
             //COnverting the double inputs to ints
             int leftVoltage = floor(left);
