@@ -78,7 +78,10 @@
         "version": "4.1.0"
       }
     },
-    "upload_options": {},
+    "upload_options": {
+      "icon": "pizza",
+      "slot": 2
+    },
     "use_early_access": false
   }
 }

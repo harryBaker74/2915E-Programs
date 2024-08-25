@@ -4,7 +4,7 @@
 
 namespace Odometery
 {
-
+    extern std::vector<std::vector<double>> currentEncoderValues;
     extern std::vector<std::vector<double>> prevEncoderValues;
 
     //Getters
@@ -14,6 +14,7 @@ namespace Odometery
      * @param portConstant The constant of the port for the desired device
      */
     double getEncoder(int portConstant = LEFT_MOTOR_FRONT);
+    double getLeftEncoder();
     //Specific getters
     //Returns a vector containg the left drivetrains encoder values in order
     std::vector<double> getLeftDriveEncoders();

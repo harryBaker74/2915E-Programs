@@ -8,12 +8,12 @@ namespace Odometery
     
 
 
-    std::vector <std::vector<double>> currentEncoderValues;
-    std::vector <std::vector<double>> prevEncoderValues = {{}};
+    std::vector <std::vector<double>> currentEncoderValues = {{0,0,0},{0,0,0},{0},{0}};
+    std::vector <std::vector<double>> prevEncoderValues = {{0,0,0},{0,0,0},{0},{0}};
 
     //Getters
 
-    double getEncoder(int portConstant = LEFT_MOTOR_FRONT)
+    double getEncoder(int portConstant)
     {
         //Switch becuase it looks a bit better
         switch (portConstant)
@@ -33,6 +33,9 @@ namespace Odometery
             default: return 0;
         }
     }
+
+    double getLeftEncoder()
+    {return currentEncoderValues.at(0).at(0);}
     //Specific getters
     std::vector<double> getLeftDriveEncoders()
     {return currentEncoderValues.at(0);}

@@ -4,6 +4,8 @@
 #include "harryLibHeader/velocityController.hpp"
 #include "harryLibHeader/boomerang.hpp"
 
+#include "harryLibHeader/exitConditions.hpp"
+
 namespace subsystems
 {   
 
@@ -151,4 +153,196 @@ namespace subsystems
                 pros::delay(10);
         }
 
+
+    void drivetrain::stop(int timeMs)
+    {
+        int endTime = pros::millis() + timeMs;
+        this->setVoltage(0, 0);
+        while(pros::millis() < endTime)
+            pros::delay(10);
+
+    }
+
+    //A REAL 1D CONTROLLER!!!??!
+    void drivetrain::drive(double distance, double maxVoltage, bool async)
+    {
+        //Prevent multiple motions from running at once
+        while (inMotion)
+            pros::delay(10);
+
+        
+
+        if (async)
+        {
+            pros::Task task {[=, this]{
+                drive(distance, false);
+                pros::Task::current().remove();
+            }};
+        }
+        else
+        {
+            this->distanceTraveled = 0;
+            this->inMotion = true;
+
+            //Tuning
+            PID::PID pid = PID::PID(
+                25,  //Kp
+                0,  //Ki
+                5,  //Kd
+                0,  //Windup Range
+                0   //Max Integral
+            );
+
+            double headingKp = 400
+;
+            //Exit Conditions
+            double errorExit = 120;
+            double velExit = 20;
+
+            //Static variables for derivatives
+            Pose prevPose = this->pose;
+
+            //Calculating Target Encoder amounts
+            double encoderDistance = (distance / (DRIVE_WHEEL_DIAMETER * M_PI) * 360 * (DRIVE_GEAR_RATIO));
+            double targetLeftEncoder = Odometery::getEncoder(LEFT_MOTOR_FRONT) + encoderDistance;
+            double targetRightEncoder =  Odometery::getEncoder(RIGHT_MOTOR_FRONT) + encoderDistance;
+            
+            //Measuring heading for correction
+            double startRotation = pose.rotation;
+            while(true)
+            {   
+                //Getting the voltage output based on the average distance fromt the desired encoder amount
+                double output = pid.getPid(
+                ((targetLeftEncoder - Odometery::getEncoder(LEFT_MOTOR_FRONT)) + (targetRightEncoder - Odometery::getEncoder(RIGHT_MOTOR_FRONT))) / 2);
+                
+                Controller.print(0, 0, "%f", output);
+                
+                double headingDiff = startRotation - pose.rotation;
+                double headingOutput = headingDiff * headingKp;
+                                
+                if(fabs(output) > maxVoltage)
+                {
+                    output = sign(output) * maxVoltage;
+                }
+                
+                //Outputting voltage into motors and slewing
+                this->setVoltage(output + headingOutput, output - headingOutput, true, 10);
+
+                //Updating async variables
+                this->distanceTraveled += pointToPointDistance(Point(pose.x, pose.y), Point(prevPose.x, prevPose.y));
+
+                //Exit conditions
+                //Getting Current Motor Velocity
+                double currentVel = (leftFrontMotor.get_actual_velocity() + rightFrontMotor.get_actual_velocity()) / 2;
+
+                //Checking if error and velocity are within a certain threshold
+                if(exitConditions::rangeExit(pid.getError(), errorExit) && exitConditions::rangeExit(currentVel, velExit))
+                    break;
+
+                pros::delay(10);
+            }
+            this->inMotion = false;
+        }
+    }
+
+    void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, bool async)
+    {   
+    //Prevent this motion from starting if the robot is already in a motion
+    while(inMotion)
+        pros::delay(10);
+    
+    //Run function in a task if it is supposed to be async
+    if (async)
+    {
+        pros::Task task {[=, this] {
+            turnToHeading(heading, radians, false);
+            pros::Task::current().remove();
+        }};
+    }
+    else
+    {
+        int endTime = pros::millis() + timeout_ms;
+        this->distanceTraveled = 0;
+        this->inMotion = true;
+
+        //TUNING
+            
+            //Guide to tuning
+            //Setup
+            //Set all pid variables to zero, and comment out the break in the exit condition if statement
+            //Run this function whenever you change the constants and take the error value to graph(print it or something)
+            //Give the function something like 90 degrees everytime you run so it actually has time to work
+            //Alrtenatively, give it random targets each time so your constants work better over multiple different target ranges
+            //
+            //Pid Tuning
+            //Start off by increasing Kp until you get 2-4 oscillations
+            //Then increase kd until the oscilattions stop, the graph should look like one sloped line curving into a straight horizontal line
+            //Set windup range to a bit above the current steady state error
+            //Set max integral to whatever you want honestly you prob dont need it
+            //Start increasing Ki very slowly until steady state error dissapears quickly.
+            //
+            //At this point un-comment the break in the exit condition if statement
+            //
+            //Exit Conditions Tuning
+            //(Note these values are in rad, rad/s, and rad/(s*s), so convert from deg if needed)
+            //Set the error exit to something like 0.1 degrees if your confident, or 0.25 if your not. Maybe go even lower if its really good
+            //Change around vel exit and accel exit to see what works best.(Aut Student Jordan D'Souza)
+            //In theory, vel exit should be about 1/100 error exit, and accel exit should be 1/10000 of error exit. but this might be wrong idk
+
+            //Pid for turning 
+            PID::PID pid(
+                13000.0,    //Kp
+                2000.0,    //Ki
+                100000.0,    //Kd
+                0.05,    //Windup Range
+                0.0     //Max Intergal
+            );
+
+            //Exit conditions
+            double errorExit = 0.01;
+            double velExit = 0.005;
+
+            
+        //Everything else
+        double angle = heading;
+        double prevVel = 0;
+        int counter = 0;
+        
+        if(!radians) angle *= M_PI / 180;  //Converting to radians if needed
+
+        //Finding the target rotation
+        //Gets the difference between the desired bounded heading and the current bounded heading, then bounds this angle, then gets the current rotation added to it
+        //In a roundabout way because we dont want to do turns bigger than 180 deg/1 pi, and its easier to track because the values cant overflow due to using rotation
+        double targetRotation = pose.rotation + (boundAngle(angle - pose.heading, true));
+
+        while(pros::millis() < endTime)
+        {
+            //Pid Voltage Calculations
+            double output = pid.getPid(pose.rotation, targetRotation);
+            
+            Controller.print(0, 0, "%f", output);
+
+
+            //Setting drivetrain voltage based on Pid Output and Slewing
+            this->setVoltage(output, -output, true, 10);
+
+            //Exit Conditions
+            //Error, and Velocity based(only exit when both are low) so we dont need to worry about waiting with low error for a certain amount of time
+            //Because error is in rad: vel is rad/s
+            double error = pid.getError();
+            double errorVel = pid.getDervative() / 0.01; //Derivative is already just the rate of change
+
+            //Checking if all these values are below a certain threshold
+            if (exitConditions::rangeExit(error, errorExit) && exitConditions::rangeExit(errorVel, velExit))
+                break;
+
+            //Updating distance traveled for async functions
+            this->distanceTraveled += this->pose.rotation - this->prevPose.rotation;
+            
+            //Delay for scheduling
+            pros::delay(10);
+        }
+        this->inMotion = false;
+    };
+}
 }

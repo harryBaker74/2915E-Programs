@@ -1,0 +1,4 @@
+void scoringSide(bool side)
+{
+    
+}

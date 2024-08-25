@@ -34,7 +34,7 @@ namespace subsystems
         double distanceTraveled = 0;
 
         //Max voltage rate of change per ms, used for a few algorithms
-        const double voltageSlew = 40;
+        const double voltageSlew = 80;
 
         double prevLeftVoltage = 0;
         double prevRightVoltage = 0;
@@ -79,12 +79,18 @@ namespace subsystems
          * @brief Function that returns once a motion is done
         */
         void waitUntilEnd();
+
+        void stop(int timeMs = 0);
+
         /**
         * @brief Turns the robot on a point to face a direction
         */
         void turnToHeading(double heading, int timeout_ms, bool radians = false, bool async = true);
 
-        void drive(double distance, bool async);
+        /**
+         * @brief Function to drive the robot 1 dimensionally, a certain distance
+         */
+        void drive(double distance, double maxVoltage = 12000, bool async = true);
         /**
          * @brief Function to move the robot from its current pose to a point. First turns, then drives
          */

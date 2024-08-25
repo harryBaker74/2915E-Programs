@@ -16,13 +16,13 @@ pros::ADIDigitalOut mogo('g');
 
 //Tracking wheel offsets(cm)
 #define HORIZONTAL_OFFSET 0
-#define VERTICAL_OFFSET 13
+#define VERTICAL_OFFSET 14
 
 //Controller port
 #define CONTROLLER 5
 
 //IMU Port
-#define INERTIAL 4
+#define INERTIAL 15
 
 //Tracking Wheel Port
 #define TRACKING_WHEEL 3

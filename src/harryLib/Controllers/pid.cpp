@@ -37,7 +37,7 @@ namespace PID {
 
         //Anti windup
             //Windup Range
-            if(this->error > fabs(this->windupRange))
+            if(fabs(this->error) > fabs(this->windupRange))
                 this->integral = 0;
             //Clamping
             if(fabs(this->integral) > fabs(this->maxIntegral))
