@@ -1,4 +1,4 @@
-#include "../../include/main.h"
+#include "../include/main.h"
 #include "harryLibHeader/robot.hpp"
 #include "harryLibHeader/pid.hpp"
 #include "harryLibHeader/velocityController.hpp"
