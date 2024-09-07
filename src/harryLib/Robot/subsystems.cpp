@@ -74,7 +74,7 @@ namespace subsystems
         void mogo::driverFunctions()
         {
             mogoPressCount += Controller.get_digital_new_press(DIGITAL_A);
-            mogoPressCount % 2 == 0 ? setState(false) : setState(true);
+            mogoPressCount % 2 == 0 ? setState(true) : setState(false); //End autons with a mogo
         }
         
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
