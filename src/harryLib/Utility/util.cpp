@@ -29,14 +29,14 @@ double atan3(double y, double x)
     return 0;
 }
 
-double boundAngle(double angle, bool raidians)
+double boundAngle(double angle, bool radians)
 {
-    if (raidians)
+    if (radians)
     {
         while ((angle > M_PI) || (angle < -1 * M_PI))
             angle = -1 * sign(angle) * ((2 * M_PI) - fabs(angle));
     }
-    if(!raidians)
+    if(!radians)
     {
         while((angle > 180) || (angle < -180))
             angle = -1 * sign(angle) * (360 - fabs(angle));

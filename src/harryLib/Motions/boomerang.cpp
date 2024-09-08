@@ -6,16 +6,6 @@
 
 namespace boomerang
 {
-    Point getGhost(Point initialCarrot, Point currentCarrot, double lead)
-    {
-        Point ghost (0, 0);
-
-        ghost.x = initialCarrot.x + (currentCarrot.x - initialCarrot.x) * (1 - lead);
-        ghost.y = initialCarrot.y + (currentCarrot.y - initialCarrot.y) * (1 - lead);
-
-        return ghost;
-    }
-
     Point getCarrot(Pose robotPose, Pose targetPose, double lead)
     {
         Pose deltaPose (0, 0, 0);
@@ -38,7 +28,7 @@ namespace boomerang
 
 namespace subsystems
 {
-    void drivetrain::boomerang(Pose targetPose, double dLead, double gLead, bool backwards, bool radians, bool async)
+    void drivetrain::boomerang(Pose targetPose, double dLead, bool backwards, bool radians, bool async)
         {
             //Prevent this motion from starting if the robot is already in a motion
             while(inMotion)
@@ -48,7 +38,7 @@ namespace subsystems
             if (async)
             {
                 pros::Task task {[=, this] {
-                    boomerang(targetPose, dLead, gLead, backwards, radians, false);
+                    boomerang(targetPose, dLead, backwards, radians, false);
                     pros::Task::current().remove();
                 }};
             }
@@ -73,39 +63,25 @@ namespace subsystems
                     0.0
                 );
 
-                //Switch conditions
-                //The distance at which the robot needs to be from the current target point, in order to move onto the next target point
-                double switchDistance = 10;
                 //Radius of exit semicircle, prob should be automatic
                 double exitDistance = 3.5;
                 double velExit = 0;
 
-                //Angular Falloff Parameter
-                double angK = 13;
-
                 //Angular switch parameter
                 //This parameter decides when to switch from facing the carrot point to facing the heading
-                //Lower values means that the switch will happen quicker, with 0 being no switch
-                //Eg:   angSwitch = 1, 50, 50 weighted for hypot = 1;
-                //      angSwitch = 2, 50, 50 weighted for hypot = 2;
+                //Lower values means that the switch will happen faster and later on, with 0 being no switch
+                //Eg:   angSwitch = 1, 50 50 weighted for hypot = 1;
+                //      angSwitch = 2, 50 50 weighted for hypot = 2;
                 double angSwitch = 8;
 
                 //Converting to radians if needed
-                if(!radians) targetPose.heading *= M_PI / 180;  //Converting to radians if needed
+                if(!radians) targetPose.heading *= M_PI / 180;
 
-                //Updating varibales for bakwards movement
+                //Updating varibales for backwards movement
                 int linMultiplier = backwards ? -1 : 1;
 
-                targetPose.heading = backwards ? boundAngle(targetPose.heading + M_PI, true) : targetPose.heading;
-
-                //Caluclating initial carrot point
-                Point initialCarrot = boomerang::getCarrot(this->pose, targetPose, dLead);
-
-                //Initialixing carrot point
-                Point carrot = initialCarrot;
-
-                //Switch boolean
-                bool followGhost = true;
+                //Initializing carrot point
+                Point carrot(0, 0);
 
                 //Initializing Velocity Controllers
                 vController::vController leftVCon(true);
@@ -116,9 +92,8 @@ namespace subsystems
                 double prevRightVel = 0;
                 
                 while(true)
-                {  
-                    //Deciding what carrot point to use
-                    //Inspired by https://github.com/Pixel-Lib/Pixel/blob/main/src/pxl/movements/boomerang.cpp
+                {
+                    //Calculating carrot point
                     carrot = boomerang::getCarrot(this->pose, targetPose, dLead);
 
                     //Calculating offset from carrot point
@@ -135,19 +110,16 @@ namespace subsystems
                     //Figures out the nearest multiple of the difference between the target heading and current heading, to the current rotation
                     double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
                     //Setting the target pose' rotation the same way
-                    targetPose.rotation = pose.rotation + boundAngle(targetPose.heading - pose.heading, true);
+                    targetPose.rotation = pose.rotation + boundAngle(boundAngle(targetPose.heading + (M_PI * backwards), true) - pose.heading, true);
                     
                     //Setting the target rotation to a weighted average between the rotation to the carrot, and the end target rotation
-                    //Based off of angSwitch;
+                    //Based off of angSwitch
+                    //Gets rid of spinning in circles on point aswell, so dont need angK
                     targetRotation = getWeightedAverage(targetRotation, targetPose.rotation, fabs(distance) / (fabs(distance) + angSwitch));
 
-                    //Calculating angMultiplier
-                    //Lowers the angular velocity the closer you get to the end point, preventing spinning in circles
-                    double angMultiplier = fabs(distance) / (fabs(distance) + angK);
-
                     //Calculate velocities
-                    double angVel = angPid.getPid(this->pose.rotation, targetRotation) * angMultiplier;
-                    double linVel = std::fmin(linPid.getPid(distance) * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90) * angMultiplier), 600 - angVel) * linMultiplier;
+                    double angVel = angPid.getPid(this->pose.rotation, targetRotation);
+                    double linVel = linPid.getPid(distance) * cos(std::fmin(fabs(targetRotation - pose.rotation), 90)) * linMultiplier;
                     double leftVel = linVel + angVel;
                     double rightVel = linVel - angVel;
                     //Getting current velocities
@@ -168,8 +140,6 @@ namespace subsystems
                     //Should add velocity exit here in the future
                     if(exitConditions::semiCircleCheck(this->pose, Point(targetPose.x, targetPose.y), targetPose.heading, exitDistance))
                         break; //Comment out for tuning maybe
-
-                        
 
 
                     //Updating distance traveled for async functions

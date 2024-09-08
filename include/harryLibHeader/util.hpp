@@ -16,7 +16,7 @@ double linearToCubed(double input, double maxInput, double k);
 
 double lineartoSquared(double input, double maxInput, double k);
 
-double boundAngle(double angle, bool raidians);
+double boundAngle(double angle, bool radians);
 
 double inToCm(double inch);
 

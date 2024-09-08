@@ -99,7 +99,7 @@ namespace subsystems
          * @brief Function to move the robot from its current pose to the desired pose
          * Uses a Boomerang controller
          */
-        void boomerang(Pose pose, double dLead, double gLead, bool backwards, bool radians = false, bool async = true);
+        void boomerang(Pose pose, double dLead, bool backwards, bool radians = false, bool async = true);
 
         /**
          * @brief Function to make the robot follow a desired path from the path generator or path scheduler
