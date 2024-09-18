@@ -2,6 +2,7 @@
 #include "harryLibHeader/pid.hpp"
 #include "harryLibHeader/velocityController.hpp"
 #include "harryLibHeader/exitConditions.hpp"
+#include "harryLibHeader/gainSchedular.hpp"
 
 namespace subsystems
 {
@@ -25,22 +26,22 @@ namespace subsystems
             this->inMotion = true;
 
             PID::PID angPid = PID::PID(
-                1000.0,    //Kp
-                0.0,    //Ki
-                2000.0,    //Kd
-                0.0,    //Windup Range
-                0.0     //Max Intergal
+                1000,    //Kp
+                0,    //Ki
+                0,    //Kd
+                0,    //Windup Range
+                0     //Max Intergal
             );
             PID::PID linPid = PID::PID(
-                10.0,
+                0,
                 0.0,
-                125.0,
+                0,
                 0.0,
                 0.0
             );
 
             //Exit conditions
-            double errorExit = 2.5;
+            double errorExit = 3.5;
             double velExit = 10;
 
             //Angular Falloff Parameter
@@ -50,7 +51,7 @@ namespace subsystems
             //      angK = 2, angVel *= 0.5 for hypot = 2;
             //      angK = 3: angVel *= 0.5 for hypot = 3;
             //      etc.
-            double angK = 10;
+            double angK = 20;
 
             //Prev velocities for velocity controllers
             double prevLeftVel = 0;
@@ -97,7 +98,7 @@ namespace subsystems
 
                 //Exit Conditions, Semi circle exit
                 //Should add velocity exit here in the future
-                if(exitConditions::semiCircleCheck(this->pose, point, this->pose.heading , errorExit))
+                if(exitConditions::semiCircleCheck(this->pose, point, this->pose.heading, errorExit))
                     break;
 
                 //Updating distance traveled for async functions

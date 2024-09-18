@@ -34,7 +34,7 @@ namespace subsystems
         double distanceTraveled = 0;
 
         //Max voltage rate of change per ms, used for a few algorithms
-        const double voltageSlew = 80;
+        const double voltageSlew = 40;
 
         double prevLeftVoltage = 0;
         double prevRightVoltage = 0;

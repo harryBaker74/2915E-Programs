@@ -64,6 +64,9 @@ namespace subsystems
                         0, 0, 0
                     },
                     {
+                        0
+                    },
+                    {
                         this->IMU.get_rotation() * M_PI / 180
                     }
                 };

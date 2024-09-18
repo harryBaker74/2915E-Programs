@@ -39,12 +39,8 @@ void autonomous()
 {   
     drivetrain.runOdom({0, 0, 0});
 
-
-    //drivetrain.turnToHeading(-90, 4000, false, false);
-    //drivetrain.turnToHeading(-180, 4000, false, false);
-    //drivetrain.turnToHeading(-270, 4000, false, false);
-    //drivetrain.turnToHeading(-360, 4000, false, false);
-
+    drivetrain.moveToPoint(Point(60, 60), false, false);
+    /*
     if(safeAuton)
     {
         drivetrain.drive(20, 12000, false);
@@ -134,7 +130,7 @@ void autonomous()
             drivetrain.drive(40, 4000, false);
         }
     }
-    
+    */
 
 }
 

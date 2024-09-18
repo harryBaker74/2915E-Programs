@@ -15,7 +15,7 @@ pros::ADIDigitalOut mogo('g');
 #define TRACKING_GEAR_RATIO 1
 
 //Tracking wheel offsets(cm)
-#define HORIZONTAL_OFFSET 0
+#define HORIZONTAL_OFFSET 2.54
 #define VERTICAL_OFFSET 14
 
 //Controller port
@@ -25,13 +25,13 @@ pros::ADIDigitalOut mogo('g');
 #define INERTIAL 15
 
 //Tracking Wheel Port
-#define TRACKING_WHEEL 3
+#define TRACKING_WHEEL 5
 
 //Mogo Port
 #define MOGO 'G'
 
 //Drivtrain Motor Ports
-#define LEFT_MOTOR_FRONT -1
+#define LEFT_MOTOR_FRONT -4
 #define LEFT_MOTOR_MID 12
 #define LEFT_MOTOR_BACK -19
 

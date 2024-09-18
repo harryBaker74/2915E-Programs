@@ -2,6 +2,7 @@
 #include "harryLibHeader/pid.hpp"
 #include "harryLibHeader/velocityController.hpp"
 #include "harryLibHeader/exitConditions.hpp"
+#include "harryLibHeader/gainSchedular.hpp"
 namespace subsystems
 {
 
@@ -49,14 +50,40 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             //Change around vel exit and accel exit to see what works best.(Aut Student Jordan D'Souza)
             //In theory, vel exit should be about 1/100 error exit, and accel exit should be 1/10000 of error exit. but this might be wrong idk
 
-            //Pid for turning 
+
+            //15 deg, 24000 kp, 3000 kp, 240000 kd, 0.048 wr
+            //30 deg, 17000 kp, 5000 ki, 200000 kd, 0.07 wr
+            //45 deg, 13000 Kp, 3000 ki, 150000 kd, 0.07 wr
+            //60 deg, 13000 Kp, 3000 Ki, 150000 Kd, 0.07 wr
+            //90 deg, 11000 Kp, 3000 Ki, 150000 Kd, 0.07 wr
+            //135 deg, 9500 Kp, 3000 Ki, 140000 Kd, 0.07 wr
+            //180 deg, 8500 Kp, 800 Ki, 140000 Kd, 0.07 wr
+
+            double angle = heading;
+            if(!radians) angle *= M_PI / 180;  //Converting to radians if needed
+
+            //Finding the target rotation
+            //Gets the difference between the desired bounded heading and the current bounded heading, then bounds this angle, then gets the current rotation added to it
+            //In a roundabout way because we dont want to do turns bigger than 180 deg/1 pi, and its easier to track because the values cant overflow due to using rotation
+            double difference = (boundAngle(angle - pose.heading, true));
+            double targetRotation = pose.rotation + difference;
+
+            //Initializing gain schedulers
+            gainSchedular Kp = gainSchedular(24, 9.5, 3.3, 35); // Kp / 1000
+            gainSchedular Ki = gainSchedular(30, 30, 1, 1); // Ki / 100
+            gainSchedular Kd = gainSchedular(24, 14, 4.5, 32); // Kd / 10000
+            gainSchedular Wr = gainSchedular(4.8, 7, 10, 20); // wR * 100
+
+            Controller.print(0, 0, "%f", Kp.getGain(difference * 180 / M_PI) * 1000);
+
             PID::PID pid(
-                13000.0,    //Kp
-                2000.0,    //Ki
-                100000.0,    //Kd
-                0.05,    //Windup Range
-                0.0     //Max Intergal
+                Kp.getGain(difference * 180 / M_PI) * 1000,    //Kp
+                Ki.getGain(difference * 180 / M_PI) * 100,    //Ki
+                Kd.getGain(difference * 180 / M_PI) * 10000,    //Kd
+                Wr.getGain(difference * 180 / M_PI) / 100,    //Windup Range
+                0.5     //Max Intergal
             );
+
 
             //Exit conditions
             double errorExit = 0.01;
@@ -64,24 +91,13 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
 
             
         //Everything else
-        double angle = heading;
         double prevVel = 0;
         int counter = 0;
-        
-        if(!radians) angle *= M_PI / 180;  //Converting to radians if needed
-
-        //Finding the target rotation
-        //Gets the difference between the desired bounded heading and the current bounded heading, then bounds this angle, then gets the current rotation added to it
-        //In a roundabout way because we dont want to do turns bigger than 180 deg/1 pi, and its easier to track because the values cant overflow due to using rotation
-        double targetRotation = pose.rotation + (boundAngle(angle - pose.heading, true));
 
         while(pros::millis() < endTime)
         {
             //Pid Voltage Calculations
             double output = pid.getPid(pose.rotation, targetRotation);
-            
-            Controller.print(0, 0, "%f", output);
-
 
             //Setting drivetrain voltage based on Pid Output and Slewing
             this->setVoltage(output, -output, true, 10);
@@ -94,11 +110,17 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
 
             //Checking if all these values are below a certain threshold
             if (exitConditions::rangeExit(error, errorExit) && exitConditions::rangeExit(errorVel, velExit))
+            {
+                int i = 0;
                 break;
-
+            }
             //Updating distance traveled for async functions
             this->distanceTraveled += this->pose.rotation - this->prevPose.rotation;
             
+        printf("(%d, %.3f)\n", counter, error * 180 / M_PI);
+        printf("(%d, %.3f)\n", counter, pid.getIntegral() * 100);
+        counter++;
+
             //Delay for scheduling
             pros::delay(10);
         }

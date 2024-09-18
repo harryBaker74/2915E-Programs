@@ -5,6 +5,7 @@
 #include "harryLibHeader/globals.h"
 #include "harryLibHeader/exitConditions.hpp"
 #include "harryLibHeader/util.hpp"
+#include "harryLibHeader/gainSchedular.hpp"
 #include "main.h"
 
 namespace subsystems
@@ -30,19 +31,38 @@ namespace subsystems
             this->distanceTraveled = 0;
             this->inMotion = true;
 
+
+            //Tuned Values
+            //10 cm, 40 kp, 390 kd
+            //20 cm, 30 kp, 350 kp
+            //30 cm, 25 kp, 340 kd
+            //45 cm, 22 kp, 260 kd
+            //60 cm, 22 kp, 240 kd
+            //80 cm, 22 kp, 240 kd
+
+            //Calculations for gain schedular, use graph for better p, k
+            //Kp, i = 40, f = 22
+            //p = 4.4, k = 20
+            //Kd, i = 390, f = 240
+            //p = 4.8, k = 29
+
+            //Initializing gain schedulers
+            gainSchedular Kp = gainSchedular(40, 22, 4.4, 20);
+            gainSchedular Kd = gainSchedular(390, 240, 4.8, 29);
+
             //Tuning
             PID::PID pid = PID::PID(
-                25,  //Kp
+                Kp.getGain(distance),  //Kp
                 0,  //Ki
-                5,  //Kd
+                Kd.getGain(distance),  //Kd
                 0,  //Windup Range
                 0   //Max Integral
             );
 
-            double headingKp = 400;
+            double headingKp = 20000;
             
             //Exit Conditions
-            double errorExit = 120;
+            double errorExit = 80;
             double velExit = 20;
 
             //Static variables for derivatives
@@ -55,13 +75,13 @@ namespace subsystems
             
             //Measuring heading for correction
             double startRotation = pose.rotation;
+
+            int counter = 0;
             while(true)
             {   
                 //Getting the voltage output based on the average distance fromt the desired encoder amount
                 double output = pid.getPid(
                 ((targetLeftEncoder - Odometery::getEncoder(LEFT_MOTOR_FRONT)) + (targetRightEncoder - Odometery::getEncoder(RIGHT_MOTOR_FRONT))) / 2);
-                
-                Controller.print(0, 0, "%f", output);
                 
                 double headingDiff = startRotation - pose.rotation;
                 double headingOutput = headingDiff * headingKp;
@@ -70,6 +90,9 @@ namespace subsystems
                 {
                     output = sign(output) * maxVoltage;
                 }
+
+                if((fabs(output) + fabs(headingOutput)) > 12000)
+                    output = (12000 - fabs(headingOutput)) * sign(output);
                 
                 //Outputting voltage into motors and slewing
                 this->setVoltage(output + headingOutput, output - headingOutput, true, 10);
@@ -83,7 +106,12 @@ namespace subsystems
 
                 //Checking if error and velocity are within a certain threshold
                 if(exitConditions::rangeExit(pid.getError(), errorExit) && exitConditions::rangeExit(currentVel, velExit))
+                {
                     break;
+                }
+                counter++;
+                printf("(%d, %.3f)\n", counter, pid.getError());
+                Controller.print(0, 0, "%f", pid.getError());
 
                 pros::delay(10);
             }
