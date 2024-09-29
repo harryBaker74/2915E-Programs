@@ -59,7 +59,7 @@ namespace subsystems
                 0   //Max Integral
             );
 
-            double headingKp = 20000;
+            double headingKp = 10000;
             
             //Exit Conditions
             double errorExit = 80;

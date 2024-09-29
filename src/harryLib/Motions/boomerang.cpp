@@ -49,22 +49,23 @@ namespace subsystems
 
                 //PID's
                 PID::PID angPid = PID::PID(
-                    700.0,    //Kp
+                    20000.0,    //Kp
                     0.0,    //Ki
-                    1000.0,    //Kd
+                    250000.0,    //Kd
                     0.0,    //Windup Range
                     0.0     //Max Intergal
                 );
                 PID::PID linPid = PID::PID(
-                    15.0,
+                    300.0,
                     0.0,
-                    150.0,
+                    1000.0,
                     0.0,
                     0.0
                 );
 
                 //Radius of exit semicircle, prob should be automatic
-                double exitDistance = 3.5;
+                double exitDistance = 6.5;
+                double headingExit = 0.2; //In rad
                 double velExit = 0;
 
                 //Angular switch parameter
@@ -72,16 +73,13 @@ namespace subsystems
                 //Lower values means that the switch will happen faster and later on, with 0 being no switch
                 //Eg:   angSwitch = 1, 50 50 weighted for hypot = 1;
                 //      angSwitch = 2, 50 50 weighted for hypot = 2;
-                double angSwitch = 8;
+                double angSwitch = 25;
 
                 //Converting to radians if needed
                 if(!radians) targetPose.heading *= M_PI / 180;
 
                 //Updating varibales for backwards movement
                 int linMultiplier = backwards ? -1 : 1;
-
-                //Initializing carrot point
-                Point carrot(0, 0);
 
                 //Initializing Velocity Controllers
                 vController::vController leftVCon(true);
@@ -94,10 +92,15 @@ namespace subsystems
                 while(true)
                 {
                     //Calculating carrot point
-                    carrot = boomerang::getCarrot(this->pose, targetPose, dLead);
+                    Point carrot = boomerang::getCarrot(this->pose, targetPose, dLead);
+
+                    //Calculating targte point, interpolating between carrot and end, prevernts slow downs with high d lead
+                    double distancetoEnd = sqrt(pow(targetPose.x - pose.x, 2) + pow(targetPose.y - pose.y, 2));
+                    Point targetPoint = Point(getWeightedAverage(carrot.x, targetPose.x, fabs(distancetoEnd) / (fabs(distancetoEnd) + angSwitch)), 
+                                         getWeightedAverage(carrot.y, targetPose.y, fabs(distancetoEnd) / (fabs(distancetoEnd) + angSwitch)));
 
                     //Calculating offset from carrot point
-                    Point deltaPos(carrot.x - this->pose.x, carrot.y - this->pose.y);
+                    Point deltaPos(targetPoint.x - this->pose.x, targetPoint.y - this->pose.y);
 
                     //Converts delta cartesian coordinates to polar coordinates, than takes theta and adds pi/2 to it to convert it to +y = 0, then bounds the angle to -pi/pi;
                     double targetHeading = atan3(deltaPos.y, deltaPos.x);
@@ -118,27 +121,20 @@ namespace subsystems
                     targetRotation = getWeightedAverage(targetRotation, targetPose.rotation, fabs(distance) / (fabs(distance) + angSwitch));
 
                     //Calculate velocities
-                    double angVel = angPid.getPid(this->pose.rotation, targetRotation);
-                    double linVel = linPid.getPid(distance) * cos(std::fmin(fabs(targetRotation - pose.rotation), 90)) * linMultiplier;
-                    double leftVel = linVel + angVel;
-                    double rightVel = linVel - angVel;
-                    //Getting current velocities
-                    double currentLeftVel = leftFrontMotor.get_actual_velocity();
-                    double currentRightVel = rightFrontMotor.get_actual_velocity();
+                    double angOutput = angPid.getPid(this->pose.rotation, targetRotation);
+                    double linOutput = std::fmax(std::fmin(linPid.getPid(distance), 12000 * cos(std::fmin(fabs(targetRotation - pose.rotation), 90)) - angOutput), 0) * linMultiplier;
 
-                    //Converting Velocities to voltage
-                    double leftVoltage = leftVCon.rpmVelToVoltage(currentLeftVel, prevLeftVel, leftVel);
-                    double rightVoltage = notLeftVCon.rpmVelToVoltage(currentRightVel, prevRightVel, rightVel);
-                    //Updating prev Velocities
-                    prevLeftVel = leftVel;
-                    prevRightVel = rightVel;
+                    Controller.print(0, 0, "%.3f", angPid.getError());
+
+                    double leftVoltage = linOutput + angOutput;
+                    double rightVoltage = linOutput - angOutput;
 
                     //Setting the motors voltage
                     this->setVoltage(leftVoltage, rightVoltage);
 
                     //Exit Conditions, Semi circle exit
                     //Should add velocity exit here in the future
-                    if(exitConditions::semiCircleCheck(this->pose, Point(targetPose.x, targetPose.y), targetPose.heading, exitDistance))
+                    if(exitConditions::semiCircleCheck(this->pose, Point(targetPose.x, targetPose.y), targetPose.heading, exitDistance) && exitConditions::rangeExit(angPid.getError(), headingExit))
                         break; //Comment out for tuning maybe
 
 
@@ -149,7 +145,6 @@ namespace subsystems
                     pros::delay(10);
                 }
                 this->inMotion = false;
-                this->setVoltage(0, 0);
             }
         }
 }

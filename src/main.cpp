@@ -31,107 +31,112 @@ void initialize()
 
 //True for scoring side, false for mogo side
 bool side = false;
-//True for blue, false for red
-bool colour = false;
-bool safeAuton = true; //Doesnt do anything
+//True for going left
+bool direction = true;
+bool safeAuton = false; //Doesnt do anything
 
 void autonomous() 
 {   
+    
     drivetrain.runOdom({0, 0, 0});
-
-    drivetrain.moveToPoint(Point(60, 60), false, false);
-    /*
     if(safeAuton)
     {
-        drivetrain.drive(20, 12000, false);
+        intake.setVoltage(-12000);
+        drivetrain.drive(-20, 12000, false);
+        drivetrain.stop();
     }
     else
     {
-        if((side) && (!colour))
-        {
-            //Scoring Red side
-            drivetrain.drive(-25, 12000, false);
-            drivetrain.turnToHeading(40, 1000, false, false);
-            drivetrain.drive(-34, 6000, false);
-            mogo.setState(true);
-            drivetrain.stop(300);
-            intake.setVoltage(12000);
-            drivetrain.turnToHeading(130, 1000, false, false);
-            drivetrain.drive(32, 7000, false);
-            drivetrain.stop(300);
-            drivetrain.drive(-20, 7000, false);
-            drivetrain.turnToHeading(115, 1000, false, false);
-            drivetrain.drive(30, 7000, false);
-            drivetrain.stop(300);
-            drivetrain.drive(-48, 7000, false);
-            drivetrain.turnToHeading(90, 1000, false, false);
-            drivetrain.drive(37, 8000, false);
-            drivetrain.stop(400);
-            drivetrain.drive(-32, 8000, false);
-            drivetrain.turnToHeading(180, 1000, false, false);
-            drivetrain.drive(40, 4000, false);
-        }
-        else if ((side) && (colour))
-        {
-            //Scoring Blue Side
-            drivetrain.drive(-25, 12000, false);
-            drivetrain.turnToHeading(-40, 1000, false, false);
-            drivetrain.drive(-34, 6000, false);
-            mogo.setState(true);
-            drivetrain.stop(300);
-            intake.setVoltage(12000);
-            drivetrain.turnToHeading(-130, 1000, false, false);
-            drivetrain.drive(32, 7000, false);
-            drivetrain.stop(300);
-            drivetrain.drive(-20, 7000, false);
-            drivetrain.turnToHeading(-115, 1000, false, false);
-            drivetrain.drive(30, 7000, false);
-            drivetrain.stop(300);
-            drivetrain.drive(-48, 7000, false);
-            drivetrain.turnToHeading(-90, 1000, false, false);
-            drivetrain.drive(37, 8000, false);
-            drivetrain.stop(400);
-            drivetrain.drive(-32, 8000, false);
-            drivetrain.turnToHeading(-180, 1000, false, false);
-            drivetrain.drive(40, 4000, false);
-        }
-        else if ((!side) && (!colour))
-        {
-            //Mogo Red Side
-            drivetrain.drive(-25, 12000, false);
-            drivetrain.turnToHeading(-40, 1000, false, false);
-            drivetrain.drive(-34, 6000, false);
-            mogo.setState(true);
-            drivetrain.stop(300);
-            intake.setVoltage(12000);
-            drivetrain.drive(5, 7000, false);
-            drivetrain.turnToHeading(-90, 1000, false, false);
-            drivetrain.drive(30, 8000, false);
-            drivetrain.stop(300);
-            drivetrain.drive(-35, 8000, false);
-            drivetrain.turnToHeading(-180, 1000, false, false);
-            drivetrain.drive(40, 4000, false);
-        }
-        else if ((!side) && (colour))
-        {
-            //Mogo Blue Side
-            drivetrain.drive(-25, 12000, false);
-            drivetrain.turnToHeading(40, 1000, false, false);
-            drivetrain.drive(-34, 6000, false);
-            mogo.setState(true);
-            drivetrain.stop(300);
-            intake.setVoltage(12000);
-            drivetrain.drive(5, 7000, false);
-            drivetrain.turnToHeading(90, 1000, false, false);
-            drivetrain.drive(30, 8000, false);
-            drivetrain.stop(300);
-            drivetrain.drive(-35, 8000, false);
-            drivetrain.turnToHeading(180, 1000, false, false);
-            drivetrain.drive(40, 4000, false);
-        }
-    }
-    */
+    if((side == true) && (direction == false))
+    {
+    intake.setVoltage(-12000);
+    drivetrain.drive(-48, 12000, false);
+    mogo.setState(true);
+    pros::delay(500);
+    drivetrain.drive(-20, 12000, false);
+    drivetrain.turnToHeading(97, 1000, false, false);
+    intake.setVoltage(12000);
+    drivetrain.drive(35, 12000, false);
+    drivetrain.turnToHeading(68, 1000, false, false);
+    drivetrain.drive(20, 12000, false);
+    drivetrain.turnToHeading(75, 1000, false, false);
+    drivetrain.drive(-35, 12000, false);
+    pros::delay(200);
+    drivetrain.turnToHeading(25, 800, false, false);
+    drivetrain.drive(28, 12000, false);
+    drivetrain.drive(-12, 12000, false);
+    drivetrain.turnToHeading(-33, 700, false, false);
+    drivetrain.drive(50, 12000, false);
+    drivetrain.turnToHeading(192, 1000, false, false);
+    drivetrain.drive(75, 12000, false);
+        drivetrain.stop();
 
+
+    }
+    else if((side == true) && (direction == true))
+    {
+    intake.setVoltage(-12000);
+    drivetrain.drive(-48, 12000, false);
+    mogo.setState(true);
+    pros::delay(500);
+    drivetrain.drive(-20, 12000, false);
+    drivetrain.turnToHeading(-97, 1000, false, false);
+    intake.setVoltage(12000);
+    drivetrain.drive(35, 12000, false);
+    drivetrain.turnToHeading(-68, 1000, false, false);
+    drivetrain.drive(20, 12000, false);
+    drivetrain.turnToHeading(-75, 1000, false, false);
+    drivetrain.drive(-35, 12000, false);
+    pros::delay(200);
+    drivetrain.turnToHeading(-25, 800, false, false);
+    drivetrain.drive(28, 12000, false);
+    drivetrain.drive(-12, 12000, false);
+    drivetrain.turnToHeading(33, 700, false, false);
+    drivetrain.drive(50, 12000, false);
+    drivetrain.turnToHeading(-192, 1000, false, false);
+    drivetrain.drive(75, 12000, false);
+        drivetrain.stop();
+
+    }
+    else if ((side == false) && (direction == false))
+    {
+    intake.setVoltage(-12000);
+    drivetrain.drive(-48, 12000, false);
+    mogo.setState(true);
+    pros::delay(500);
+    drivetrain.drive(-20, 12000, false);
+    pros::delay(1000);
+    intake.setVoltage(12000);
+    drivetrain.drive(68, 12000, false);
+    drivetrain.drive(-50, 12000, false);
+    drivetrain.turnToHeading(45, 1000, false, false);
+    drivetrain.drive(40, 12000, false);
+    drivetrain.drive(-40, 12000, false);
+    drivetrain.turnToHeading(185, 1250, false, false);
+    drivetrain.drive(30, 6000, false);
+        drivetrain.stop();
+
+    }
+    else if ((side == false) && (direction == true))
+    {
+    intake.setVoltage(-12000);
+    drivetrain.drive(-48, 12000, false);
+    mogo.setState(true);
+    pros::delay(500);
+    drivetrain.drive(-20, 12000, false);
+    pros::delay(1000);
+    intake.setVoltage(12000);
+    drivetrain.drive(68, 12000, false);
+    drivetrain.drive(-50, 12000, false);
+    drivetrain.turnToHeading(-45, 1000, false, false);
+    drivetrain.drive(40, 12000, false);
+    drivetrain.drive(-40, 12000, false);
+    drivetrain.turnToHeading(-185, 1250, false, false);
+    drivetrain.drive(30, 6000, false);
+        drivetrain.stop();
+
+    }
+    }
 }
 
 void opcontrol() 

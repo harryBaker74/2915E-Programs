@@ -26,22 +26,22 @@ namespace subsystems
             this->inMotion = true;
 
             PID::PID angPid = PID::PID(
-                1000,    //Kp
+                20000,    //Kp
                 0,    //Ki
-                0,    //Kd
+                250000,    //Kd
                 0,    //Windup Range
                 0     //Max Intergal
             );
             PID::PID linPid = PID::PID(
-                0,
+                500,
                 0.0,
-                0,
+                10000,
                 0.0,
                 0.0
             );
 
             //Exit conditions
-            double errorExit = 3.5;
+            double errorExit = 7;
             double velExit = 10;
 
             //Angular Falloff Parameter
@@ -51,7 +51,7 @@ namespace subsystems
             //      angK = 2, angVel *= 0.5 for hypot = 2;
             //      angK = 3: angVel *= 0.5 for hypot = 3;
             //      etc.
-            double angK = 20;
+            double angK = 10;
 
             //Prev velocities for velocity controllers
             double prevLeftVel = 0;
@@ -85,7 +85,7 @@ namespace subsystems
 
                 //Calculating voltage
                 double angOutput = angPid.getPid(pose.rotation, targetRotation) * angMultiplier;
-                double linOutput = std::fmin(linPid.getPid(hypot), 12000 * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90)) - angOutput) * linMultiplier;
+                double linOutput = std::fmin(linPid.getPid(hypot), std::fmax(12000 * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90)) - angOutput, 0)) * linMultiplier;
 
                 //Preventing over saturation, prioritising turning over driving
                 if((fabs(linOutput) + fabs(angOutput)) > 12000)
@@ -98,8 +98,10 @@ namespace subsystems
 
                 //Exit Conditions, Semi circle exit
                 //Should add velocity exit here in the future
-                if(exitConditions::semiCircleCheck(this->pose, point, this->pose.heading, errorExit))
+                if(exitConditions::semiCircleCheck(this->pose, point, this->pose.heading, errorExit, backwards))
                     break;
+
+                Controller.print(0, 0, "%.1f, %.1f, %.1f", hypot, pose.x, pose.y);
 
                 //Updating distance traveled for async functions
                 this->distanceTraveled += sqrt(pow(this->pose.x - this->prevPose.x, 2) + pow(this->pose.y - this->prevPose.y, 2));

@@ -3,9 +3,10 @@
 
 namespace exitConditions
 {
-    bool semiCircleCheck(Pose robotPose, Point targetPoint, double targetHeading, double radius)
+    bool semiCircleCheck(Pose robotPose, Point targetPoint, double targetHeading, double radius, bool backwards)
     {  
 
+        
         Point deltaPos (robotPose.x - targetPoint.x, robotPose.y - targetPoint.y);
         double distance = sqrt(pow(deltaPos.x, 2) + pow(deltaPos.y, 2));
         //Check if robot is in the full circle, if not, then cant be in the semi circle
@@ -14,8 +15,8 @@ namespace exitConditions
         
         //Caluclate angle from target to robot
         double angle = atan3(deltaPos.y, deltaPos.x);
-        printf("Angle:%f", angle * 180 / M_PI);
-        printf("Shiatss:%f", (targetHeading - angle) * 180 / M_PI);
+        
+        angle = backwards ? boundAngle(angle + M_PI, true) : angle;
 
         return fabs(angle - targetHeading) <= M_PI;
     }

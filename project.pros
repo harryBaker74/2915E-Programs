@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "Testing",
+    "project_name": "Mogo not left",
     "target": "v5",
     "templates": {
       "kernel": {
@@ -80,7 +80,7 @@
     },
     "upload_options": {
       "icon": "alien",
-      "slot": 1
+      "slot": 4
     },
     "use_early_access": false
   }
