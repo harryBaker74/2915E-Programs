@@ -1,11 +1,3 @@
-/*
-pros::MotorGroup left_mg({10, -18, -19});    
-pros::MotorGroup right_mg({8, 9, -20}); 
-
-pros::Motor intakeT(-12);
-pros::Motor intakeB(11);
-pros::ADIDigitalOut mogo('g');
-*/
 #pragma once
 
 //Wheel Size

@@ -48,7 +48,6 @@ namespace Odometery
     
     void OdometeryCalculations(Pose* robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive, pros::Rotation* trackingWheel, pros::IMU* IMU)
     {
-
         //Updating model values
 
         //Getting current encoder values

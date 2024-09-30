@@ -39,7 +39,11 @@ void autonomous()
 {   
     
     drivetrain.runOdom({0, 0, 0});
-    if(safeAuton)
+
+    drivetrain.boomerang(Pose(60, 60, 90), 0.8, false, false, false);
+    drivetrain.stop();
+
+    /*if(safeAuton)
     {
         intake.setVoltage(-12000);
         drivetrain.drive(-20, 12000, false);
@@ -136,7 +140,7 @@ void autonomous()
         drivetrain.stop();
 
     }
-    }
+    }*/
 }
 
 void opcontrol() 
