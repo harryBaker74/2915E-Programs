@@ -40,7 +40,7 @@ void autonomous()
     
     drivetrain.runOdom({0, 0, 0});
 
-    drivetrain.boomerang(Pose(60, 60, 90), 0.8, false, false, false);
+    drivetrain.boomerang(Pose(60, 60, 90), 0.5, false, false, false);
     drivetrain.stop();
 
     /*if(safeAuton)

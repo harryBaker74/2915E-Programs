@@ -1,6 +1,7 @@
 #pragma once
 #include "../main.h"
 #include "util.hpp"
+#include "pathGen.hpp"
 
 
 //File for controlling all systems in the robot
@@ -100,6 +101,11 @@ namespace subsystems
          * Uses a Boomerang controller
          */
         void boomerang(Pose pose, double dLead, bool backwards, bool radians = false, bool async = true);
+
+        /**
+         * @brief Function that makes the robot follow an inputted cubic Bezier curve
+         */
+        void tangentIntersection(cubicBezier curve, bool async = true);
 
         /**
          * @brief Function to make the robot follow a desired path from the path generator or path scheduler
