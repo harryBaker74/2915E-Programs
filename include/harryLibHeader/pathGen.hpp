@@ -1,3 +1,4 @@
+#include "harryLibHeader/util.hpp"
 struct cubicBezier
 {
     //Very, Very heavily inspired by https://github.com/RobertRen1177/Tangent-Intersection-Path-Following-Algo-For-Wheeled-Mobile-Robots/blob/main/Math/CubicBezier.hpp
@@ -8,10 +9,7 @@ struct cubicBezier
 
     Point getFirstDerivative(double t);
 
-    Point getSecondDerivative(double t)
-    {
-        return (p1 - p2 * 2 + p3) * (6 * (1 - t)) + (p2 - p3 * 2 + p4) * (6 * t);
-    }
+    Point getSecondDerivative(double t);
 
     double getFirstDistanceDerivative(double t, Point point);
 

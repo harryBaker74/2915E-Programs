@@ -40,7 +40,9 @@ void autonomous()
     
     drivetrain.runOdom({0, 0, 0});
 
-    drivetrain.boomerang(Pose(60, 60, 90), 0.5, false, false, false);
+    drivetrain.tangentIntersection(cubicBezier(Point(0, 0), Point(9, 149), Point(-50, 130), Point(-60, 60)));
+    //drivetrain.drive(30, 12000, false);
+    //drivetrain.drive(-5, 12000, false);
     drivetrain.stop();
 
     /*if(safeAuton)

@@ -33,39 +33,6 @@ double slew(double targetAmount, double currentAmount, double rateOfChange_ms, d
  */
 double getWeightedAverage(double numA, double numB, double decimalWeight);
 
-//Point Struct
-struct Point
-{
-    double x;
-    double y;
-
-    Point(double x, double y);
-
-    void set(double x, double y);
-
-    Point operator*(float scalar) const
-    {
-        return {x * scalar, y * scalar};
-    }
-    double operator*(Point point) const
-    {
-        return {x * point.x + y * point.y};
-    }
-    Point operator+(const Point& point) const
-    {
-        return {x + point.x, y + point.y};
-    }
-    Point operator-(const Point& point) const
-    {
-        return {x - point.x, y - point.y};
-    }
-
-    double cross(Point point)
-    {
-        return (x * point.y - y * point.x);
-    }
-};
-
 //Pose struct
     struct Pose
     {
@@ -94,5 +61,40 @@ struct Point
          */
         void set(Pose pose);
     };
+
+//Point Struct
+struct Point
+{
+    double x;
+    double y;
+
+    Point(double x, double y);
+    
+    Point(Pose pose);
+
+    void set(double x, double y);
+
+    Point operator*(float scalar) const
+    {
+        return {x * scalar, y * scalar};
+    }
+    double operator*(Point point) const
+    {
+        return {x * point.x + y * point.y};
+    }
+    Point operator+(const Point& point) const
+    {
+        return {x + point.x, y + point.y};
+    }
+    Point operator-(const Point& point) const
+    {
+        return {x - point.x, y - point.y};
+    }
+
+    double cross(Point point)
+    {
+        return (x * point.y - y * point.x);
+    }
+};
 
 double pointToPointDistance(Point p1, Point p2);

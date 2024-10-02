@@ -107,6 +107,13 @@ Point::Point(double x, double y)
     this->y = y;
 }
 
+Point::Point(Pose pose)
+{
+    this->x = pose.x;
+    this->y = pose.y;
+}
+
+
 void Point::set(double x, double y)
 {
     this->x = x;
