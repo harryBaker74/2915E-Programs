@@ -42,6 +42,28 @@ struct Point
     Point(double x, double y);
 
     void set(double x, double y);
+
+    Point operator*(float scalar) const
+    {
+        return {x * scalar, y * scalar};
+    }
+    double operator*(Point point) const
+    {
+        return {x * point.x + y * point.y};
+    }
+    Point operator+(const Point& point) const
+    {
+        return {x + point.x, y + point.y};
+    }
+    Point operator-(const Point& point) const
+    {
+        return {x - point.x, y - point.y};
+    }
+
+    double cross(Point point)
+    {
+        return (x * point.y - y * point.x);
+    }
 };
 
 //Pose struct
