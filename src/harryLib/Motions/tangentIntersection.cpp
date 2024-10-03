@@ -11,7 +11,7 @@ namespace subsystems
     {
 
         //Generating motion profile
-        profile motionProfile(0.0f, 0.0f);
+        profile motionProfile(175.6, 473.4);
         std::vector<std::vector<double>> profile = motionProfile.generateProfile(curve, 50, 5);
 
         double exitShitass = 0.995;
@@ -102,22 +102,22 @@ namespace subsystems
 
             
 
-                double angOutput = angPID.getPid(targetRotationError);
-                double linOutput = linPID.getPid(fmin(fmax(distanceError, endDistanceError), 50)) / fmax((fmax(futureCurvature, curvature) * cornerSlowdown), 1);
-                Controller.print(0, 0, "%.4f", closestTValue);
+                //double angOutput = angPID.getPid(targetRotationError);
+                //double linOutput = linPID.getPid(fmin(fmax(distanceError, endDistanceError), 50)) / fmax((fmax(futureCurvature, curvature) * cornerSlowdown), 1);
+                //Controller.print(0, 0, "%.4f", closestTValue);
 
-                double leftOuput = linOutput + angOutput;
-                double rightOutput = linOutput - angOutput;
+                //double leftOuput = linOutput + angOutput;
+                //double rightOutput = linOutput - angOutput;
 
                 //Preventing oversaturation proportionally, taken from lemlib
-                    double ratio = fmax(fabs(leftOuput), fabs(rightOutput)) / 12000;
-                    if(ratio > 1)
-                    {
-                        leftOuput /= ratio;
-                        rightOutput /= ratio;
-                    }
+                    //double ratio = fmax(fabs(leftOuput), fabs(rightOutput)) / 12000;
+                    //if(ratio > 1)
+                    //{
+                        //leftOuput /= ratio;
+                        //rightOutput /= ratio;
+                    //}
 
-                setVoltage(leftOuput, rightOutput, true, 10);
+                //setVoltage(leftOuput, rightOutput, true, 10);
 
             //Delay for other tasks
             pros::delay(10);
