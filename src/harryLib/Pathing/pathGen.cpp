@@ -1,6 +1,7 @@
 #include "harryLibHeader/pathGen.hpp"
 #include "harryLibHeader/util.hpp"
 #include "main.h"
+#include <vector>
 
 //Cubic bezier struct
 //Very, Very heavily inspired by https://github.com/RobertRen1177/Tangent-Intersection-Path-Following-Algo-For-Wheeled-Mobile-Robots/blob/main/Math/CubicBezier.hpp
@@ -81,3 +82,116 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    profile::profile(double maxVel, double maxAccel)
+    {
+        this->maxVel = maxVel;
+        this->maxAccel = maxAccel;
+    }
+
+    std::vector<std::vector<double>> profile::generateProfile(cubicBezier curve, double pointAmount, double k)
+    {
+        //Getting Points
+        double deltaT = 1 / pointAmount;
+        std::vector<std::vector<double>> points;
+        double t = 0;
+
+        while(t < 1)
+        {   
+            Point point = curve.getPoint(t);
+            points.push_back({point.x, point.y});
+            t += deltaT;
+        }
+
+        //Getting approximate arc length for each point, accuracy depends on amount of points
+        double arcLength = 0;
+        Point prevPoint = Point(points.at(0).at(0), points.at(0).at(1));
+        points.at(0).push_back(arcLength);
+
+        for(int i = 1; i < points.size(); i++)
+        {
+            Point point = Point(points.at(i).at(0), points.at(i).at(1));
+            arcLength += pointToPointDistance(prevPoint, point);
+            points.at(i).push_back(arcLength);
+            prevPoint = point;
+        }
+
+        //Calculating max velocity at each point
+        std::vector<double> maxVelocities = {0};
+
+        for(int i = 0; i < points.size(); i++)
+        {
+            Point firstDerivative = curve.getFirstDerivative(i * deltaT);
+            Point secondDerivative = curve.getSecondDerivative(i * deltaT);
+            double curvature = (sqrt(pow(secondDerivative.x, 2) + pow(secondDerivative.y,2))) / (pow(firstDerivative.x, 2) + pow(firstDerivative.y, 2));
+            maxVelocities.at(i) = fmin(maxVel, k / curvature);
+        }
+
+        //Forward pass
+        std::vector<double> forwardPass;
+        double prevVel = 0;
+
+        for(int i = 0; i < points.size() - 1; i++)
+        {
+            //Getting distance to next point
+            double deltaDistance = points.at(i).at(2) - points.at(i + 1).at(2);
+            
+            //Calculating how long it will take to get to next point, based off of initial velocity and acceleration
+            double time_1 = (-prevVel + sqrt(pow(prevVel, 2) - 2 * maxAccel * (deltaDistance))) / maxAccel;
+            double time_2 = (-prevVel - sqrt(pow(prevVel, 2) - 2 * maxAccel * (deltaDistance))) / maxAccel;
+            //Taking appropriate root
+            double time = fmax(time_1, time_2);
+            
+            //Calculating end velocity based off of the time it would take
+            double vel = prevVel + maxAccel * time;
+            //If end velocity is bigger than max velocity, then set it to max velocity
+            vel = vel > maxVelocities.at(i) ? maxVelocities.at(i) : vel;
+            
+            //Add velocity to list
+            forwardPass.at(i) = vel;
+            //Update prev velocity
+            prevVel = vel;
+        }
+        //Setting end point vel manually becuse there is no point after it.
+        forwardPass.push_back(maxVelocities.at(maxVelocities.size() - 1));
+
+        //Backwards pass
+        std::vector<double> backwardsPass = forwardPass; //Making sure its the right size so it gets no vector errors
+        prevVel = 0;
+
+        for(int i = points.size() - 1; i > 0; i--)
+        {
+            //Getting distance to next point
+            double deltaDistance = points.at(i).at(2) - points.at(i - 1).at(2);
+
+            //Calculating how long it will take to get to next point, based off of initial velocity and acceleration
+            double time_1 = (-prevVel + sqrt(pow(prevVel, 2) - 2 * maxAccel * (deltaDistance))) / maxAccel;
+            double time_2 = (-prevVel - sqrt(pow(prevVel, 2) - 2 * maxAccel * (deltaDistance))) / maxAccel;
+            //Taking appropriate root
+            double time = fmax(time_1, time_2);
+
+            //Calculating end velocity based off of the time it would take
+            double vel = prevVel + maxAccel * time;
+            //If end velocity is bigger than max velocity, then set it to max velocity
+            vel = vel > forwardPass.at(i) ? forwardPass.at(i) : vel;
+
+            //Add velocity to list
+            backwardsPass.at(i) = vel;
+            //Update prev velocity
+            prevVel = vel;
+        }
+        //Setting last point manually againg because ther is no point after it
+        backwardsPass.at(0) = forwardPass.at(0);
+
+
+        //Generating output, with x, y, and vel
+        std::vector<std::vector<double>> output;
+
+        for(int i = 0; i < backwardsPass.size(); i++)
+        {
+            output.push_back({points.at(i).at(0), points.at(i).at(1), backwardsPass.at(i)});
+        }
+
+        return output;
+
+    }
