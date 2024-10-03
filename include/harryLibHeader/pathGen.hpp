@@ -1,3 +1,5 @@
+#pragma once
+
 #include "harryLibHeader/util.hpp"
 #include <vector>
 struct cubicBezier
@@ -31,11 +33,12 @@ class profile
 {
     public:
 
-    profile(double maxVel, double maxAccel);
+    profile(double maxVel, double maxAccel, double maxDeccel);
 
     //Generates a linear velocity profie, for use with steering algorithms
     std::vector<std::vector<double>> generateProfile(cubicBezier curve, double pointAmount = 50, double k = 5);
     
     double maxVel;
     double maxAccel;
+    double maxDeccel;
 };

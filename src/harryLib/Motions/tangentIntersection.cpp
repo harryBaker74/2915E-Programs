@@ -3,37 +3,53 @@
 #include "harryLibHeader/pid.hpp"
 #include "harryLibHeader/boomerang.hpp"
 #include "harryLibHeader/pathGen.hpp"
+#include "harryLibHeader/velocityController.hpp"
 #include <vector>
+#include "harryLibHeader/globals.h"
 
 namespace subsystems
 {  
     void drivetrain::tangentIntersection(cubicBezier curve, bool async)
     {
 
+        //leftDriveMotors.set_brake_mode_all(MOTOR_BRAKE_HOLD);
+        //rightDriveMotors.set_brake_mode_all(MOTOR_BRAKE_HOLD);
+
         //Generating motion profile
-        profile motionProfile(175.6, 473.4);
-        std::vector<std::vector<double>> profile = motionProfile.generateProfile(curve, 50, 5);
+        profile motionProfile(175.6, 473.4, 75);
+        std::vector<std::vector<double>> profile = motionProfile.generateProfile(curve, 50, 1.90);
+
+        vController::vController linCont (false);
+
+        PID::PID angPID = PID::PID
+        (
+            10000,  //Kp
+            0,  //Ki
+            50000,  //Kd
+            0,  //Windup Range
+            0   //Max Integral
+        );
 
         double exitShitass = 0.995;
         double correctionAmount = 5.0;
-        double cornerSlowdown = 30; // Higher values, slower around corners
-        double angSwitch = 8;
+        double angSwitch = 10;
 
         double closestTValue = 0.0;
         double prevClosestTValue = 0.0;
 
         Point endingPoint = curve.getPoint(1); //make = to curve at t = 1
-        Point nearEndPoint = curve.getPoint(0.975);
+        Point nearEndPoint = curve.getPoint(0.99);
 
-        bool switchTarget = false;
+        double prevVel = 0;
 
+        pros::delay(10);
         //Main loop
         while(true)
         {
             
             //Finding t value asscoiated with the point on the curve closest to the robot.
                 closestTValue = curve.smallestDistance(Point(pose.x, pose.y), prevClosestTValue);
-
+                
 
                 //Exit conditions
                 if(closestTValue >= exitShitass)
@@ -88,36 +104,46 @@ namespace subsystems
 
 
             //Move towards intersection point
-                Point deltaPos(carrot.x - pose.x, carrot.y - pose.y);
+                //Angular speed calculations
+                    Point deltaPos(carrot.x - pose.x, carrot.y - pose.y);
 
-                double targetHeading = atan3(deltaPos.y, deltaPos.x);
-                double endingHeading = atan3(endingPoint.y - nearEndPoint.y, endingPoint.x - nearEndPoint.x); 
+                    double distance = pointToPointDistance(deltaPos, Point(0, 0));
 
-                double distanceError = pointToPointDistance(pose, carrot);
-                double endDistanceError = pointToPointDistance(pose, endingPoint);
+                    double targetHeading = atan3(deltaPos.y, deltaPos.x);
+                    double endingHeading = atan3(endTangent.y, endTangent.x); 
+
+                    double distanceError = pointToPointDistance(pose, carrot);
+                    double endDistanceError = pointToPointDistance(pose, endingPoint);
 
 
-                double endingRotationError = boundAngle(endingHeading - pose.heading, true);
-                double targetRotationError = boundAngle(targetHeading - pose.heading, true);
+                    double endingRotation = pose.rotation + boundAngle(endingHeading - pose.heading, true);
+                    double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
 
-            
+                    double actualTargetRotation = getWeightedAverage(targetRotation, endingRotation, pow(fabs(distance), 3) / (pow(fabs(distance), 3) + pow(angSwitch, 3)));
 
-                //double angOutput = angPID.getPid(targetRotationError);
-                //double linOutput = linPID.getPid(fmin(fmax(distanceError, endDistanceError), 50)) / fmax((fmax(futureCurvature, curvature) * cornerSlowdown), 1);
-                //Controller.print(0, 0, "%.4f", closestTValue);
+                    double angOutput = angPID.getPid(pose.rotation, actualTargetRotation);
 
-                //double leftOuput = linOutput + angOutput;
-                //double rightOutput = linOutput - angOutput;
+                //Linear speed Calculations
+                    double tIndex = ceil(closestTValue * profile.size()); //Taking velcoity of point in front of self
+                    double linVel = profile.at(tIndex - 1).at(2);
+                    double rpmVel = linVel / (DRIVE_WHEEL_DIAMETER * M_PI * 2.54) * 60 / DRIVE_GEAR_RATIO;
+
+                    double currentVel = (leftFrontMotor.get_actual_velocity() + rightFrontMotor.get_actual_velocity()) / 2;
+                    double linOutput = linCont.rpmVelToVoltage(currentVel, prevVel, rpmVel);
+                    prevVel = currentVel;
+
+                    double leftOuput = linOutput + angOutput;
+                    double rightOutput = linOutput - angOutput;
 
                 //Preventing oversaturation proportionally, taken from lemlib
-                    //double ratio = fmax(fabs(leftOuput), fabs(rightOutput)) / 12000;
-                    //if(ratio > 1)
-                    //{
-                        //leftOuput /= ratio;
-                        //rightOutput /= ratio;
-                    //}
+                    double ratio = fmax(fabs(leftOuput), fabs(rightOutput)) / 12000;
+                    if(ratio > 1)
+                    {
+                        leftOuput /= ratio;
+                        rightOutput /= ratio;
+                    }
 
-                //setVoltage(leftOuput, rightOutput, true, 10);
+                setVoltage(leftOuput, rightOutput, true, 10);
 
             //Delay for other tasks
             pros::delay(10);

@@ -24,8 +24,21 @@ double atan3(double y, double x)
     {
         return atan(x / y) - M_PI;
     }
-    
-    //Undefined
+    else if ((y == 0) && (x < 0))
+    {
+        return -M_PI_2;
+    }
+    else if ((y == 0) && (x > 0))
+    {
+        return M_PI_2;
+    }
+    else if ((x == 0) && (y < 0))
+    {
+        return -M_PI;
+    }
+
+
+    //Undefined, or (x == 0) && (y > 0)
     return 0;
 }
 

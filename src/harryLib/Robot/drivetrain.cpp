@@ -33,9 +33,6 @@ namespace subsystems
             
             rightDriveMotors.append(rightMidMotor);
             rightDriveMotors.append(rightBackMotor);
-
-            Controller.print(0, 0, "Mode: ", leftFrontMotor.get_brake_mode());
-
         }
 
         /**

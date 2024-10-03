@@ -83,10 +83,11 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    profile::profile(double maxVel, double maxAccel)
+    profile::profile(double maxVel, double maxAccel, double maxDeccel)
     {
         this->maxVel = maxVel;
         this->maxAccel = maxAccel;
+        this->maxDeccel = maxDeccel;
     }
 
     std::vector<std::vector<double>> profile::generateProfile(cubicBezier curve, double pointAmount, double k)
@@ -102,6 +103,8 @@
             points.push_back({point.x, point.y});
             t += deltaT;
         }
+        Point point = curve.getPoint(1);
+        points.push_back({point.x, point.y});
 
         //Getting approximate arc length for each point, accuracy depends on amount of points
         double arcLength = 0;
@@ -117,14 +120,14 @@
         }
 
         //Calculating max velocity at each point
-        std::vector<double> maxVelocities = {0};
+        std::vector<double> maxVelocities;
 
         for(int i = 0; i < points.size(); i++)
         {
             Point firstDerivative = curve.getFirstDerivative(i * deltaT);
             Point secondDerivative = curve.getSecondDerivative(i * deltaT);
             double curvature = (sqrt(pow(secondDerivative.x, 2) + pow(secondDerivative.y,2))) / (pow(firstDerivative.x, 2) + pow(firstDerivative.y, 2));
-            maxVelocities.at(i) = fmin(maxVel, k / curvature);
+            maxVelocities.push_back(fmin(maxVel, k / curvature));
         }
 
         //Forward pass
@@ -148,7 +151,7 @@
             vel = vel > maxVelocities.at(i) ? maxVelocities.at(i) : vel;
             
             //Add velocity to list
-            forwardPass.at(i) = vel;
+            forwardPass.push_back(vel);
             //Update prev velocity
             prevVel = vel;
         }
@@ -158,20 +161,21 @@
         //Backwards pass
         std::vector<double> backwardsPass = forwardPass; //Making sure its the right size so it gets no vector errors
         prevVel = 0;
+        backwardsPass.at(points.size() - 1) = 0; //Setting first point seperately to ensure we end on 0 velocity. Cant start at 0, but should end at 0
 
-        for(int i = points.size() - 1; i > 0; i--)
+        for(int i = points.size() - 2; i > 0; i--)
         {
             //Getting distance to next point
-            double deltaDistance = points.at(i).at(2) - points.at(i - 1).at(2);
+            double deltaDistance = points.at(i - 1).at(2) - points.at(i).at(2);
 
             //Calculating how long it will take to get to next point, based off of initial velocity and acceleration
-            double time_1 = (-prevVel + sqrt(pow(prevVel, 2) - 2 * maxAccel * (deltaDistance))) / maxAccel;
-            double time_2 = (-prevVel - sqrt(pow(prevVel, 2) - 2 * maxAccel * (deltaDistance))) / maxAccel;
+            double time_1 = (-prevVel + sqrt(pow(prevVel, 2) - 2 * maxDeccel * (deltaDistance))) / maxDeccel;
+            double time_2 = (-prevVel - sqrt(pow(prevVel, 2) - 2 * maxDeccel * (deltaDistance))) / maxDeccel;
             //Taking appropriate root
             double time = fmax(time_1, time_2);
 
             //Calculating end velocity based off of the time it would take
-            double vel = prevVel + maxAccel * time;
+            double vel = prevVel + maxDeccel * time;
             //If end velocity is bigger than max velocity, then set it to max velocity
             vel = vel > forwardPass.at(i) ? forwardPass.at(i) : vel;
 
@@ -184,12 +188,12 @@
         backwardsPass.at(0) = forwardPass.at(0);
 
 
-        //Generating output, with x, y, and vel
+        //Generating output, with x, y, and vel, and t value(for interpolation)
         std::vector<std::vector<double>> output;
 
         for(int i = 0; i < backwardsPass.size(); i++)
         {
-            output.push_back({points.at(i).at(0), points.at(i).at(1), backwardsPass.at(i)});
+            output.push_back({points.at(i).at(0), points.at(i).at(1), backwardsPass.at(i), i * deltaT});
         }
 
         return output;

@@ -40,9 +40,8 @@ void autonomous()
     
     drivetrain.runOdom({0, 0, 0});
 
-    drivetrain.tangentIntersection(cubicBezier(Point(0, 0), Point(9, 149), Point(-50, 130), Point(-60, 60)));
-    //drivetrain.drive(30, 12000, false);
-    //drivetrain.drive(-5, 12000, false);
+    drivetrain.tangentIntersection(cubicBezier(Point(0, 0), Point(-3, 151), Point(-57, 151), Point(-60, 60)));
+    drivetrain.tangentIntersection(cubicBezier(Point(-60, 60), Point(-26, 53.5), Point(1.4, 27.6), Point(0, 0)), false);
     drivetrain.stop();
 
     /*if(safeAuton)
