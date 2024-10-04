@@ -15,12 +15,6 @@ namespace vController
             //a lot of oscillation when tuning some controllers like 1d pids, however its still useful for other controllers
         };
 
-        double vController::rpmVelToVoltage(double a, double b)
-        {
-            int i =0;
-            return i;
-        }
-
         double vController::rpmVelToVoltage(double currentVelocity, double prevVelocity, double targetVelocity)
         {
             double derivative = currentVelocity - prevVelocity;

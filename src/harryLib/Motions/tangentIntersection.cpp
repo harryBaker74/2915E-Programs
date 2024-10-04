@@ -9,7 +9,7 @@
 
 namespace subsystems
 {  
-    void drivetrain::tangentIntersection(cubicBezier curve, bool async)
+    void drivetrain::tangentIntersection(cubicBezier curve, bool backwards, bool async)
     {
 
         //leftDriveMotors.set_brake_mode_all(MOTOR_BRAKE_HOLD);
@@ -112,9 +112,11 @@ namespace subsystems
                     double targetHeading = atan3(deltaPos.y, deltaPos.x);
                     double endingHeading = atan3(endTangent.y, endTangent.x); 
 
-                    double distanceError = pointToPointDistance(pose, carrot);
-                    double endDistanceError = pointToPointDistance(pose, endingPoint);
-
+                    if(backwards)
+                    {
+                        targetHeading = boundAngle(targetHeading + M_PI, true);
+                        endingHeading = boundAngle(endingHeading + M_PI, true);
+                    }
 
                     double endingRotation = pose.rotation + boundAngle(endingHeading - pose.heading, true);
                     double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
@@ -129,19 +131,27 @@ namespace subsystems
                     double rpmVel = linVel / (DRIVE_WHEEL_DIAMETER * M_PI * 2.54) * 60 / DRIVE_GEAR_RATIO;
 
                     double currentVel = (leftFrontMotor.get_actual_velocity() + rightFrontMotor.get_actual_velocity()) / 2;
+                    
+                    if(backwards)
+                    {
+                        currentVel *= (1 - backwards);
+                        rpmVel *= (1 - backwards);
+                    }
+                    
                     double linOutput = linCont.rpmVelToVoltage(currentVel, prevVel, rpmVel);
                     prevVel = currentVel;
 
+                //Wheel voltage calculations
                     double leftOuput = linOutput + angOutput;
                     double rightOutput = linOutput - angOutput;
 
-                //Preventing oversaturation proportionally, taken from lemlib
-                    double ratio = fmax(fabs(leftOuput), fabs(rightOutput)) / 12000;
-                    if(ratio > 1)
-                    {
-                        leftOuput /= ratio;
-                        rightOutput /= ratio;
-                    }
+                    //Preventing oversaturation proportionally, taken from lemlib
+                        double ratio = fmax(fabs(leftOuput), fabs(rightOutput)) / 12000;
+                        if(ratio > 1)
+                        {
+                            leftOuput /= ratio;
+                            rightOutput /= ratio;
+                        }
 
                 setVoltage(leftOuput, rightOutput, true, 10);
 
