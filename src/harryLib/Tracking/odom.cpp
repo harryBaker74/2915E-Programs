@@ -45,6 +45,8 @@ namespace Odometery
     {return currentEncoderValues.at(2);}
     double getInertialRotation()
     {return currentEncoderValues.at(3).at(0);}
+
+    double leftEncoders = 0;
     
     void OdometeryCalculations(Pose* robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive, pros::Rotation* trackingWheel, pros::IMU* IMU)
     {
@@ -63,7 +65,7 @@ namespace Odometery
             rightDrive->get_position(2)
             }, 
             {
-            0//double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
+            double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
             },
             {
                 IMU->get_rotation() * M_PI / 180
@@ -100,18 +102,21 @@ namespace Odometery
 
         //Odom Calculations
 
-        //Calculating radius length for the vertical arc and horiontal arc
-        //Preventing divide by zero if deltaHeading is zero
-        deltaHeading += (deltaHeading == 0) * 0.000000001;
-        double verticalArcRadius = std::max(((deltaLeft / deltaHeading) - VERTICAL_OFFSET), ((deltaRight / deltaHeading) + VERTICAL_OFFSET));
-        double horizontalArcRadius = (deltaHorizontal / (deltaHeading) + HORIZONTAL_OFFSET); 
-
-
         //Calculating the arcs chord lengths
         //Can imagine these as being rotated by theta / 2, 
         //with the vertical arc's chord becoming the new y axis, and horizontal arc's chord becoming the new x axis.
-        double localY = 2 * sin(deltaHeading / 2) * verticalArcRadius;
-        double localX = 2 * sin(deltaHeading / 2) * horizontalArcRadius;
+        double localY = 0;
+        double localX = 0;
+        if(deltaHeading == 0)
+        {
+            localY = deltaLeft;
+            localX = deltaHorizontal;
+        }
+        else
+        {
+            localY = 2 * sin(deltaHeading / 2) * (deltaLeft / deltaHeading - VERTICAL_OFFSET);
+            localX = 2 * sin(deltaHeading / 2) * (deltaHorizontal / deltaHeading + HORIZONTAL_OFFSET);
+        }
 
         //Rotataing the local axis back to global
         double averageHeading = robotPose->rotation + deltaHeading / 2; //Amount to rotate by

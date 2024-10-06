@@ -74,8 +74,6 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             gainSchedular Kd = gainSchedular(24, 14, 4.5, 32); // Kd / 10000
             gainSchedular Wr = gainSchedular(4.8, 7, 10, 20); // wR * 100
 
-            Controller.print(0, 0, "%f", Kp.getGain(difference * 180 / M_PI) * 1000);
-
             PID::PID pid(
                 Kp.getGain(difference * 180 / M_PI) * 1000,    //Kp
                 Ki.getGain(difference * 180 / M_PI) * 100,    //Ki
@@ -116,10 +114,6 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             }
             //Updating distance traveled for async functions
             this->distanceTraveled += this->pose.rotation - this->prevPose.rotation;
-            
-        printf("(%d, %.3f)\n", counter, error * 180 / M_PI);
-        printf("(%d, %.3f)\n", counter, pid.getIntegral() * 100);
-        counter++;
 
             //Delay for scheduling
             pros::delay(10);

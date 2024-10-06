@@ -69,7 +69,7 @@ namespace subsystems
             Pose prevPose = this->pose;
 
             //Calculating Target Encoder amounts
-            double encoderDistance = (distance / (DRIVE_WHEEL_DIAMETER * M_PI) * 360 * (DRIVE_GEAR_RATIO));
+            double encoderDistance = (distance / (DRIVE_WHEEL_DIAMETER * 2.54 * M_PI) * 360 / (DRIVE_GEAR_RATIO));
             double targetLeftEncoder = Odometery::getEncoder(LEFT_MOTOR_FRONT) + encoderDistance;
             double targetRightEncoder =  Odometery::getEncoder(RIGHT_MOTOR_FRONT) + encoderDistance;
             

@@ -7,8 +7,8 @@
 #define TRACKING_GEAR_RATIO 1
 
 //Tracking wheel offsets(cm)
-#define HORIZONTAL_OFFSET 2.54
-#define VERTICAL_OFFSET 14
+#define HORIZONTAL_OFFSET 2.61
+#define VERTICAL_OFFSET 14.90
 
 //Controller port
 #define CONTROLLER 5

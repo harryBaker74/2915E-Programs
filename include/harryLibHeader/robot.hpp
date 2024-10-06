@@ -105,7 +105,7 @@ namespace subsystems
         /**
          * @brief Function that makes the robot follow an inputted cubic Bezier curve
          */
-        void tangentIntersection(cubicBezier curve, bool backwards = false, bool async = true);
+        void tangentIntersection(cubicBezier curve, std::vector<std::vector<double>> profile, bool backwards = false, bool async = true);
 
         /**
          * @brief Function to make the robot follow a desired path from the path generator or path scheduler

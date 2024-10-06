@@ -9,40 +9,34 @@
 
 namespace subsystems
 {  
-    void drivetrain::tangentIntersection(cubicBezier curve, bool backwards, bool async)
+    void drivetrain::tangentIntersection(cubicBezier curve, std::vector<std::vector<double>> profile, bool backwards, bool async)
     {
 
-        //leftDriveMotors.set_brake_mode_all(MOTOR_BRAKE_HOLD);
-        //rightDriveMotors.set_brake_mode_all(MOTOR_BRAKE_HOLD);
-
-        //Generating motion profile
-        profile motionProfile(175.6, 473.4, 75);
-        std::vector<std::vector<double>> profile = motionProfile.generateProfile(curve, 50, 1.90);
+        leftDriveMotors.set_brake_mode_all(MOTOR_BRAKE_HOLD);
+        rightDriveMotors.set_brake_mode_all(MOTOR_BRAKE_HOLD);
 
         vController::vController linCont (false);
 
         PID::PID angPID = PID::PID
         (
-            10000,  //Kp
+            20000,  //Kp
             0,  //Ki
-            50000,  //Kd
+            200000,  //Kd
             0,  //Windup Range
             0   //Max Integral
         );
 
         double exitShitass = 0.995;
-        double correctionAmount = 5.0;
-        double angSwitch = 10;
+        double correctionAmount = 0.2;
 
         double closestTValue = 0.0;
         double prevClosestTValue = 0.0;
 
         Point endingPoint = curve.getPoint(1); //make = to curve at t = 1
-        Point nearEndPoint = curve.getPoint(0.99);
 
         double prevVel = 0;
 
-        pros::delay(10);
+        pros::delay(50);
         //Main loop
         while(true)
         {
@@ -50,13 +44,8 @@ namespace subsystems
             //Finding t value asscoiated with the point on the curve closest to the robot.
                 closestTValue = curve.smallestDistance(Point(pose.x, pose.y), prevClosestTValue);
                 
-
-                //Exit conditions
-                if(closestTValue >= exitShitass)
-                {
-                    //Exit if Robot is close to the end of the curve
-                    break;
-                }
+                if(closestTValue == 0)
+                    closestTValue += 0.00001;
 
                 prevClosestTValue = closestTValue;
 
@@ -68,11 +57,11 @@ namespace subsystems
             
             //Calculate tangents
                 Point endTangent = curve.getFirstDerivative(1);
-                double endSlope = endTangent.y / endTangent.x;
+                double endSlope = endTangent.y / (endTangent.x + 0.000001);
                 double endYIntercept = endingPoint.y - (endSlope * endingPoint.x);
                 Point localTangent = curve.getFirstDerivative(closestTValue);
                 Point closestPoint = curve.getPoint(closestTValue);
-                double localSlope = localTangent.y / localTangent.x;
+                double localSlope = localTangent.y / (localTangent.x + 0.000001);
                 double localYIntercept = closestPoint.y - (localSlope * closestPoint.x);
 
             //Rotate local tangent based on cross track and curvature
@@ -98,8 +87,10 @@ namespace subsystems
                                     ((B * cos(theta)) - (A * sin(theta)))) + y;
 
             //Get Intersection Point
-                double carrotX = (localYIntercept - endYIntercept) / (endSlope - localSlope);
-                double carrotY = (endSlope * carrotX) + endYIntercept;
+                double carrotX = 0;
+                double carrotY = 0;
+                carrotX = (localYIntercept - endYIntercept) / (endSlope - localSlope);
+                carrotY = (endSlope * carrotX) + endYIntercept;
                 Point carrot = Point(carrotX, carrotY);
 
 
@@ -112,6 +103,8 @@ namespace subsystems
                     double targetHeading = atan3(deltaPos.y, deltaPos.x);
                     double endingHeading = atan3(endTangent.y, endTangent.x); 
 
+                    Controller.print(0, 0, "%.2f, %.2f", endTangent.x, endTangent.y);
+
                     if(backwards)
                     {
                         targetHeading = boundAngle(targetHeading + M_PI, true);
@@ -121,7 +114,7 @@ namespace subsystems
                     double endingRotation = pose.rotation + boundAngle(endingHeading - pose.heading, true);
                     double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
 
-                    double actualTargetRotation = getWeightedAverage(targetRotation, endingRotation, pow(fabs(distance), 3) / (pow(fabs(distance), 3) + pow(angSwitch, 3)));
+                    double actualTargetRotation = getWeightedAverage(endingRotation, targetRotation, pow(closestTValue, 4));
 
                     double angOutput = angPID.getPid(pose.rotation, actualTargetRotation);
 
@@ -133,11 +126,8 @@ namespace subsystems
                     double currentVel = (leftFrontMotor.get_actual_velocity() + rightFrontMotor.get_actual_velocity()) / 2;
                     
                     if(backwards)
-                    {
-                        currentVel *= (1 - backwards);
-                        rpmVel *= (1 - backwards);
-                    }
-                    
+                        rpmVel *= -1;
+
                     double linOutput = linCont.rpmVelToVoltage(currentVel, prevVel, rpmVel);
                     prevVel = currentVel;
 
@@ -154,6 +144,14 @@ namespace subsystems
                         }
 
                 setVoltage(leftOuput, rightOutput, true, 10);
+
+
+                //Exit conditions
+                if((closestTValue >= exitShitass) && (fabs(angPID.getError()) < 0.01))
+                {
+                    //Exit if Robot is close to the end of the curve
+                    break;
+                }
 
             //Delay for other tasks
             pros::delay(10);

@@ -2,6 +2,7 @@
 #include "../include/harryLibHeader/robot.hpp"
 #include "../include/harryLibHeader/globals.h"
 #include "../include/harryLibHeader/velocityController.hpp"
+#include "../include/harryLibHeader/pathGen.hpp"
 
  //Creating Drivetrain
     subsystems::drivetrain drivetrain = subsystems::drivetrain
@@ -20,12 +21,21 @@
     //Creating Mogo
     subsystems::mogo mogo = subsystems::mogo(MOGO);
 
+
+    //Auton paths and motion profiling
+    cubicBezier curve1 = cubicBezier(Point(0, 0), Point(-5, 30), Point(-20, 45), Point(-60, 45));
+    cubicBezier curve2 = cubicBezier(Point(-65, 45), Point(-30, 55), Point(-10, 40), Point(-10, 0));
+    profile motionProfile = profile(175.6, 473.4, 275);
+    std::vector<std::vector<double>> profile1;
+    std::vector<std::vector<double>> profile2;
+
 void initialize() 
 {
 	pros::IMU imu = pros::IMU(INERTIAL);
 
-    imu.reset();
-
+    imu.reset(false);
+    profile1 = motionProfile.generateProfile(curve1, 50, 2.75);
+    profile2 = motionProfile.generateProfile(curve2, 50, 2.75);
 
 }
 
@@ -40,8 +50,8 @@ void autonomous()
     
     drivetrain.runOdom({0, 0, 0});
 
-    drivetrain.tangentIntersection(cubicBezier(Point(0, 0), Point(-3, 151), Point(-57, 151), Point(-60, 60)));
-    drivetrain.tangentIntersection(cubicBezier(Point(-60, 60), Point(-26, 53.5), Point(1.4, 27.6), Point(0, 0)), false);
+    drivetrain.tangentIntersection(curve1, profile1, false, false);
+    drivetrain.tangentIntersection(curve2, profile2, true, false);
     drivetrain.stop();
 
     /*if(safeAuton)
