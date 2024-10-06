@@ -16,7 +16,7 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
     if (async)
     {
         pros::Task task {[=, this] {
-            turnToHeading(heading, radians, false);
+            turnToHeading(heading, timeout_ms, radians, false);
             pros::Task::current().remove();
         }};
     }
@@ -91,6 +91,7 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
         //Everything else
         double prevVel = 0;
         int counter = 0;
+        double prevRotation = this->pose.rotation;
 
         while(pros::millis() < endTime)
         {
@@ -113,7 +114,8 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
                 break;
             }
             //Updating distance traveled for async functions
-            this->distanceTraveled += this->pose.rotation - this->prevPose.rotation;
+            this->distanceTraveled = (this->pose.rotation - prevRotation) * 180 / M_PI;
+            Controller.print(0, 0, "%f", distanceTraveled);
 
             //Delay for scheduling
             pros::delay(10);

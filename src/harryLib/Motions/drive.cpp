@@ -22,7 +22,7 @@ namespace subsystems
         if (async)
         {
             pros::Task task {[=, this]{
-                drive(distance, false);
+                drive(distance, maxVoltage, false);
                 pros::Task::current().remove();
             }};
         }
@@ -40,11 +40,9 @@ namespace subsystems
             //60 cm, 22 kp, 240 kd
             //80 cm, 22 kp, 240 kd
 
-            //Calculations for gain schedular, use graph for better p, k
-            //Kp, i = 40, f = 22
-            //p = 4.4, k = 20
-            //Kd, i = 390, f = 240
-            //p = 4.8, k = 29
+            //Calculations for gain schedular, use graph for better p & k
+            //Kp, i = 40, f = 22, p = 4.4, k = 20
+            //Kd, i = 390, f = 240, p = 4.8, k = 29
 
             //Initializing gain schedulers
             gainSchedular Kp = gainSchedular(40, 22, 4.4, 20);
@@ -63,7 +61,7 @@ namespace subsystems
             
             //Exit Conditions
             double errorExit = 80;
-            double velExit = 20;
+            double velExit = 60;
 
             //Static variables for derivatives
             Pose prevPose = this->pose;
@@ -72,6 +70,8 @@ namespace subsystems
             double encoderDistance = (distance / (DRIVE_WHEEL_DIAMETER * 2.54 * M_PI) * 360 / (DRIVE_GEAR_RATIO));
             double targetLeftEncoder = Odometery::getEncoder(LEFT_MOTOR_FRONT) + encoderDistance;
             double targetRightEncoder =  Odometery::getEncoder(RIGHT_MOTOR_FRONT) + encoderDistance;
+
+            double startLeftEncoder = Odometery::getEncoder(LEFT_MOTOR_FRONT);//For poistion tracking
             
             //Measuring heading for correction
             double startRotation = pose.rotation;
@@ -98,7 +98,7 @@ namespace subsystems
                 this->setVoltage(output + headingOutput, output - headingOutput, true, 10);
 
                 //Updating async variables
-                this->distanceTraveled += pointToPointDistance(Point(pose.x, pose.y), Point(prevPose.x, prevPose.y));
+                this->distanceTraveled = (Odometery::getEncoder(LEFT_MOTOR_FRONT) - startLeftEncoder) * DRIVE_GEAR_RATIO / 360 * (DRIVE_WHEEL_DIAMETER * 2.54 * M_PI);
 
                 //Exit conditions
                 //Getting Current Motor Velocity
@@ -109,9 +109,6 @@ namespace subsystems
                 {
                     break;
                 }
-                counter++;
-                printf("(%d, %.3f)\n", counter, pid.getError());
-                Controller.print(0, 0, "%f", pid.getError());
 
                 pros::delay(10);
             }

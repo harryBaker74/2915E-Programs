@@ -52,7 +52,7 @@ void autonomous()
 
     drivetrain.tangentIntersection(curve1, profile1, false, false);
     drivetrain.tangentIntersection(curve2, profile2, true, false);
-    drivetrain.stop();
+    drivetrain.stop(100);
 
     /*if(safeAuton)
     {

@@ -145,8 +145,14 @@ namespace subsystems
 
         void drivetrain::waitUntil(double distance)
         {
-            while ((this->distanceTraveled < distance) && (this->inMotion))
+            //Wait for motion to start
+            while(!this->inMotion)
+                pros::delay(10); 
+
+            while ((fabs(this->distanceTraveled) < distance) && (this->inMotion))
+            {
                 pros::delay(10);
+            }
         }
 
         void drivetrain::waitUntilEnd()
@@ -159,37 +165,6 @@ namespace subsystems
     void drivetrain::stop(int timeMs)
     {
         int endTime = pros::millis() + timeMs;
-
-        /*PID::PID stopPid = PID::PID
-        (
-            8000,  //Kp
-            0,  //Ki
-            0,  //Kd
-            0,  //Windup Range
-            0   //Max Integral
-        );
-
-        Pose targetPose = pose;
-        double prevDeltaDistance = 0;
-        pros::delay(20);
-        while(true)
-        {
-            double deltaDistance = pointToPointDistance(targetPose, pose);
-            
-            double output = stopPid.getPid(deltaDistance);
-
-            setVoltage(output, output, true, 10);
-
-            Controller.print(0, 0, "%f", output);
-
-            if(exitConditions::rangeExit(deltaDistance, 0.5) && exitConditions::rangeExit(prevDeltaDistance - deltaDistance, 0.05))
-                break;
-
-            prevDeltaDistance = deltaDistance;
-            pros::delay(10);
-        }
-
-        setVoltage(0, 0);*/
 
         leftDriveMotors.set_brake_mode(MOTOR_BRAKE_HOLD);
         rightDriveMotors.set_brake_mode(MOTOR_BRAKE_HOLD);

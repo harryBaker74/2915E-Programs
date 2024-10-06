@@ -16,7 +16,7 @@ namespace subsystems
         if(async)
         {
             pros::Task task {[=, this] {
-                moveToPoint(point, false);
+                moveToPoint(point, false, false);
                 pros::Task::current().remove();
             }};
         }
