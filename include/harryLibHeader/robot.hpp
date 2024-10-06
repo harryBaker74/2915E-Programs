@@ -35,7 +35,7 @@ namespace subsystems
         double distanceTraveled = 0;
 
         //Max voltage rate of change per ms, used for a few algorithms
-        const double voltageSlew = 40;
+        double voltageSlew = 40;
 
         double prevLeftVoltage = 0;
         double prevRightVoltage = 0;
@@ -100,10 +100,10 @@ namespace subsystems
          * @brief Function to move the robot from its current pose to the desired pose
          * Uses a Boomerang controller
          */
-        void boomerang(Pose pose, double dLead, bool backwards, bool radians = false, bool async = true);
+        void boomerang(Pose pose, double minSpeed, double dLead, bool backwards, bool radians = false, bool async = true);
 
         /**
-         * @brief Function that makes the robot follow an inputted cubic Bezier curve
+         * @brief Function that makes the robot follow an inputted cubic Bezier curve and linear motion profile
          */
         void tangentIntersection(cubicBezier curve, std::vector<std::vector<double>> profile, bool backwards = false, bool async = true);
 

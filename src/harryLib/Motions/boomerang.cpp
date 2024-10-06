@@ -28,7 +28,7 @@ namespace boomerang
 
 namespace subsystems
 {
-    void drivetrain::boomerang(Pose targetPose, double dLead, bool backwards, bool radians, bool async)
+    void drivetrain::boomerang(Pose targetPose, double minSpeed, double dLead, bool backwards, bool radians, bool async)
         {
             //Prevent this motion from starting if the robot is already in a motion
             while(inMotion)
@@ -38,7 +38,7 @@ namespace subsystems
             if (async)
             {
                 pros::Task task {[=, this] {
-                    boomerang(targetPose, dLead, backwards, radians, false);
+                    boomerang(targetPose, minSpeed, dLead, backwards, radians, false);
                     pros::Task::current().remove();
                 }};
             }
@@ -49,44 +49,36 @@ namespace subsystems
 
                 //PID's
                 PID::PID angPid = PID::PID(
-                    10000.0,    //Kp
-                    0.0,    //Ki
-                    100000.0,    //Kd
-                    0.0,    //Windup Range
-                    0.0     //Max Intergal
+                    25000.0,    //Kp
+                    1000.0,        //Ki
+                    200000.0,        //Kd
+                    0.025,        //Windup Range
+                    0.0         //Max Intergal
                 );
                 PID::PID linPid = PID::PID(
-                    700.0,
+                    500.0,
                     0.0,
-                    9000.0,
+                    10000.0,
                     0.0,
                     0.0
                 );
 
                 //Radius of exit semicircle, prob should be automatic
-                double exitDistance = 5;
-                double headingExit = 0.05; //In rad
-
-                //Angular switch parameter
-                //This parameter decides when to switch from facing the carrot point to facing the heading
-                //Lower values means that the switch will happen faster and later on, with 0 being no switch
-                //Eg:   angSwitch = 1, 50 50 weighted for hypot = 1;
-                //      angSwitch = 2, 50 50 weighted for hypot = 2;
-                double angSwitch = 5;
-                //How fast the switch is
-                double p = 10;
+                double exitDistance = 2;
+                double headingExit = 0.008; //In rad
+                double headingVelExit = 0.002;
 
                 //Converting to radians if needed
                 if(!radians) targetPose.heading *= M_PI / 180;
 
-                //Updating varibales for backwards movement
-                int linMultiplier = backwards ? -1 : 1;
-
                 //Calculating carrot
                 Point carrot = boomerang::getCarrot(this->pose, targetPose, dLead);
 
+                //Settling variables
+                double settleDistance = 15;
                 bool close = false;
-                double prevDistance = infinity();
+                double prevDistance = infinity(); 
+                bool prevSide = false;
 
                 while(true)
                 {
@@ -94,52 +86,54 @@ namespace subsystems
                     //Updating carrot point
                     carrot = boomerang::getCarrot(this->pose, targetPose, dLead);
 
-                    double distancetoEnd = sqrt(pow(targetPose.x - pose.x, 2) + pow(targetPose.y - pose.y, 2));
-                    double switchCurve = pow(fabs(distancetoEnd), p) / (pow(fabs(distancetoEnd), p) + pow(angSwitch, p));
+                    Point deltaPos (carrot.x - pose.x, carrot.y - pose.y);
 
-                    //Calculating target point, interpolating between carrot and end, prevernts slow downs with high d lead
-                    Point targetPoint = Point(getWeightedAverage(carrot.x, targetPose.x, switchCurve), 
-                                         getWeightedAverage(carrot.y, targetPose.y, switchCurve));
+                    double distance = pointToPointDistance(pose, carrot);
 
-                    //Calculating offset from carrot point
-                    Point deltaPos(targetPoint.x - this->pose.x, targetPoint.y - this->pose.y);
-
-                    //Converts delta cartesian coordinates to polar coordinates, than takes theta and adds pi/2 to it to convert it to +y = 0, then bounds the angle to -pi/pi;
                     double targetHeading = atan3(deltaPos.y, deltaPos.x);
+                    double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
+                    double endingRotation = pose.rotation + boundAngle(targetPose.heading - pose.heading, true);
 
-                    //Caluclating distance to carrot
-                    double distance = sqrt(pow(deltaPos.x, 2) + pow(deltaPos.y, 2));
+                    if(close)
+                        targetRotation = endingRotation;
 
-                    if (switchCurve < 0.5)
-                        close = true;
+                    double angOutput = angPid.getPid(pose.rotation, targetRotation);
+                    double linOutput = 0;
 
-                    //Figures out the nearest multiple of the difference between the target heading and current heading, to the current rotation
-                    double carrotRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
-                    targetPose.rotation = pose.rotation + boundAngle(targetPose.heading - pose.heading, true);
-                    double targetRotation = getWeightedAverage(carrotRotation, targetPose.rotation, switchCurve);
-                    
-                    //Calculate velocities
-                    double angOutput = angPid.getPid(this->pose.rotation, targetRotation);
-                    double linOutput = fmax(fmin(linPid.getPid(distance) * cos(fabs(targetRotation - pose.rotation)), 8000 - angOutput), 4000);
 
-                    if (prevDistance < distance)
+                    double switchCurve = fabs(distance) / (fabs(distance) + settleDistance);
+                    linOutput = getWeightedAverage(linPid.getPid(distance) * cos(fabs(pose.rotation - targetRotation)), 
+                                                    fmax(linPid.getPid(distance), minSpeed) * cos(fabs(pose.rotation - targetRotation)), switchCurve);
+
+                    if((fabs(distance) <= settleDistance) && (!close))
                     {
-                        linOutput = 0;
+                        close = true;
                     }
-
-                    prevDistance = distance;
 
                     double leftVoltage = linOutput + angOutput;
                     double rightVoltage = linOutput - angOutput;
 
-                    //Setting the motors voltage
-                    this->setVoltage(leftVoltage, rightVoltage);
+                    double ratio = fmax(fabs(leftVoltage), fabs(rightVoltage)) / 12000;
+                    if(ratio > 1)
+                    {
+                        leftVoltage /= ratio;
+                        rightVoltage /= ratio;
+                    }
 
-                    //Exit Conditions, Semi circle exit
-                    //Should add velocity exit here in the future
-                    if(exitConditions::semiCircleCheck(pose, Point(targetPose.x, targetPose.y), targetPose.heading, exitDistance))
+                    setVoltage(leftVoltage, rightVoltage);
+
+                    //Exit Conditions
+                    if(exitConditions::rangeExit(distance, exitDistance))
+                        if(exitConditions::rangeExit(fabs(angPid.getError()), headingExit) && exitConditions::rangeExit(fabs(angPid.getDervative()), headingVelExit))
+                            break;
+                    
+                    //Robot has gone past point
+                    bool side = (pose.y - targetPose.y) * cos(targetPose.heading) >= (pose.x - targetPose.x) * -sin(targetPose.heading) - exitDistance; 
+                    if(close && (prevSide != side))
                         break;
-                    Controller.print(0, 0, "%.2f, %.2f", deltaPos.x, deltaPos.y);
+                    prevSide = side;
+
+                    Controller.print(0, 0, "%d", side);
                     
                     //Updating distance traveled for async functions
                     this->distanceTraveled += sqrt(pow(this->pose.x - this->prevPose.x, 2) + pow(this->pose.y - this->prevPose.y, 2));

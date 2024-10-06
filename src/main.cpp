@@ -50,9 +50,8 @@ void autonomous()
     
     drivetrain.runOdom({0, 0, 0});
 
-    drivetrain.tangentIntersection(curve1, profile1, false, false);
-    drivetrain.tangentIntersection(curve2, profile2, true, false);
-    drivetrain.stop(100);
+    drivetrain.boomerang(Pose(-85, 110, -90), 12000, 0.75, false, false, false);
+    drivetrain.stop(500);
 
     /*if(safeAuton)
     {
