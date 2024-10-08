@@ -1,4 +1,5 @@
 #include "harryLibHeader/robot.hpp"
+#include "harryLibHeader/pid.hpp"
 
 namespace subsystems
 {
@@ -45,6 +46,65 @@ namespace subsystems
         void basket::setState(bool state)
         {
             basketPistons.set_value(state);
+        }
+
+        void basket::setPosition(enum LiftPosition position)
+        {
+            this->targetPos = position;
+        }
+
+        void basket::holdPosition(enum LiftPosition position)
+        {
+            this->targetPos = position;
+            this->hold = true;
+
+            pros::Task task{[=, this] {
+            //Input position, output a velocity
+            PID::PID posPID = PID::PID
+            {
+                10,
+                0,
+                0,
+                0,
+                0
+            };
+
+            //Inputs a velocity, outputs a voltage
+            double Ks = 1000;
+            double Kv = 40;
+            double Kg = 3800;
+
+            while(this->hold)
+            {
+                double currentPos = this->basketMotor.get_position() / 3;
+                double posError = (targetPos / 3) - currentPos;
+                double angle = encoderToRad(currentPos);
+                double targetVel = posPID.getPid(posError);
+                double currentVel = this->basketMotor.get_actual_velocity();
+
+                double voltage = Kg * cos(angle) + Ks * sign(targetVel) + Kv * targetVel;
+
+                setVoltage(voltage);
+                pros::delay(15);
+            }
+
+            //Setting voltage back to zero so the lift stops trying to hold its position
+            setVoltage(0);
+            //Kill task when not being used
+            pros::Task::current().remove();
+            }};
+        }
+
+        void basket::endHold()
+        {
+            this->hold = false;
+        }
+
+        double basket::encoderToRad(double encoder)
+        {
+            double zero = 200 / 3;//Amount of encoder units for a perfectly horizontal position, zero radians
+            double offset = zero - encoder; //Find difference, sign doesnt matter because its being used for cos wave
+            return offset * M_PI / 180; //Convert from normal encoder unit(degrees) to radians
         }
 
         //Function to run basket during driver control

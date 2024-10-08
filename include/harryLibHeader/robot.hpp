@@ -129,8 +129,21 @@ namespace subsystems
         void driverFunctions();
     };
 
+    enum LiftPosition
+    {
+        DEFAULT = 35,
+        WALLSTAKESCORE = 340,
+        WALLSTAKEDROP = 200,
+        ALLIANCESTAKESCORE = 240,
+        ALLIANCESTAKEDROP = 0
+    };
+
     class basket
     {
+
+        enum LiftPosition targetPos = DEFAULT;
+        bool hold = false;
+
         pros::Motor basketMotor;
         pros::adi::Pneumatics basketPistons;
 
@@ -142,8 +155,16 @@ namespace subsystems
 
         //Function to set basket voltage
         void setVoltage(double voltage);
-
+        //Function to set piston state
         void setState(bool state);
+
+
+        //Functions to move lift to certain positions
+        void setPosition(enum LiftPosition position);
+        void holdPosition(enum LiftPosition position);
+        void endHold();
+        //Function to convert current encoder position into an amount of radians for the lift in real life. Used for vel controller
+        double encoderToRad(double encoder);
 
         //Function to run basket during driver control
         void driverFunctions();

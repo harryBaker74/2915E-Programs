@@ -49,117 +49,26 @@ void autonomous()
 {   
     
     drivetrain.runOdom({0, 0, 0});
-
-    drivetrain.boomerang(Pose(-85, 110, -90), 12000, 0.75, false, false, false);
-    drivetrain.stop(500);
-
-    /*if(safeAuton)
-    {
-        intake.setVoltage(-12000);
-        drivetrain.drive(-20, 12000, false);
-        drivetrain.stop();
-    }
-    else
-    {
-    if((side == true) && (direction == false))
-    {
-    intake.setVoltage(-12000);
-    drivetrain.drive(-48, 12000, false);
-    mogo.setState(true);
-    pros::delay(500);
-    drivetrain.drive(-20, 12000, false);
-    drivetrain.turnToHeading(97, 1000, false, false);
-    intake.setVoltage(12000);
-    drivetrain.drive(35, 12000, false);
-    drivetrain.turnToHeading(68, 1000, false, false);
-    drivetrain.drive(20, 12000, false);
-    drivetrain.turnToHeading(75, 1000, false, false);
-    drivetrain.drive(-35, 12000, false);
-    pros::delay(200);
-    drivetrain.turnToHeading(25, 800, false, false);
-    drivetrain.drive(28, 12000, false);
-    drivetrain.drive(-12, 12000, false);
-    drivetrain.turnToHeading(-33, 700, false, false);
-    drivetrain.drive(50, 12000, false);
-    drivetrain.turnToHeading(192, 1000, false, false);
-    drivetrain.drive(75, 12000, false);
-        drivetrain.stop();
-
-
-    }
-    else if((side == true) && (direction == true))
-    {
-    intake.setVoltage(-12000);
-    drivetrain.drive(-48, 12000, false);
-    mogo.setState(true);
-    pros::delay(500);
-    drivetrain.drive(-20, 12000, false);
-    drivetrain.turnToHeading(-97, 1000, false, false);
-    intake.setVoltage(12000);
-    drivetrain.drive(35, 12000, false);
-    drivetrain.turnToHeading(-68, 1000, false, false);
-    drivetrain.drive(20, 12000, false);
-    drivetrain.turnToHeading(-75, 1000, false, false);
-    drivetrain.drive(-35, 12000, false);
-    pros::delay(200);
-    drivetrain.turnToHeading(-25, 800, false, false);
-    drivetrain.drive(28, 12000, false);
-    drivetrain.drive(-12, 12000, false);
-    drivetrain.turnToHeading(33, 700, false, false);
-    drivetrain.drive(50, 12000, false);
-    drivetrain.turnToHeading(-192, 1000, false, false);
-    drivetrain.drive(75, 12000, false);
-        drivetrain.stop();
-
-    }
-    else if ((side == false) && (direction == false))
-    {
-    intake.setVoltage(-12000);
-    drivetrain.drive(-48, 12000, false);
-    mogo.setState(true);
-    pros::delay(500);
-    drivetrain.drive(-20, 12000, false);
+    basket.holdPosition(subsystems::LiftPosition::WALLSTAKESCORE);
     pros::delay(1000);
-    intake.setVoltage(12000);
-    drivetrain.drive(68, 12000, false);
-    drivetrain.drive(-50, 12000, false);
-    drivetrain.turnToHeading(45, 1000, false, false);
-    drivetrain.drive(40, 12000, false);
-    drivetrain.drive(-40, 12000, false);
-    drivetrain.turnToHeading(185, 1250, false, false);
-    drivetrain.drive(30, 6000, false);
-        drivetrain.stop();
+    basket.setPosition(subsystems::LiftPosition::WALLSTAKEDROP);
+    pros::delay(800);
+    basket.setPosition(subsystems::LiftPosition::DEFAULT);
+    pros::delay(800);
+    basket.setPosition(subsystems::LiftPosition::ALLIANCESTAKESCORE);
+    pros::delay(800);
+    basket.endHold();
+    basket.setPosition(subsystems::LiftPosition::DEFAULT);
 
-    }
-    else if ((side == false) && (direction == true))
-    {
-    intake.setVoltage(-12000);
-    drivetrain.drive(-48, 12000, false);
-    mogo.setState(true);
-    pros::delay(500);
-    drivetrain.drive(-20, 12000, false);
-    pros::delay(1000);
-    intake.setVoltage(12000);
-    drivetrain.drive(68, 12000, false);
-    drivetrain.drive(-50, 12000, false);
-    drivetrain.turnToHeading(-45, 1000, false, false);
-    drivetrain.drive(40, 12000, false);
-    drivetrain.drive(-40, 12000, false);
-    drivetrain.turnToHeading(-185, 1250, false, false);
-    drivetrain.drive(30, 6000, false);
-        drivetrain.stop();
 
-    }
-    }*/
 }
 
 void opcontrol() 
-{ 
-    
-    
+{
+    drivetrain.stopOdom();
+    basket.endHold();
 	while(true)
     {
-
         //Controlling Drivetrain
         drivetrain.driverFunctions();
         //Controlling Intake
