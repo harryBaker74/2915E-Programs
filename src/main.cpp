@@ -49,17 +49,9 @@ void autonomous()
 {   
     
     drivetrain.runOdom({0, 0, 0});
-    basket.holdPosition(subsystems::LiftPosition::WALLSTAKESCORE);
-    pros::delay(1000);
-    basket.setPosition(subsystems::LiftPosition::WALLSTAKEDROP);
-    pros::delay(800);
-    basket.setPosition(subsystems::LiftPosition::DEFAULT);
-    pros::delay(800);
-    basket.setPosition(subsystems::LiftPosition::ALLIANCESTAKESCORE);
-    pros::delay(800);
-    basket.endHold();
-    basket.setPosition(subsystems::LiftPosition::DEFAULT);
-
+    
+    drivetrain.boomerang(Pose(-60, 120, -90), 6000, 0.5, false, false, false);
+    drivetrain.stop(300);
 
 }
 

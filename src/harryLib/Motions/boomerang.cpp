@@ -74,6 +74,9 @@ namespace subsystems
                 //Calculating carrot
                 Point carrot = boomerang::getCarrot(this->pose, targetPose, dLead);
 
+                //For backwards movement
+                int linMultiplier = backwards ? -1 : 1;
+
                 //Settling variables
                 double settleDistance = 15;
                 bool close = false;
@@ -91,19 +94,20 @@ namespace subsystems
                     double distance = pointToPointDistance(pose, carrot);
 
                     double targetHeading = atan3(deltaPos.y, deltaPos.x);
-                    double targetRotation = pose.rotation + boundAngle(targetHeading - pose.heading, true);
-                    double endingRotation = pose.rotation + boundAngle(targetPose.heading - pose.heading, true);
+                    double targetRotation = pose.rotation + boundAngle(targetHeading + (backwards * M_PI) - pose.heading, true);
+                    double endingRotation = pose.rotation + boundAngle(targetPose.heading + (backwards * M_PI) - pose.heading, true);
 
                     if(close)
                         targetRotation = endingRotation;
 
                     double angOutput = angPid.getPid(pose.rotation, targetRotation);
-                    double linOutput = 0;
 
 
                     double switchCurve = fabs(distance) / (fabs(distance) + settleDistance);
-                    linOutput = getWeightedAverage(linPid.getPid(distance) * cos(fabs(pose.rotation - targetRotation)), 
-                                                    fmax(linPid.getPid(distance), minSpeed) * cos(fabs(pose.rotation - targetRotation)), switchCurve);
+                    double linOutput = getWeightedAverage(linPid.getPid(distance) * cos(fabs(pose.rotation - targetRotation)), 
+                                                    fmax(linPid.getPid(distance), minSpeed) * cos(fabs(pose.rotation - targetRotation)), switchCurve) * linMultiplier;
+
+                    Controller.print(0, 0, "%f", cos(fabs(pose.rotation - targetRotation)));
 
                     if((fabs(distance) <= settleDistance) && (!close))
                     {
@@ -123,17 +127,15 @@ namespace subsystems
                     setVoltage(leftVoltage, rightVoltage);
 
                     //Exit Conditions
-                    if(exitConditions::rangeExit(distance, exitDistance))
-                        if(exitConditions::rangeExit(fabs(angPid.getError()), headingExit) && exitConditions::rangeExit(fabs(angPid.getDervative()), headingVelExit))
-                            break;
-                    
-                    //Robot has gone past point
-                    bool side = (pose.y - targetPose.y) * cos(targetPose.heading) >= (pose.x - targetPose.x) * -sin(targetPose.heading) - exitDistance; 
-                    if(close && (prevSide != side))
-                        break;
-                    prevSide = side;
+                        if(exitConditions::rangeExit(distance, exitDistance))
+                            if(exitConditions::rangeExit(fabs(angPid.getError()), headingExit) && exitConditions::rangeExit(fabs(angPid.getDervative()), headingVelExit))
+                                break;
 
-                    Controller.print(0, 0, "%d", side);
+                        //Robot has gone past point
+                        bool side = (pose.y - targetPose.y) * cos(targetPose.heading) >= (pose.x - targetPose.x) * -sin(targetPose.heading) - exitDistance; 
+                        if(close && (prevSide != side))
+                            break;
+                        prevSide = side;
                     
                     //Updating distance traveled for async functions
                     this->distanceTraveled += sqrt(pow(this->pose.x - this->prevPose.x, 2) + pow(this->pose.y - this->prevPose.y, 2));
