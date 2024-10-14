@@ -84,8 +84,8 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
 
 
             //Exit conditions
-            double errorExit = 0.01;
-            double velExit = 0.005;
+            double errorExit = 0.02;
+            double velExit = 0.015;
 
             
         //Everything else

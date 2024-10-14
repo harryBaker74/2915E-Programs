@@ -26,7 +26,7 @@ namespace subsystems
             this->inMotion = true;
 
             PID::PID angPid = PID::PID(
-                20000,    //Kp
+                10000,    //Kp
                 0,    //Ki
                 250000,    //Kd
                 0,    //Windup Range

@@ -23,11 +23,9 @@
 
 
     //Auton paths and motion profiling
-    cubicBezier curve1 = cubicBezier(Point(0, 0), Point(-5, 30), Point(-20, 45), Point(-60, 45));
-    cubicBezier curve2 = cubicBezier(Point(-65, 45), Point(-30, 55), Point(-10, 40), Point(-10, 0));
+    cubicBezier curve1 = cubicBezier(Point(10, -85), Point(5, -60), Point(-10, -20), Point(-10, -20));
     profile motionProfile = profile(175.6, 473.4, 275);
     std::vector<std::vector<double>> profile1;
-    std::vector<std::vector<double>> profile2;
 
 void initialize() 
 {
@@ -35,24 +33,76 @@ void initialize()
 
     imu.reset(false);
     profile1 = motionProfile.generateProfile(curve1, 50, 2.75);
-    profile2 = motionProfile.generateProfile(curve2, 50, 2.75);
 
 }
 
-//True for scoring side, false for mogo side
-bool side = false;
-//True for going left
-bool direction = true;
-bool safeAuton = false; //Doesnt do anything
+enum auton
+{
+    LEFT = 0,
+    RIGHT = 1
+};
+
+enum auton Auton = LEFT;
 
 void autonomous() 
 {   
     
     drivetrain.runOdom({0, 0, 0});
-    
-    drivetrain.boomerang(Pose(-60, 120, -90), 6000, 0.5, false, false, false);
-    drivetrain.stop(300);
+    intake.setVoltage(12000);
+    pros::delay(300);
+    intake.setVoltage(0);
+    basket.holdPosition(subsystems::LiftPosition::WALLSTAKESCORE);
 
+    if(Auton == LEFT)
+    {
+    drivetrain.drive(-40, 12000, false);
+    drivetrain.turnToHeading(40, 1000, false, false);
+    drivetrain.drive(-48, 5000, true);
+    drivetrain.waitUntil(30);
+    mogo.setState(true);
+    drivetrain.waitUntilEnd();
+    drivetrain.turnToHeading(90, 1000, false, false);
+    intake.setVoltage(12000);
+    drivetrain.drive(70, 12000, false);
+    pros::delay(200);
+    drivetrain.drive(-70, 12000, false);
+    drivetrain.turnToHeading(-135, 1000, false, false);
+    drivetrain.drive(20, 12000, false);
+    drivetrain.turnToHeading(-165, 200, false, false);
+    drivetrain.turnToHeading(-105, 200, false, false);
+    drivetrain.turnToHeading(-165, 200, false, false);
+    drivetrain.turnToHeading(-105, 200, false, false);
+    drivetrain.turnToHeading(-135, 1000, false, false);
+    drivetrain.stop();
+    basket.setPosition(subsystems::LiftPosition::DEFAULT);
+    pros::delay(400);
+    basket.endHold();
+    }
+    else if (Auton == RIGHT)
+    {
+    drivetrain.drive(-40, 12000, false);
+    drivetrain.turnToHeading(-40, 1000, false, false);
+    drivetrain.drive(-48, 5000, true);
+    drivetrain.waitUntil(30);
+    mogo.setState(true);
+    drivetrain.waitUntilEnd();
+    drivetrain.turnToHeading(-90, 1000, false, false);
+    intake.setVoltage(12000);
+    drivetrain.drive(70, 12000, false);
+    pros::delay(200);
+    drivetrain.drive(-70, 12000, false);
+    drivetrain.turnToHeading(135, 1000, false, false);
+    drivetrain.drive(20, 12000, false);
+    drivetrain.turnToHeading(165, 200, false, false);
+    drivetrain.turnToHeading(105, 200, false, false);
+    drivetrain.turnToHeading(165, 200, false, false);
+    drivetrain.turnToHeading(105, 200, false, false);
+    drivetrain.turnToHeading(135, 1000, false, false);
+    drivetrain.stop();
+    basket.setPosition(subsystems::LiftPosition::DEFAULT);
+    pros::delay(400);
+    basket.endHold();
+    }
 }
 
 void opcontrol() 
