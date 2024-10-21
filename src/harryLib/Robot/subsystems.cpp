@@ -9,8 +9,9 @@ namespace subsystems
 
     //Intake Class
         //Constructor
-        intake::intake(int intakeMotorPort)
-        :   intakeMotor(pros::Motor (intakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees))
+        intake::intake(int intakeMotorPort, int opticalSensorPort)
+        :   intakeMotor(pros::Motor (intakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+            optical(pros::v5::Optical (opticalSensorPort))
         {}
 
         //Function to set intake voltage
@@ -20,40 +21,34 @@ namespace subsystems
         }
 
         //Function to run intake during driver control
-        void intake::driverFunctions()
-        {
+        void intake::driverFunctions(bool colour)
+        {  
             setVoltage((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2)) * 12000);
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    //Basket Class
+    //Lift Class
         //Constructor
-        basket::basket(int basketMotorPort, char basketPistonsPort)
-        :   basketMotor(pros::Motor (basketMotorPort, pros::v5::MotorGearset::red, pros::v5::MotorEncoderUnits::degrees)),
-            basketPistons(pros::adi::Pneumatics (basketPistonsPort, false, false))
+        lift::lift(int liftMotorPort)
+        :   liftMotor(pros::Motor (liftMotorPort, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees))
         {
-            basketMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
+            liftMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
         }
 
         //Function to set basket voltage
-        void basket::setVoltage(double voltage)
+        void lift::setVoltage(double voltage)
         {
-            basketMotor.move_voltage(floor(voltage));
+            liftMotor.move_voltage(floor(voltage));
         }
 
-        void basket::setState(bool state)
-        {
-            basketPistons.set_value(state);
-        }
-
-        void basket::setPosition(enum LiftPosition position)
+        void lift::setPosition(enum LiftPosition position)
         {
             this->targetPos = position;
         }
 
-        void basket::holdPosition(enum LiftPosition position)
+        void lift::holdPosition(enum LiftPosition position)
         {
             this->targetPos = position;
             this->hold = true;
@@ -70,21 +65,22 @@ namespace subsystems
             };
 
             //Inputs a velocity, outputs a voltage
-            double Ks = 1000;
-            double Kv = 40;
-            double Kg = 3800;
+            double Ks = 700;
+            double Kv = 25;
+            double Kg = 1200;
 
             while(this->hold)
             {
-                double currentPos = this->basketMotor.get_position() / 3;
-                double posError = (targetPos / 3) - currentPos;
+                double currentPos = this->liftMotor.get_position() / 5;
+                double posError = (targetPos / 5) - currentPos;
                 double angle = encoderToRad(currentPos);
                 double targetVel = posPID.getPid(posError);
-                double currentVel = this->basketMotor.get_actual_velocity();
+                double currentVel = this->liftMotor.get_actual_velocity();
 
                 double voltage = Kg * cos(angle) + Ks * sign(targetVel) + Kv * targetVel;
 
                 setVoltage(voltage);
+                printf("%f\n", voltage);
                 pros::delay(15);
             }
 
@@ -95,24 +91,27 @@ namespace subsystems
             }};
         }
 
-        void basket::endHold()
+        void lift::endHold()
         {
             this->hold = false;
         }
 
-        double basket::encoderToRad(double encoder)
+        double lift::encoderToRad(double encoder)
         {
-            double zero = 200 / 3;//Amount of encoder units for a perfectly horizontal position, zero radians
+            double zero = 100 / 5;//Amount of encoder units for a perfectly horizontal position, zero radians
             double offset = zero - encoder; //Find difference, sign doesnt matter because its being used for cos wave
             return offset * M_PI / 180; //Convert from normal encoder unit(degrees) to radians
         }
 
         //Function to run basket during driver control
-        void basket::driverFunctions()
+        void lift::driverFunctions()
         {
-            basketPressCount += Controller.get_digital_new_press(DIGITAL_LEFT);
-            basketPressCount % 2 == 0 ? setState(false) : setState(true);
-            this->setVoltage((Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2)) * 12000);
+            if(Controller.get_digital(DIGITAL_L1))
+                setPosition(subsystems::LiftPosition::SCORE);
+            if(Controller.get_digital(DIGITAL_L2))
+                setPosition(subsystems::LiftPosition::GRAB);
+            if(Controller.get_digital(DIGITAL_LEFT))
+                setPosition(subsystems::LiftPosition::DEFAULT);
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,9 +133,32 @@ namespace subsystems
         void mogo::driverFunctions()
         {
             mogoPressCount += Controller.get_digital_new_press(DIGITAL_A);
-            mogoPressCount % 2 == 0 ? setState(true) : setState(false); //End autons with a mogo
+            mogoPressCount % 2 == 0 ? setState(false) : setState(true); //End autons with a mogo
         }
         
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //Arms class
+        //Constructer
+        arms::arms(char arm1SolanoidPort)
+        : arm1Solanoid(pros::adi::Pneumatics (arm1SolanoidPort, false, false))
+        {}
+
+        //Function to set arm state
+        void arms::setState(bool state)
+        {
+            arm1Solanoid.set_value(state);
+        }
+
+        //Function for driver control
+        void arms::driverFunctions()
+        {
+            arm1PressCount += Controller.get_digital_new_press(DIGITAL_UP);
+            arm1PressCount % 2 == 0 ? setState(false) : setState(true);
+        }
 }

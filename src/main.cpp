@@ -15,11 +15,13 @@
         TRACKING_WHEEL,
         INERTIAL);
     //Creating intake
-    subsystems::intake intake = subsystems::intake(INTAKE);
-    //Creating plunger
-    subsystems::basket basket = subsystems::basket(BASKET, BASKET_PISTONS);
+    subsystems::intake intake = subsystems::intake(INTAKE, OPTICAL);
+    //Creating lift
+    subsystems::lift lift = subsystems::lift(LIFT);
     //Creating Mogo
     subsystems::mogo mogo = subsystems::mogo(MOGO);
+    //Creating arm
+    subsystems::arms arm = subsystems::arms(ARM);
 
 
     //Auton paths and motion profiling
@@ -32,7 +34,7 @@ void initialize()
 	pros::IMU imu = pros::IMU(INERTIAL);
 
     imu.reset(false);
-    profile1 = motionProfile.generateProfile(curve1, 50, 2.75);
+    
 
 }
 
@@ -46,79 +48,35 @@ enum auton Auton = LEFT;
 
 void autonomous() 
 {   
-    
-    drivetrain.runOdom({0, 0, 0});
+    drivetrain.drive(-95, 12000, true);
+    drivetrain.waitUntil(65);
+    mogo.setState(true);
+    drivetrain.waitUntilEnd();
+    drivetrain.stop(400);
     intake.setVoltage(12000);
-    pros::delay(300);
+    pros::delay(2500);
     intake.setVoltage(0);
-    basket.holdPosition(subsystems::LiftPosition::WALLSTAKESCORE);
-
-    if(Auton == LEFT)
-    {
-    drivetrain.drive(-40, 12000, false);
-    drivetrain.turnToHeading(40, 1000, false, false);
-    drivetrain.drive(-48, 5000, true);
-    drivetrain.waitUntil(30);
-    mogo.setState(true);
-    drivetrain.waitUntilEnd();
-    drivetrain.turnToHeading(90, 1000, false, false);
-    intake.setVoltage(12000);
-    drivetrain.drive(70, 12000, false);
-    pros::delay(200);
-    drivetrain.drive(-70, 12000, false);
-    drivetrain.turnToHeading(-135, 1000, false, false);
-    drivetrain.drive(20, 12000, false);
-    drivetrain.turnToHeading(-165, 200, false, false);
-    drivetrain.turnToHeading(-105, 200, false, false);
-    drivetrain.turnToHeading(-165, 200, false, false);
-    drivetrain.turnToHeading(-105, 200, false, false);
-    drivetrain.turnToHeading(-135, 1000, false, false);
-    drivetrain.stop();
-    basket.setPosition(subsystems::LiftPosition::DEFAULT);
-    pros::delay(400);
-    basket.endHold();
-    }
-    else if (Auton == RIGHT)
-    {
-    drivetrain.drive(-40, 12000, false);
-    drivetrain.turnToHeading(-40, 1000, false, false);
-    drivetrain.drive(-48, 5000, true);
-    drivetrain.waitUntil(30);
-    mogo.setState(true);
-    drivetrain.waitUntilEnd();
-    drivetrain.turnToHeading(-90, 1000, false, false);
-    intake.setVoltage(12000);
-    drivetrain.drive(70, 12000, false);
-    pros::delay(200);
-    drivetrain.drive(-70, 12000, false);
-    drivetrain.turnToHeading(135, 1000, false, false);
-    drivetrain.drive(20, 12000, false);
-    drivetrain.turnToHeading(165, 200, false, false);
-    drivetrain.turnToHeading(105, 200, false, false);
-    drivetrain.turnToHeading(165, 200, false, false);
-    drivetrain.turnToHeading(105, 200, false, false);
-    drivetrain.turnToHeading(135, 1000, false, false);
-    drivetrain.stop();
-    basket.setPosition(subsystems::LiftPosition::DEFAULT);
-    pros::delay(400);
-    basket.endHold();
-    }
 }
 
 void opcontrol() 
 {
+    //Colour we are
+    bool colour = false;
+
     drivetrain.stopOdom();
-    basket.endHold();
+    lift.holdPosition(subsystems::LiftPosition::DEFAULT);
 	while(true)
     {
         //Controlling Drivetrain
         drivetrain.driverFunctions();
         //Controlling Intake
-        intake.driverFunctions();
+        intake.driverFunctions(colour);
         //Controlling Plunger
-        basket.driverFunctions();
+        lift.driverFunctions();
         //Controlling Mogo
         mogo.driverFunctions();
+        //Controlling Arm
+        arm.driverFunctions();
         
         pros::delay(10);
     }

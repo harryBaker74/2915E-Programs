@@ -65,7 +65,7 @@ namespace Odometery
             rightDrive->get_position(2)
             }, 
             {
-            double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
+            0//double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
             },
             {
                 IMU->get_rotation() * M_PI / 180

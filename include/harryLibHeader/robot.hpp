@@ -117,47 +117,49 @@ namespace subsystems
     class intake
     {
         pros::Motor intakeMotor;
+        pros::v5::Optical optical;
+
+        bool sort = false;
+        double sortStartTime = 0;
+        double sortEndTime = 0;
 
         public:
         //Constructor
-        intake(int intakeMotorPort);
+        intake(int intakeMotorPort, int opticalSensorPort);
 
         //Function to set intake voltage
         void setVoltage(double voltage);
 
-        //Function to run intake during driver control
-        void driverFunctions();
+        /**
+         * @brief Function to run intake during driver control
+         * 
+         * @param colour The colour you are(sorting out other colour), True for blue, false for red
+        */
+        void driverFunctions(bool colour);
     };
 
     enum LiftPosition
     {
-        DEFAULT = 35,
-        WALLSTAKESCORE = 340,
-        WALLSTAKEDROP = 200,
-        ALLIANCESTAKESCORE = 240,
-        ALLIANCESTAKEDROP = 0
+        DEFAULT = 0,
+        GRAB = 142,
+        HANG = 300,
+        SCORE = 670
     };
 
-    class basket
+    class lift
     {
 
         enum LiftPosition targetPos = DEFAULT;
         bool hold = false;
 
-        pros::Motor basketMotor;
-        pros::adi::Pneumatics basketPistons;
-
-        int basketPressCount = 0;
+        pros::Motor liftMotor;
 
         public:
         //Constructor
-        basket(int basketMotorPort, char basketPistonsPort);
+        lift(int liftMotorPort);
 
         //Function to set basket voltage
         void setVoltage(double voltage);
-        //Function to set piston state
-        void setState(bool state);
-
 
         //Functions to move lift to certain positions
         void setPosition(enum LiftPosition position);
@@ -186,5 +188,23 @@ namespace subsystems
         //Function to run mogo during driver control
         
         void driverFunctions();
+    };
+
+    class arms
+    {
+        pros::adi::Pneumatics arm1Solanoid;
+
+        int arm1PressCount = 0;
+
+        public:
+        //Constructer
+        arms(char arm1SolanoidPort);
+
+        //Function to set state
+        void setState(bool state);
+
+        //Function for driver control
+        void driverFunctions();
+    
     };
 }

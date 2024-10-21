@@ -68,8 +68,10 @@ namespace subsystems
 
             //Calculating Target Encoder amounts
             double encoderDistance = (distance / (DRIVE_WHEEL_DIAMETER * 2.54 * M_PI) * 360 / (DRIVE_GEAR_RATIO));
-            double targetLeftEncoder = Odometery::getEncoder(LEFT_MOTOR_FRONT) + encoderDistance;
-            double targetRightEncoder =  Odometery::getEncoder(RIGHT_MOTOR_FRONT) + encoderDistance;
+            double targetLeftEncoder =  leftFrontMotor.get_position() + encoderDistance;
+            double targetRightEncoder =  rightFrontMotor.get_position() + encoderDistance;
+
+            Controller.print(0, 0, "%f", encoderDistance);
 
             double startLeftEncoder = Odometery::getEncoder(LEFT_MOTOR_FRONT);//For poistion tracking
             
@@ -81,11 +83,13 @@ namespace subsystems
             {   
                 //Getting the voltage output based on the average distance fromt the desired encoder amount
                 double output = pid.getPid(
-                ((targetLeftEncoder - Odometery::getEncoder(LEFT_MOTOR_FRONT)) + (targetRightEncoder - Odometery::getEncoder(RIGHT_MOTOR_FRONT))) / 2);
+                ((targetLeftEncoder - leftFrontMotor.get_position()) + (targetRightEncoder - rightFrontMotor.get_position())) / 2);
                 
                 double headingDiff = startRotation - pose.rotation;
                 double headingOutput = headingDiff * headingKp;
                                 
+                Controller.print(0, 0, "%f", output);
+
                 if(fabs(output) > maxVoltage)
                 {
                     output = sign(output) * maxVoltage;
