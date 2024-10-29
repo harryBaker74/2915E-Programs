@@ -162,21 +162,27 @@ namespace subsystems
         }
 
 
-    void drivetrain::stop(int timeMs)
-    {
-        int endTime = pros::millis() + timeMs;
+        void drivetrain::stop(int timeMs)
+        {
+            int endTime = pros::millis() + timeMs;
 
-        leftDriveMotors.set_brake_mode(MOTOR_BRAKE_HOLD);
-        rightDriveMotors.set_brake_mode(MOTOR_BRAKE_HOLD);
+            leftDriveMotors.set_brake_mode(MOTOR_BRAKE_HOLD);
+            rightDriveMotors.set_brake_mode(MOTOR_BRAKE_HOLD);
 
-        leftDriveMotors.brake();
-        rightDriveMotors.brake();
+            leftDriveMotors.brake();
+            rightDriveMotors.brake();
 
-        while (pros::millis() < endTime)
-            pros::delay(10);
+            while (pros::millis() < endTime)
+                pros::delay(10);
 
-        leftDriveMotors.set_brake_mode(MOTOR_BRAKE_COAST);
-        rightDriveMotors.set_brake_mode(MOTOR_BRAKE_COAST);
+            leftDriveMotors.set_brake_mode(MOTOR_BRAKE_COAST);
+            rightDriveMotors.set_brake_mode(MOTOR_BRAKE_COAST);
 
-    }
+        }
+
+        void drivetrain::setBrakeMode(enum pros::motor_brake_mode_e brakeMode)
+        {
+            leftDriveMotors.set_brake_mode_all(brakeMode);
+            rightDriveMotors.set_brake_mode_all(brakeMode);
+        }
 }

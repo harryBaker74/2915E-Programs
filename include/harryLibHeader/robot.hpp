@@ -69,6 +69,8 @@ namespace subsystems
 
         void stopOdom();
 
+        void setBrakeMode(enum pros::motor_brake_mode_e brakeMode);
+
         //////////////////////////////////////////////////////////////////////////////////////////
         //AUTON FUNCTIONS
         /**
@@ -106,6 +108,14 @@ namespace subsystems
          * @brief Function that makes the robot follow an inputted cubic Bezier curve and linear motion profile
          */
         void tangentIntersection(cubicBezier curve, std::vector<std::vector<double>> profile, bool backwards = false, bool async = true);
+
+        /**
+         * @brief Function to make the robot swing(only move one side of the drivetrain) to a desired heading
+         * 
+         * @param side Side of drivetrain to move, true for left
+         * @param backwards Direction to move drivetrain side to reach heading
+         */
+        void swingToHeading(double heading, bool side, bool backwards = false, bool radians = false, bool async = true);
 
         /**
          * @brief Function to make the robot follow a desired path from the path generator or path scheduler

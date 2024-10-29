@@ -48,14 +48,14 @@ enum auton Auton = LEFT;
 
 void autonomous() 
 {   
-    drivetrain.drive(-95, 12000, true);
-    drivetrain.waitUntil(65);
-    mogo.setState(true);
-    drivetrain.waitUntilEnd();
-    drivetrain.stop(400);
-    intake.setVoltage(12000);
-    pros::delay(2500);
-    intake.setVoltage(0);
+    drivetrain.runOdom(Pose(0, 0, 0));
+    lift.holdPosition(subsystems::LiftPosition::DEFAULT);
+    drivetrain.setBrakeMode(MOTOR_BRAKE_HOLD);
+
+    
+
+    drivetrain.stopOdom();
+    lift.endHold();
 }
 
 void opcontrol() 
@@ -63,7 +63,7 @@ void opcontrol()
     //Colour we are
     bool colour = false;
 
-    drivetrain.stopOdom();
+    drivetrain.setBrakeMode(MOTOR_BRAKE_COAST);
     lift.holdPosition(subsystems::LiftPosition::DEFAULT);
 	while(true)
     {
