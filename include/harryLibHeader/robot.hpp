@@ -151,9 +151,9 @@ namespace subsystems
     enum LiftPosition
     {
         DEFAULT = 0,
-        GRAB = 120,
+        GRAB = 110,
         HANG = 300,
-        SCORE = 680
+        SCORE = 690
     };
 
     class lift

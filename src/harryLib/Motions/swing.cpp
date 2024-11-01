@@ -23,15 +23,17 @@ namespace subsystems
 
             PID::PID pid = PID::PID
             {
-                0,  //Kp
+                40000,  //Kp
                 0,  //Ki
-                0,  //Kd
+                800000,  //Kd
                 0,  //Windup Range
                 0   //Max Intergal
             };
 
-            double errorExit = 0;
-            double velExit = 0;
+            double errorExit = 0.02;
+            double velExit = 1;
+
+            double minSpeed = 5000;
             
             double angle = heading;
             if(!radians)
@@ -75,8 +77,15 @@ namespace subsystems
 
                 //Getting pid output
                 double output = pid.getPid(rotationDifference);
-            
+
+                if(fabs(output) < minSpeed)
+                {
+                    output = sign(output) * minSpeed;
+                }
+
                 //Setting motor voltage based on output, and which side should be moving
+
+
                 setVoltage(output * side, output * (side - 1), true, 10);
             
                 //Exit conditions, velocity + range exit
@@ -87,6 +96,8 @@ namespace subsystems
 
                 //Updating async variables
                 this->distanceTraveled += fabs(pose.rotation - prevPose.rotation);
+
+                Controller.print(0, 0, "%f", pid.getError());
 
                 pros::delay(10);
             }

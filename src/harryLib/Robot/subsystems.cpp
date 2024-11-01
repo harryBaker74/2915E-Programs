@@ -57,9 +57,9 @@ namespace subsystems
             //Input position, output a velocity
             PID::PID posPID = PID::PID
             {
-                10,
+                20,
                 0,
-                0,
+                40,
                 0,
                 0
             };

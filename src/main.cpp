@@ -49,13 +49,56 @@ enum auton Auton = LEFT;
 void autonomous() 
 {   
     drivetrain.runOdom(Pose(0, 0, 0));
-    lift.holdPosition(subsystems::LiftPosition::DEFAULT);
+    //lift.holdPosition(subsystems::LiftPosition::DEFAULT);
     drivetrain.setBrakeMode(MOTOR_BRAKE_HOLD);
 
     
+    //4 ring, ring side, awp end
+    /*drivetrain.drive(-27, 12000, false);
+    drivetrain.swingToHeading(-30, true, true, false, false);
+    drivetrain.drive(-52, 6000, false);
+    mogo.setState(true);
+    pros::delay(200);
+    intake.setVoltage(12000);
+    drivetrain.drive(-5, 12000, false);
+    drivetrain.turnToHeading(-90, 2000, false, false);
+    drivetrain.drive(45, 12000, false);
+    pros::delay(650);
+    drivetrain.turnToHeading(-180, 2500, false, false);
+    drivetrain.drive(31, 12000, false);
+    drivetrain.drive(-38, 12000, false);
+    drivetrain.swingToHeading(-155, true, false, false, false);
+    drivetrain.drive(30, 12000, false);
+    drivetrain.stop(300);
+    drivetrain.drive(-40, 12000, false);
+    drivetrain.swingToHeading(90, false, false, false, false);
+    drivetrain.drive(50, 12000, false);
+    */
 
-    drivetrain.stopOdom();
-    lift.endHold();
+    //4 ring, ring side, elim end
+    drivetrain.drive(-27, 12000, false);
+    drivetrain.swingToHeading(-30, true, true, false, false);
+    drivetrain.drive(-52, 6000, false);
+    mogo.setState(true);
+    pros::delay(200);
+    intake.setVoltage(12000);
+    drivetrain.drive(-5, 12000, false);
+    drivetrain.turnToHeading(-90, 1600, false, false);
+    drivetrain.drive(45, 12000, false);
+    pros::delay(650);
+    drivetrain.turnToHeading(-180, 2300, false, false);
+    drivetrain.drive(31, 12000, false);
+    drivetrain.drive(-38, 12000, false);
+    drivetrain.swingToHeading(-155, true, false, false, false);
+    drivetrain.drive(30, 12000, false);
+    drivetrain.stop(300);
+    drivetrain.drive(-40, 12000, false);
+    drivetrain.swingToHeading(-260, true, true, false, false);
+    drivetrain.stop(200);
+    intake.setVoltage(-12000);
+    drivetrain.drive(200, 12000, false);
+
+    drivetrain.stop(200);
 }
 
 void opcontrol() 
@@ -63,6 +106,8 @@ void opcontrol()
     //Colour we are
     bool colour = false;
 
+    //drivetrain.stopOdom();
+    lift.endHold();
     drivetrain.setBrakeMode(MOTOR_BRAKE_COAST);
     lift.holdPosition(subsystems::LiftPosition::DEFAULT);
 	while(true)

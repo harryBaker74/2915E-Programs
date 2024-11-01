@@ -75,16 +75,16 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             gainSchedular Wr = gainSchedular(4.8, 7, 10, 20); // wR * 100
 
             PID::PID pid(
-                Kp.getGain(difference * 180 / M_PI) * 1000,    //Kp
-                Ki.getGain(difference * 180 / M_PI) * 100,    //Ki
-                Kd.getGain(difference * 180 / M_PI) * 10000,    //Kd
-                Wr.getGain(difference * 180 / M_PI) / 100,    //Windup Range
-                0.5     //Max Intergal
+                15000,    //Kp
+                1000,    //Ki
+                140000,    //Kd
+                0.175,    //Windup Range
+                0     //Max Intergal
             );
 
 
             //Exit conditions
-            double errorExit = 0.02;
+            double errorExit = 0.01;
             double velExit = 0.015;
 
             

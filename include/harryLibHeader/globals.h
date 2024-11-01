@@ -8,13 +8,13 @@
 
 //Tracking wheel offsets(cm)
 #define HORIZONTAL_OFFSET 2.61
-#define VERTICAL_OFFSET 14.90
+#define VERTICAL_OFFSET 12.5
 
 //Controller port
 #define CONTROLLER 8
 
 //IMU Port
-#define INERTIAL 12
+#define INERTIAL 21
 
 //Tracking Wheel Port
 #define TRACKING_WHEEL 8

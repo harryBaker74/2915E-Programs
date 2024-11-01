@@ -60,8 +60,8 @@ namespace subsystems
             double headingKp = 10000;
             
             //Exit Conditions
-            double errorExit = 100;
-            double velExit = 60;
+            double errorExit = 50;
+            double velExit = 30;
 
             //Static variables for derivatives
             Pose prevPose = this->pose;
@@ -100,6 +100,8 @@ namespace subsystems
                 
                 //Outputting voltage into motors and slewing
                 this->setVoltage(output + headingOutput, output - headingOutput, true, 10);
+
+                Controller.print(0, 0, "%.2f, %.2f", output, pid.getError());
 
                 //Updating async variables
                 this->distanceTraveled = (Odometery::getEncoder(LEFT_MOTOR_FRONT) - startLeftEncoder) * DRIVE_GEAR_RATIO / 360 * (DRIVE_WHEEL_DIAMETER * 2.54 * M_PI);
