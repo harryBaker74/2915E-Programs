@@ -72,6 +72,15 @@ class profile
 
     //Generates a linear velocity profie, for use with steering algorithms
     std::vector<std::vector<double>> generateProfile(cubicBezier curve, double pointAmount = 50, double k = 5);
+
+    /**
+     * @brief Generates a 2d motion profiled trajectory, based off of an inputedd spline
+     * 
+     * @param spline Spline to use
+     * 
+     * @return A vector of pairs, with each pair having a pose, and a vector of linear and angular velocities
+     */
+    std::vector<std::pair<Pose, std::vector<double>>> generateProfile(quinticSpline spline);
     
     double maxVel;
     double maxAccel;

@@ -347,3 +347,9 @@
         return output;
 
     }
+
+    std::vector<std::pair<Pose, std::vector<double>>> generateProfile(quinticSpline spline)
+    {
+
+    }
+
