@@ -29,6 +29,41 @@ struct cubicBezier
     Point p4 = Point(0, 0);
 };
 
+struct quinticBezier
+{
+    Point p0;
+    Point p1;
+    Point p2;
+    Point p3;
+    Point p4;
+    Point p5;
+
+    quinticBezier(Point p0, Point p1, Point p2, Point p3, Point p4, Point p5);
+    
+    Point getPoint(double t);
+
+    Point getFirstDerivative(double t);
+
+    Point getSecondDerivative(double t);
+
+    double getCurvature(double t);
+};
+
+struct quinticSpline
+{
+    std::vector<quinticBezier> curves;
+
+    quinticSpline(std::vector<std::vector<Point>> points);
+
+    Point getPoint(double u);
+
+    Point getFirstDerivative(double u);
+
+    Point getSecondDerivative(double u);
+
+    double getCurvature(double u);
+};
+
 class profile
 {
     public:

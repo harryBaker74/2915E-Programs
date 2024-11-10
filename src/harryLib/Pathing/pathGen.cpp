@@ -83,6 +83,154 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+//Quintic Bezier struct
+//Inspired by cubic bezier framework, with math from https://www.desmos.com/calculator/iy5gzoasrf
+    quinticBezier::quinticBezier(Point p0, Point p1, Point p2, Point p3, Point p4, Point p5)
+    {
+        this->p0 = p0;
+        this->p1 = p1;
+        this->p2 = p2;
+        this->p3 = p3;
+        this->p4 = p4;
+        this->p5 = p5;
+    }
+
+    Point quinticBezier::getPoint(double t)
+    {
+        Point point =   
+            p0 * (pow(1 - t, 5))
+        +   p1 * (5 * t * pow(1 - t, 4))
+        +   p2 * (10 * pow(t, 2) * pow(1 - t, 3))
+        +   p3 * (10 * pow(t, 3) * pow(1 - t, 2))
+        +   p4 * (5 * pow(t, 4) * (1 - t))
+        +   p5 * (pow(t, 5));
+
+        return point;
+    }
+
+    Point quinticBezier::getFirstDerivative(double t)
+    {
+        Point firstDerivative = 
+            p0 * (-5 * pow(1 - t, 4))
+        +   p1 * ((5 - (25 * t)) * pow(1 - t, 3))
+        +   p2 * (t * (20 - (50 * t)) * pow(1 - t, 2))
+        +   p3 * (pow(t, 2) * (30 - (50 * t)) * (1 - t))
+        +   p4 * (pow(t, 3) * (20 - (25 * t)))
+        +   p5 * (5 * pow(t, 4));
+
+        return firstDerivative;
+    }
+
+    Point quinticBezier::getSecondDerivative(double t)
+    {
+        Point secondDerivative =
+            p0 * (20 * pow(1 - t, 3))
+        +   p1 * ((-40 * pow(1 - t, 3)) + ((60 * t) * pow(1 - t, 2)))
+        +   p2 * ((20 * pow(1 - t, 3)) + ((-120 * t) * pow(1 - t, 2)) + ((60 * pow(t, 2)) * (1 - t)))
+        +   p3 * (((60 * t) * pow(1 - t, 2)) + ((-120 * pow(t, 2)) * (1 - t)) + (20 * pow(t, 3)))
+        +   p4 * (((60 * pow(t, 2)) * (1 - t)) + (-40 * pow(t, 3)))
+        +   p5 * (20 * pow(t, 3));
+
+        return secondDerivative;
+    }
+
+    double quinticBezier::getCurvature(double t)
+    {
+        Point firstDerivative = getFirstDerivative(t);
+        Point secondDerivative = getSecondDerivative(t);
+
+        double firstMagnitude = sqrt(pow(firstDerivative.x, 2) + pow(firstDerivative.y, 2));
+
+        double curvature = (firstDerivative.cross(secondDerivative)) / pow(firstMagnitude, 3);
+    }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Quintic Spline Struct
+//Based off of the same desmos thing from the quintic bezier struct, just with some logic to handle easy continuos spline generation and interpolation
+
+    /**
+     * @brief This should be used with a spline planner of some sort, 
+     * desmos link if needed: https://www.desmos.com/calculator/iy5gzoasrf
+     * 
+     * @param points A vector of point groups, with each point group having 3 points in it. First point in each group is the point the curve passes through, second point is first handle, third point is second handle
+     */
+    quinticSpline::quinticSpline(std::vector<std::vector<Point>> points)
+    {
+        //Figuring our how many quintic bezier curves to generate
+        double curveAmount = points.size() - 1;
+
+        //Setting first curve manually
+        curves.at(0) = quinticBezier(points.at(0).at(0), points.at(0).at(1), points.at(0).at(2), points.at(1).at(2), points.at(1).at(1), points.at(1).at(0));
+
+        //Going over each point group, creating a curve for each group(except last)
+        for(int pointGroupIndex = 1; pointGroupIndex <= curveAmount; pointGroupIndex++)
+        {
+            //Calculating the handles used for generating the curve
+            Point firstCalculatedHandle= (points.at(pointGroupIndex).at(0) * 2) - points.at(pointGroupIndex).at(1);
+            Point secondCalculatedHandle = (points.at(pointGroupIndex).at(0) * 4) - (points.at(pointGroupIndex).at(1) * 4) + points.at(pointGroupIndex).at(2);
+
+            //Creating curve object
+            quinticBezier calculatedCurve = quinticBezier(points.at(pointGroupIndex).at(0), firstCalculatedHandle, secondCalculatedHandle, 
+            points.at(pointGroupIndex + 1).at(2), points.at(pointGroupIndex + 1).at(1), points.at(pointGroupIndex + 1).at(0));
+
+            //Adding curve onto the end of the curves vector
+            curves.push_back(calculatedCurve);
+        }
+    }
+
+    /**
+     * @param u Interpolating value. The whole number is the curve to interpolate(-1), the decimal is the t value. Ex: u = 1.5, choosing second curve with t value of 0.5
+     */
+    Point quinticSpline::getPoint(double u)
+    {
+        int curveIndex = floor(u);
+        double t = u - curveIndex;
+        Point point = curves.at(curveIndex).getPoint(t);
+
+        return point;
+    }
+
+    /**
+     * @param u Interpolating value. The whole number is the curve to interpolate(-1), the decimal is the t value. Ex: u = 1.5, choosing second curve with t value of 0.5
+     */
+    Point quinticSpline::getFirstDerivative(double u)
+    {
+        int curveIndex = floor(u);
+        double t = u - curveIndex;
+        Point firstDerivative = curves.at(curveIndex).getFirstDerivative(t);
+
+        return firstDerivative;
+    }
+
+    /**
+     * @param u Interpolating value. The whole number is the curve to interpolate(-1), the decimal is the t value. Ex: u = 1.5, choosing second curve with t value of 0.5
+     */
+    Point quinticSpline::getSecondDerivative(double u)
+    {
+        int curveIndex = floor(u);
+        double t = u - curveIndex;
+        Point secondDerivative = curves.at(curveIndex).getSecondDerivative(t);
+
+        return secondDerivative;
+    }
+
+    /**
+     * @param u Interpolating value. The whole number is the curve to interpolate(-1), the decimal is the t value. Ex: u = 1.5, choosing second curve with t value of 0.5
+     */
+    double quinticSpline::getCurvature(double u)
+    {
+        int curveIndex = floor(u);
+        double t = u - curveIndex;
+        double curvature = curves.at(curveIndex).getCurvature(t);
+
+        return curvature;
+    }
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     profile::profile(double maxVel, double maxAccel, double maxDeccel)
     {
         this->maxVel = maxVel;
