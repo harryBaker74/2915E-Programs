@@ -8,37 +8,35 @@
 
 //Tracking wheel offsets(cm)
 #define HORIZONTAL_OFFSET 2.61
-#define VERTICAL_OFFSET 12.5
+#define VERTICAL_OFFSET 14.5503391594702
 
 //Controller port
 #define CONTROLLER 8
 
 //IMU Port
-#define INERTIAL 21
+#define INERTIAL 9
 
 //Tracking Wheel Port
 #define TRACKING_WHEEL 8
 
 //Mogo Port
-#define MOGO 'G'
+#define MOGO 'A'
 
-//Arm Port
-#define ARM 'A'
+//Redirect
+#define REDIRECT 'B'
 
 //Drivtrain Motor Ports
-#define LEFT_MOTOR_FRONT 4
-#define LEFT_MOTOR_MID -5
-#define LEFT_MOTOR_BACK -6
+#define LEFT_MOTOR_FRONT -1
+#define LEFT_MOTOR_MID 2
+#define LEFT_MOTOR_BACK -3
 
-#define RIGHT_MOTOR_FRONT -1
-#define RIGHT_MOTOR_MID 2
-#define RIGHT_MOTOR_BACK 3
+#define RIGHT_MOTOR_FRONT 4
+#define RIGHT_MOTOR_MID -6
+#define RIGHT_MOTOR_BACK 5
 
 //Intake Port
-#define INTAKE 7
+#define INTAKE_1 7
+#define INTAKE_2 -8
 
 //Optical Sensor Port
 #define OPTICAL 15
-
-//Lift Port
-#define LIFT 11

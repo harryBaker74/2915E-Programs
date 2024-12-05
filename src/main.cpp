@@ -15,13 +15,11 @@
         TRACKING_WHEEL,
         INERTIAL);
     //Creating intake
-    subsystems::intake intake = subsystems::intake(INTAKE, OPTICAL);
-    //Creating lift
-    subsystems::lift lift = subsystems::lift(LIFT);
+    subsystems::intake intake = subsystems::intake(INTAKE_1, INTAKE_2);
     //Creating Mogo
     subsystems::mogo mogo = subsystems::mogo(MOGO);
     //Creating arm
-    subsystems::arms arm = subsystems::arms(ARM);
+    subsystems::redirect redirect = subsystems::redirect(REDIRECT);
 
 
     //Auton paths and motion profiling
@@ -49,56 +47,119 @@ enum auton Auton = LEFT;
 void autonomous() 
 {   
     drivetrain.runOdom(Pose(0, 0, 0));
-    //lift.holdPosition(subsystems::LiftPosition::DEFAULT);
     drivetrain.setBrakeMode(MOTOR_BRAKE_HOLD);
 
-    
-    //4 ring, ring side, awp end
-    /*drivetrain.drive(-27, 12000, false);
-    drivetrain.swingToHeading(-30, true, true, false, false);
-    drivetrain.drive(-52, 6000, false);
+    /*drivetrain.moveToPoint(Point(0, -70), true, true);
+    drivetrain.waitUntil(60);
     mogo.setState(true);
-    pros::delay(200);
+    drivetrain.waitUntilEnd();
     intake.setVoltage(12000);
-    drivetrain.drive(-5, 12000, false);
-    drivetrain.turnToHeading(-90, 2000, false, false);
-    drivetrain.drive(45, 12000, false);
-    pros::delay(650);
-    drivetrain.turnToHeading(-180, 2500, false, false);
-    drivetrain.drive(31, 12000, false);
-    drivetrain.drive(-38, 12000, false);
-    drivetrain.swingToHeading(-155, true, false, false, false);
-    drivetrain.drive(30, 12000, false);
-    drivetrain.stop(300);
-    drivetrain.drive(-40, 12000, false);
-    drivetrain.swingToHeading(90, false, false, false, false);
-    drivetrain.drive(50, 12000, false);
+
+    drivetrain.moveToPoint(Point(-70, -60), false, false);
+    
+
+    drivetrain.moveToPoint(Point(-70, -106), false, false);
+
+    drivetrain.moveToPoint(Point(-50, -70), true, false);
+    drivetrain.moveToPoint(Point(-50, -110), false, false);
+
+    drivetrain.moveToPoint(Point(-60, -70), true, false);
+
+    drivetrain.moveToPoint(Point(-60, -30), false, false);
+
+    drivetrain.boomerang(Pose(-100, 15, -45), 7000, 0.5, false, false, false);
+    
+    pros::delay(300);
+    drivetrain.moveToPoint(Point(45, -10), true, true);
+    pros::delay(500);
+    intake.holdPosition(subsystems::LiftPosition::ALLIANCE);
+    drivetrain.waitUntilEnd();
+
+    drivetrain.stop(300);*/
+
+    drivetrain.drive(-75, 6000, true);
+    drivetrain.waitUntil(74);
+    mogo.setState(true);
+    drivetrain.waitUntilEnd();
+    intake.setVoltage(12000);
+
+    drivetrain.moveToPoint(Point(60, -70), false, false);
+    
+    drivetrain.moveToPoint(Point(70, -90), false, false);
+
+    drivetrain.moveToPoint(Point(70, -112), false, false);
+
+    drivetrain.moveToPoint(Point(25, -70), true, false);
+    drivetrain.moveToPoint(Point(42, -113), false, false);
+
+    drivetrain.moveToPoint(Point(60, -70), true, false);
+
+    drivetrain.moveToPoint(Point(60, -30), false, false);
+
+    drivetrain.stop();
+
+
+
+
+    //Wp 4 ring side, blue team
+    
+    /*drivetrain.drive(-75, 6000, true);
+    drivetrain.waitUntil(74);
+    mogo.setState(true);
+    drivetrain.waitUntilEnd();
+    intake.setVoltage(12000);
+
+    drivetrain.moveToPoint(Point(-75, -72), false, false);
+    
+    drivetrain.moveToPoint(Point(-70, -72), false, false);
+
+    drivetrain.moveToPoint(Point(-70, -111), false, false);
+
+    drivetrain.moveToPoint(Point(-20, -72), true, false);
+    drivetrain.moveToPoint(Point(-35, -113), false, false);
+
+    drivetrain.moveToPoint(Point(-60, -72), true, false);
+
+    drivetrain.moveToPoint(Point(-60, -32), false, false);
+
+    drivetrain.stop();
     */
 
-    //4 ring, ring side, elim end
-    drivetrain.drive(-27, 12000, false);
-    drivetrain.swingToHeading(-30, true, true, false, false);
-    drivetrain.drive(-52, 6000, false);
+    //Elim 4 ring side, blue team
+    /*
+    drivetrain.drive(-70, 6000, true);
+    drivetrain.waitUntil(65);
     mogo.setState(true);
+    drivetrain.waitUntilEnd();
+    intake.setVoltage(12000);
+
+    drivetrain.moveToPoint(Point(-75, -70), false, false);
+    
+    drivetrain.moveToPoint(Point(-70, -70), false, false);
+
+    drivetrain.moveToPoint(Point(-70, -112), false, false);
+
+    drivetrain.moveToPoint(Point(-20, -70), true, false);
+    drivetrain.moveToPoint(Point(-35, -112), false, false);
+
+    drivetrain.moveToPoint(Point(-60, -70), true, false);
+
+    drivetrain.moveToPoint(Point(-60, -30), false, false);
+
+    drivetrain.boomerang(Pose(-98, 13, -45), 7000, 0.5, false, false, true);
+    drivetrain.waitUntil(60);
+    intake.setVoltage(0);
+    drivetrain.waitUntilEnd();
+
+    pros::delay(300);
+    drivetrain.moveToPoint(Point(45, -10), true, false);
+
+    drivetrain.setBrakeMode(MOTOR_BRAKE_COAST);
+    drivetrain.setVoltage(0, 0);
     pros::delay(200);
     intake.setVoltage(12000);
-    drivetrain.drive(-5, 12000, false);
-    drivetrain.turnToHeading(-90, 1600, false, false);
-    drivetrain.drive(45, 12000, false);
-    pros::delay(650);
-    drivetrain.turnToHeading(-180, 2300, false, false);
-    drivetrain.drive(31, 12000, false);
-    drivetrain.drive(-38, 12000, false);
-    drivetrain.swingToHeading(-155, true, false, false, false);
-    drivetrain.drive(30, 12000, false);
-    drivetrain.stop(300);
-    drivetrain.drive(-40, 12000, false);
-    drivetrain.swingToHeading(-260, true, true, false, false);
-    drivetrain.stop(200);
-    intake.setVoltage(-12000);
-    drivetrain.drive(200, 12000, false);
+    */
 
-    drivetrain.stop(200);
 }
 
 void opcontrol() 
@@ -107,21 +168,18 @@ void opcontrol()
     bool colour = false;
 
     //drivetrain.stopOdom();
-    lift.endHold();
+    intake.endHold();
     drivetrain.setBrakeMode(MOTOR_BRAKE_COAST);
-    lift.holdPosition(subsystems::LiftPosition::DEFAULT);
 	while(true)
     {
         //Controlling Drivetrain
         drivetrain.driverFunctions();
         //Controlling Intake
         intake.driverFunctions(colour);
-        //Controlling Plunger
-        lift.driverFunctions();
         //Controlling Mogo
         mogo.driverFunctions();
-        //Controlling Arm
-        arm.driverFunctions();
+        //Controlling Redirect
+        redirect.driverFunctions();
         
         pros::delay(10);
     }

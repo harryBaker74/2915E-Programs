@@ -124,18 +124,38 @@ namespace subsystems
 
     };
 
+    enum LiftPosition
+    {
+        ALLIANCE = -650,
+        WALL = -800,
+        TIP = -400
+    };
+
     class intake
     {
-        pros::Motor intakeMotor;
-        pros::v5::Optical optical;
 
-        bool sort = false;
-        double sortStartTime = 0;
-        double sortEndTime = 0;
+        double targetPos = 0;
+
+        pros::Motor intakeMotor1;
+        pros::Motor intakeMotor2;
+        
+        bool lifting = false;
 
         public:
         //Constructor
-        intake(int intakeMotorPort, int opticalSensorPort);
+        intake(int intakeMotor1Port, int intakeMotor2Port);
+
+        //Getting postion of intake
+        double getPosition();
+        double getVelocity();
+
+        //Functions to move lift to certain positions
+        void setPosition(enum LiftPosition position);
+        void holdPosition(enum LiftPosition position);
+        void endHold();
+        //Function to convert current encoder position into an amount of radians for the lift in real life. Used for vel controller
+        double encoderToRad(double encoder);
+
 
         //Function to set intake voltage
         void setVoltage(double voltage);
@@ -146,40 +166,6 @@ namespace subsystems
          * @param colour The colour you are(sorting out other colour), True for blue, false for red
         */
         void driverFunctions(bool colour);
-    };
-
-    enum LiftPosition
-    {
-        DEFAULT = 0,
-        GRAB = 110,
-        HANG = 300,
-        SCORE = 690
-    };
-
-    class lift
-    {
-
-        enum LiftPosition targetPos = DEFAULT;
-        bool hold = false;
-
-        pros::Motor liftMotor;
-
-        public:
-        //Constructor
-        lift(int liftMotorPort);
-
-        //Function to set basket voltage
-        void setVoltage(double voltage);
-
-        //Functions to move lift to certain positions
-        void setPosition(enum LiftPosition position);
-        void holdPosition(enum LiftPosition position);
-        void endHold();
-        //Function to convert current encoder position into an amount of radians for the lift in real life. Used for vel controller
-        double encoderToRad(double encoder);
-
-        //Function to run basket during driver control
-        void driverFunctions();
     };
 
     class mogo
@@ -200,15 +186,15 @@ namespace subsystems
         void driverFunctions();
     };
 
-    class arms
+    class redirect
     {
-        pros::adi::Pneumatics arm1Solanoid;
+        pros::adi::Pneumatics redirectPiston;
 
-        int arm1PressCount = 0;
+        int redirectPressCount = 0;
 
         public:
         //Constructer
-        arms(char arm1SolanoidPort);
+        redirect(char redirectPistonPort);
 
         //Function to set state
         void setState(bool state);

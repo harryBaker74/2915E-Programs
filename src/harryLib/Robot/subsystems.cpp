@@ -9,78 +9,64 @@ namespace subsystems
 
     //Intake Class
         //Constructor
-        intake::intake(int intakeMotorPort, int opticalSensorPort)
-        :   intakeMotor(pros::Motor (intakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
-            optical(pros::v5::Optical (opticalSensorPort))
+        intake::intake(int intakeMotor1Port, int intakeMotor2Port)
+        :   intakeMotor1(pros::Motor (intakeMotor1Port, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+            intakeMotor2(pros::Motor (intakeMotor2Port, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees))
         {}
 
-        //Function to set intake voltage
-        void intake::setVoltage(double voltage)
+        double intake::getPosition()
         {
-            intakeMotor.move_voltage(floor(voltage));
+            return (intakeMotor1.get_position() + intakeMotor2.get_position()) / 2;
         }
 
-        //Function to run intake during driver control
-        void intake::driverFunctions(bool colour)
-        {  
-            setVoltage((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2)) * 12000);
-        }
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //Lift Class
-        //Constructor
-        lift::lift(int liftMotorPort)
-        :   liftMotor(pros::Motor (liftMotorPort, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees))
+        double intake::getVelocity()
         {
-            liftMotor.set_brake_mode(MOTOR_BRAKE_HOLD);
+            return (intakeMotor1.get_actual_velocity() + intakeMotor2.get_actual_velocity()) / 2;
         }
 
-        //Function to set basket voltage
-        void lift::setVoltage(double voltage)
-        {
-            liftMotor.move_voltage(floor(voltage));
-        }
-
-        void lift::setPosition(enum LiftPosition position)
+        void intake::setPosition(enum LiftPosition position)
         {
             this->targetPos = position;
         }
 
-        void lift::holdPosition(enum LiftPosition position)
+        void intake::holdPosition(enum LiftPosition position)
         {
+            intakeMotor1.tare_position();
+            intakeMotor2.tare_position();
+
             this->targetPos = position;
-            this->hold = true;
+            this->lifting = true;
 
             pros::Task task{[=, this] {
             //Input position, output a velocity
             PID::PID posPID = PID::PID
             {
-                20,
+                6,
                 0,
-                40,
+                0,
                 0,
                 0
             };
 
             //Inputs a velocity, outputs a voltage
-            double Ks = 700;
-            double Kv = 25;
-            double Kg = 1200;
+            double Ks = 1000;
+            double Kv = 10;
+            double Kg = -3000;
 
-            while(this->hold)
+            while(this->lifting)
             {
-                double currentPos = this->liftMotor.get_position() / 5;
-                double posError = (targetPos / 5) - currentPos;
+
+                double currentPos = getPosition();
+                double posError = (targetPos) - currentPos;
                 double angle = encoderToRad(currentPos);
                 double targetVel = posPID.getPid(posError);
-                double currentVel = this->liftMotor.get_actual_velocity();
+                double currentVel = getVelocity();
 
-                double voltage = Kg * cos(angle) + Ks * sign(targetVel) + Kv * targetVel;
+                double voltage = Kg + Ks * sign(targetVel) + Kv * targetVel;
 
-                setVoltage(voltage);
-                printf("%f\n", voltage);
+                Controller.print(0, 0, "%f", targetVel);
+
+                this->setVoltage(voltage);
                 pros::delay(15);
             }
 
@@ -91,27 +77,69 @@ namespace subsystems
             }};
         }
 
-        void lift::endHold()
+        void intake::endHold()
         {
-            this->hold = false;
+            this->lifting = false;
         }
 
-        double lift::encoderToRad(double encoder)
+        double intake::encoderToRad(double encoder)
         {
-            double zero = 100 / 5;//Amount of encoder units for a perfectly horizontal position, zero radians
+            double zero = -30;//Amount of encoder units for a perfectly horizontal position, zero radians
             double offset = zero - encoder; //Find difference, sign doesnt matter because its being used for cos wave
             return offset * M_PI / 180; //Convert from normal encoder unit(degrees) to radians
         }
 
-        //Function to run basket during driver control
-        void lift::driverFunctions()
+        //Function to set intake voltage
+        void intake::setVoltage(double voltage)
         {
-            if(Controller.get_digital(DIGITAL_L1))
-                setPosition(subsystems::LiftPosition::SCORE);
+            intakeMotor1.move_voltage(floor(voltage));
+            intakeMotor2.move_voltage(floor(voltage));
+        }
+
+        //Function to run intake during driver control
+        void intake::driverFunctions(bool colour)
+        {  
+            if(Controller.get_digital(DIGITAL_R1))
+            {
+                    endHold();
+            }
+            if(!lifting)
+            {
+                setVoltage((Controller.get_digital(DIGITAL_R1)) * 12000);
+            }
+
+            if(Controller.get_digital(DIGITAL_R2))
+            {
+                if(!lifting)
+                {
+                    lifting = true;
+                    holdPosition(WALL);
+                }
+                else
+                    setPosition(WALL);
+
+            }
             if(Controller.get_digital(DIGITAL_L2))
-                setPosition(subsystems::LiftPosition::GRAB);
-            if(Controller.get_digital(DIGITAL_LEFT))
-                setPosition(subsystems::LiftPosition::DEFAULT);
+            {
+                if(!lifting)
+                {
+                    lifting = true;
+                    holdPosition(ALLIANCE);
+                }
+                else
+                    setPosition(ALLIANCE);
+            }
+            if(Controller.get_digital(DIGITAL_X))
+            {
+                if(!lifting)
+                {
+                    lifting = true;
+                    holdPosition(TIP);
+                }
+                else
+                    setPosition(TIP);
+            }
+
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -132,33 +160,29 @@ namespace subsystems
         //Function to run mogo during driver control
         void mogo::driverFunctions()
         {
-            mogoPressCount += Controller.get_digital_new_press(DIGITAL_A);
-            mogoPressCount % 2 == 0 ? setState(false) : setState(true); //End autons with a mogo
+            mogoPressCount += Controller.get_digital_new_press(DIGITAL_L1);
+            mogoPressCount % 2 == 0 ? setState(true) : setState(false); //End autons with a mogo
         }
         
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //Arms class
-        //Constructer
-        arms::arms(char arm1SolanoidPort)
-        : arm1Solanoid(pros::adi::Pneumatics (arm1SolanoidPort, false, false))
+    //Redirect Class
+        //Constructor
+        redirect::redirect(char redirectPistonPort)
+        :   redirectPiston(pros::adi::Pneumatics (redirectPistonPort, false))
         {}
 
-        //Function to set arm state
-        void arms::setState(bool state)
+        //Function to set redrect output
+        void redirect::setState(bool state)
         {
-            arm1Solanoid.set_value(state);
+            redirectPiston.set_value(state);
         }
 
         //Function for driver control
-        void arms::driverFunctions()
+        void redirect::driverFunctions()
         {
-            arm1PressCount += Controller.get_digital_new_press(DIGITAL_UP);
-            arm1PressCount % 2 == 0 ? setState(false) : setState(true);
+            redirectPressCount += Controller.get_digital_new_press(DIGITAL_UP);
+            redirectPressCount % 2 == 0 ? setState(false) : setState(true);
         }
 }

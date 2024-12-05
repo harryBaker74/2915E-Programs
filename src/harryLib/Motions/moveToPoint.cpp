@@ -16,7 +16,7 @@ namespace subsystems
         if(async)
         {
             pros::Task task {[=, this] {
-                moveToPoint(point, false, false);
+                moveToPoint(point, backwards, false);
                 pros::Task::current().remove();
             }};
         }
@@ -98,7 +98,7 @@ namespace subsystems
 
                 //Exit Conditions, Semi circle exit
                 //Should add velocity exit here in the future
-                if(exitConditions::semiCircleCheck(this->pose, point, this->pose.heading, errorExit, backwards))
+                if(exitConditions::semiCircleCheck(this->pose, point, this->pose.heading, errorExit, backwards) || exitConditions::rangeExit(hypot, errorExit))
                     break;
 
                 Controller.print(0, 0, "%.1f, %.1f, %.1f", hypot, pose.x, pose.y);

@@ -118,6 +118,9 @@ namespace Odometery
             localX = 2 * sin(deltaHeading / 2) * (deltaHorizontal / deltaHeading + HORIZONTAL_OFFSET);
         }
 
+        leftEncoders += deltaLeft;
+        Controller.print(0, 0, "%.2f, %.2f", robotPose->x, robotPose->y);
+
         //Rotataing the local axis back to global
         double averageHeading = robotPose->rotation + deltaHeading / 2; //Amount to rotate by
 
