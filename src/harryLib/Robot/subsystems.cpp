@@ -99,14 +99,14 @@ namespace subsystems
         //Function to run intake during driver control
         void intake::driverFunctions(bool colour)
         {  
-            if(Controller.get_digital(DIGITAL_R1))
+            /*if(Controller.get_digital(DIGITAL_R1))
             {
                     endHold();
             }
             if(!lifting)
-            {
-                setVoltage((Controller.get_digital(DIGITAL_R1)) * 12000);
-            }
+            {*/
+                setVoltage(((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2))) * 12000);
+           /* }
 
             if(Controller.get_digital(DIGITAL_R2))
             {
@@ -138,7 +138,7 @@ namespace subsystems
                 }
                 else
                     setPosition(TIP);
-            }
+            }*/
 
         }
 

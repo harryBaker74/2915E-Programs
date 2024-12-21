@@ -14,10 +14,10 @@
 #define CONTROLLER 8
 
 //IMU Port
-#define INERTIAL 9
+#define INERTIAL 10
 
 //Tracking Wheel Port
-#define TRACKING_WHEEL 8
+#define TRACKING_WHEEL 9
 
 //Mogo Port
 #define MOGO 'A'
@@ -26,17 +26,17 @@
 #define REDIRECT 'B'
 
 //Drivtrain Motor Ports
-#define LEFT_MOTOR_FRONT -1
-#define LEFT_MOTOR_MID 2
-#define LEFT_MOTOR_BACK -3
+#define LEFT_MOTOR_FRONT -2
+#define LEFT_MOTOR_MID -3
+#define LEFT_MOTOR_BACK 4
 
-#define RIGHT_MOTOR_FRONT 4
-#define RIGHT_MOTOR_MID -6
-#define RIGHT_MOTOR_BACK 5
+#define RIGHT_MOTOR_FRONT 17
+#define RIGHT_MOTOR_MID -18
+#define RIGHT_MOTOR_BACK 19
 
 //Intake Port
-#define INTAKE_1 7
-#define INTAKE_2 -8
+#define INTAKE_1 -20
+#define INTAKE_2 21
 
 //Optical Sensor Port
 #define OPTICAL 15
