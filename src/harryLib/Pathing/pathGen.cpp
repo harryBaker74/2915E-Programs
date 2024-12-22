@@ -348,8 +348,13 @@
 
     }
 
-    std::vector<std::pair<Pose, std::vector<double>>> generateProfile(quinticSpline spline)
+    std::vector<std::pair<Pose, std::vector<double>>> generateProfile(quinticSpline spline, double ds = 3, double k = 5)
     {
+        //dt = ds / sqrt(pow(deriv.x, 2) + pow(deriv.y, 2))
+        //Delta t based off delta distance, derived from current t
+        //From cooper motion profiling
+        //Note: Only an approcimation, more accurate with lower curvature, and lower ds
 
+        
     }
 

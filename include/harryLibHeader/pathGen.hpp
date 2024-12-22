@@ -76,11 +76,13 @@ class profile
     /**
      * @brief Generates a 2d motion profiled trajectory, based off of an inputedd spline
      * 
-     * @param spline Spline to use
+     * @param spline Spline to use, quintic bezier spline only
+     * @param ds Delta distance between each point in cm, defaulted to 3 cm
+     * @param k Tuning value for linear speed at higher curvatures, doesnt change angular velocites
      * 
      * @return A vector of pairs, with each pair having a pose, and a vector of linear and angular velocities
      */
-    std::vector<std::pair<Pose, std::vector<double>>> generateProfile(quinticSpline spline);
+    std::vector<std::pair<Pose, std::vector<double>>> generateProfile(quinticSpline spline, double ds = 3, double k = 5);
     
     double maxVel;
     double maxAccel;
