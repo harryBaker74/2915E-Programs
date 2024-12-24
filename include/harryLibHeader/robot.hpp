@@ -133,46 +133,40 @@ namespace subsystems
 
     class intake
     {
-
-        double targetPos = 0;
-
-        pros::Motor intakeMotor1;
-        pros::Motor intakeMotor2;
+        pros::Motor intakeMotor;
         
-        bool lifting = false;
-
         public:
         //Constructor
-        intake(int intakeMotor1Port, int intakeMotor2Port);
-
-        //Getting postion of intake
-        double getPosition();
-        double getVelocity();
-
-        //Functions to move lift to certain positions
-        void setPosition(enum LiftPosition position);
-        void holdPosition(enum LiftPosition position);
-        void endHold();
-        //Function to convert current encoder position into an amount of radians for the lift in real life. Used for vel controller
-        double encoderToRad(double encoder);
-
+        intake(int intakeMotorPort);
 
         //Function to set intake voltage
         void setVoltage(double voltage);
 
-        /**
-         * @brief Function to run intake during driver control
-         * 
-         * @param colour The colour you are(sorting out other colour), True for blue, false for red
-        */
-        void driverFunctions(bool colour);
+        //Function to run intake during driver control
+        void driverFunctions();
+    };
+
+    class lift
+    {
+        pros::Motor liftMotor1;
+        pros::Motor liftMotor2;
+
+        public:
+        //Constructor
+        lift(int liftMotor1Port, int liftMotor2Port);
+
+        //Function to set voltage
+        void setVoltage(double voltage);
+
+        //Function for driver control
+        void driverFunctions();
     };
 
     class mogo
     {
         pros::adi::Pneumatics mogoSolanoid;
 
-        int mogoPressCount = 0;
+        int pressCount = 0;
 
         public:
         //Constructor
@@ -186,21 +180,55 @@ namespace subsystems
         void driverFunctions();
     };
 
-    class redirect
+    class rushMech
     {
-        pros::adi::Pneumatics redirectPiston;
+        pros::adi::Pneumatics rushSolanoid;
 
-        int redirectPressCount = 0;
+        int pressCount = 0;
 
         public:
-        //Constructer
-        redirect(char redirectPistonPort);
+        //Constructor
+        rushMech(char rushMechSolanoidPort);
 
         //Function to set state
         void setState(bool state);
 
         //Function for driver control
         void driverFunctions();
-    
     };
+
+    class doinker    
+    {
+        pros::adi::Pneumatics doinkerSolanoid;
+
+        int pressCount = 0;
+
+        public:
+        //Constructor
+        doinker(char doinkerSolanoidPort);
+
+        //Function to set state
+        void setState(bool state);
+
+        //Function for driver control
+        void driverFunctions();
+    };
+
+    class pto
+    {
+        pros::adi::Pneumatics ptoSolanoid;
+
+        int pressCount = 0;
+
+        public:
+        //Constructor
+        pto(char ptoSolanoidPort);
+
+        //Function to set state
+        void setState(bool state);
+
+        //Function for driver control
+        void driverFunctions();
+    };
+
 }

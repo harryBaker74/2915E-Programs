@@ -13,19 +13,26 @@
         RIGHT_MOTOR_MID, 
         RIGHT_MOTOR_BACK,
         TRACKING_WHEEL,
-        INERTIAL);
-    //Creating intake
-    subsystems::intake intake = subsystems::intake(INTAKE_1, INTAKE_2);
-    //Creating Mogo
+        INERTIAL
+    );
+//Creating intake
+    subsystems::intake intake = subsystems::intake(INTAKE);
+//Creating Lift
+    subsystems::lift lift = subsystems::lift(LIFT_1, LIFT_2);
+//Creating Mogo
     subsystems::mogo mogo = subsystems::mogo(MOGO);
-    //Creating arm
-    subsystems::redirect redirect = subsystems::redirect(REDIRECT);
+//Creating Mogo
+    subsystems::rushMech rushMech = subsystems::rushMech(RUSH);
+//Creating Mogo
+    subsystems::doinker doinker = subsystems::doinker(DOINKER);
+//Creating Mogo
+    subsystems::pto pto = subsystems::pto(PTO);
 
 
-    //Auton paths and motion profiling
-    cubicBezier curve1 = cubicBezier(Point(10, -85), Point(5, -60), Point(-10, -20), Point(-10, -20));
-    profile motionProfile = profile(175.6, 473.4, 275);
-    std::vector<std::vector<double>> profile1;
+//Auton paths and motion profiling
+cubicBezier curve1 = cubicBezier(Point(10, -85), Point(5, -60), Point(-10, -20), Point(-10, -20));
+profile motionProfile = profile(175.6, 473.4, 275);
+std::vector<std::vector<double>> profile1;
 
 void initialize() 
 {
@@ -164,22 +171,24 @@ void autonomous()
 
 void opcontrol() 
 {
-    //Colour we are
-    bool colour = false;
-
-    //drivetrain.stopOdom();
-    intake.endHold();
+    drivetrain.stopOdom();
     drivetrain.setBrakeMode(MOTOR_BRAKE_COAST);
 	while(true)
     {
         //Controlling Drivetrain
         drivetrain.driverFunctions();
         //Controlling Intake
-        intake.driverFunctions(colour);
+        intake.driverFunctions();
+        //Controlling Lift
+        lift.driverFunctions();
         //Controlling Mogo
         mogo.driverFunctions();
-        //Controlling Redirect
-        redirect.driverFunctions();
+        //Controlling Rush Mech
+        rushMech.driverFunctions();
+        //Controlling Doinker
+        doinker.driverFunctions();
+        //Controlling Pto
+        pto.driverFunctions();
         
         pros::delay(10);
     }
