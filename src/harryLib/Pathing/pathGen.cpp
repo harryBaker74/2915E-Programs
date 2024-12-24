@@ -348,13 +348,76 @@
 
     }
 
-    std::vector<std::pair<Pose, std::vector<double>>> generateProfile(quinticSpline spline, double ds = 3, double k = 5)
+    std::vector<std::pair<Pose, std::vector<double>>> profile::generateProfile(quinticSpline spline, double ds = 3, double k = 5)
     {
         //dt = ds / sqrt(pow(deriv.x, 2) + pow(deriv.y, 2))
         //Delta t based off delta distance, derived from current t
         //From cooper motion profiling
-        //Note: Only an approcimation, more accurate with lower curvature, and lower ds
+        //Note: Only an approximation, more accurate with lower curvature, and lower ds
 
+        double startVel = 0;
+        //Forward pass
+        std::vector<std::vector<double>> forwardPass = {{}};
+
+        double u = 0;
+        //Caluclating Linear Velocity
+        double maxLinVelocity = fmin(this->maxVel, k / spline.getCurvature(u));
+        //(2 times because its a quadratic, only the biggest root is correct in real life)
+        double time_1 = (-startVel + sqrt(pow(startVel, 2) - 4 * maxAccel * (-1 * ds))) / 2 * maxAccel;
+        double time_2 = (-startVel - sqrt(pow(startVel, 2) - 4 * maxAccel * (-1 * ds))) / 2 * maxAccel;
+        double time = fmax(time_1, time_2);
+        double linVel = startVel + maxAccel * time;
+
+        //Calculating Angular velocity
+        double angVel = linVel * spline.getCurvature(u);
         
-    }
+        //Storing Velocities, time, and u value
+        forwardPass.at(0) = {linVel, angVel, time, u};
+        double prevVel = linVel;
+        double prevTime = time;
+
+        while(u < spline.curves.size())
+        {
+            //Getting delta u value based on delta distance 
+                Point derivative = spline.getFirstDerivative(u);
+                u += ds / sqrt(pow(derivative.x, 2) + pow(derivative.y, 2));
+
+            //Calculating lin vel
+                maxLinVelocity = fmin(maxVel, k / spline.getCurvature(u));
+                time_1 = (-prevVel + sqrt(pow(prevVel, 2) - 4 * maxAccel * (-1 * ds))) / 2 * maxAccel;
+                time_2 = (-prevVel - sqrt(pow(prevVel, 2) - 4 * maxAccel * (-1 * ds))) / 2 * maxAccel;
+                double time = fmax(time_1, time_2);
+                double linVel = prevVel + maxAccel * time;
+
+                //Cheicking if velocity reached would be higher than max vel
+                if(linVel > maxLinVelocity)
+                {
+                    linVel = maxLinVelocity;
+                    //Recalculating time by figuring out time to accel to max vel, and time spent at max vel
+                    double accelTime = (maxLinVelocity - prevVel) / maxAccel;
+                    double accelDistance = (prevVel * accelTime) + ((maxAccel * accelTime) / 2);
+                    double cruiseTime = (ds - accelDistance) / maxLinVelocity;
+                    time = accelTime + cruiseTime;
+                }
+
+            //Calculating ang vel
+                angVel = linVel * spline.getCurvature(u);
+
+            //Storing velocities, time, and u value
+                forwardPass.push_back({linVel, angVel, time + prevTime, u});
+
+            prevVel = linVel;
+            prevTime = time;
+        }
+
+        //Backwards pass
+
+        //For loop because we know the number of points now
+        for(int i = forwardPass.size() - 1; i--; i >= 0)
+        {
+            
+        }
+
+
+    }   
 
