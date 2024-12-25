@@ -142,6 +142,8 @@
         double firstMagnitude = sqrt(pow(firstDerivative.x, 2) + pow(firstDerivative.y, 2));
 
         double curvature = (firstDerivative.cross(secondDerivative)) / pow(firstMagnitude, 3);
+
+        return curvature;
     }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -348,7 +350,7 @@
 
     }
 
-    std::vector<std::pair<Pose, std::vector<double>>> profile::generateProfile(quinticSpline spline, double ds = 3, double k = 5)
+    std::vector<std::pair<Pose, std::vector<double>>> profile::generateProfile(quinticSpline spline, double ds, double k)
     {
         //dt = ds / sqrt(pow(deriv.x, 2) + pow(deriv.y, 2))
         //Delta t based off delta distance, derived from current t
@@ -415,9 +417,9 @@
         //For loop because we know the number of points now
         for(int i = forwardPass.size() - 1; i--; i >= 0)
         {
-            
+
         }
 
-
+        return {{Pose(0, 0, 0), {0}}};
     }   
 

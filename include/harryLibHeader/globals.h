@@ -15,30 +15,30 @@
     #define CONTROLLER 8
 
     //IMU Port
-    #define INERTIAL 10
+    #define INERTIAL 1
 
     //Tracking Wheel Port
     #define TRACKING_WHEEL 9
 
     //Drivtrain Motor Ports
     #define LEFT_MOTOR_FRONT -2
-    #define LEFT_MOTOR_MID -3
+    #define LEFT_MOTOR_MID 3
     #define LEFT_MOTOR_BACK 4
 
-    #define RIGHT_MOTOR_FRONT 17
-    #define RIGHT_MOTOR_MID -18
-    #define RIGHT_MOTOR_BACK 19
+    #define RIGHT_MOTOR_FRONT -11
+    #define RIGHT_MOTOR_MID -9
+    #define RIGHT_MOTOR_BACK 10
 
 //Other Motors
     //Intake Port
-    #define INTAKE -20
+    #define INTAKE -5
 
     //Lady Brown Ports
-    #define LIFT_1 0
-    #define LIFT_2 0
+    #define LIFT_1 -7
+    #define LIFT_2 6
 
 //Solanoids
-    //Mogo Port and controls
+    //Mogo Port and controlss
     #define MOGO 'A'
     #define MOGO_CONTROL DIGITAL_A
 
