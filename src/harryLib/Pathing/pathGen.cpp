@@ -350,7 +350,7 @@
 
     }
 
-    std::vector<std::pair<Pose, std::vector<double>>> profile::generateProfile(quinticSpline spline, double ds, double k)
+    std::vector<std::pair<Point, std::vector<double>>> profile::generateProfile(quinticSpline spline, double ds, double k)
     {
         //dt = ds / sqrt(pow(deriv.x, 2) + pow(deriv.y, 2))
         //Delta t based off delta distance, derived from current t
@@ -365,18 +365,14 @@
         //Caluclating Linear Velocity
         double maxLinVelocity = fmin(this->maxVel, k / spline.getCurvature(u));
         //(2 times because its a quadratic, only the biggest root is correct in real life)
-        double time_1 = (-startVel + sqrt(pow(startVel, 2) - 4 * maxAccel * (-1 * ds))) / 2 * maxAccel;
-        double time_2 = (-startVel - sqrt(pow(startVel, 2) - 4 * maxAccel * (-1 * ds))) / 2 * maxAccel;
+        double time_1 = (-startVel + sqrt(pow(startVel, 2) - 4 * maxAccel * (-1 * ds))) / (2 * maxAccel);
+        double time_2 = (-startVel - sqrt(pow(startVel, 2) - 4 * maxAccel * (-1 * ds))) / (2 * maxAccel);
         double time = fmax(time_1, time_2);
         double linVel = startVel + maxAccel * time;
-
-        //Calculating Angular velocity
-        double angVel = linVel * spline.getCurvature(u);
         
-        //Storing Velocities, time, and u value
-        forwardPass.at(0) = {linVel, angVel, time, u};
+        //Storing Lin velocity and u value
+        forwardPass.at(0) = {linVel, u};
         double prevVel = linVel;
-        double prevTime = time;
 
         while(u < spline.curves.size())
         {
@@ -386,10 +382,10 @@
 
             //Calculating lin vel
                 maxLinVelocity = fmin(maxVel, k / spline.getCurvature(u));
-                time_1 = (-prevVel + sqrt(pow(prevVel, 2) - 4 * maxAccel * (-1 * ds))) / 2 * maxAccel;
-                time_2 = (-prevVel - sqrt(pow(prevVel, 2) - 4 * maxAccel * (-1 * ds))) / 2 * maxAccel;
-                double time = fmax(time_1, time_2);
-                double linVel = prevVel + maxAccel * time;
+                time_1 = (-prevVel + sqrt(pow(prevVel, 2) - 4 * maxAccel * (-1 * ds))) / (2 * maxAccel);
+                time_2 = (-prevVel - sqrt(pow(prevVel, 2) - 4 * maxAccel * (-1 * ds))) / (2 * maxAccel);
+                time = fmax(time_1, time_2);
+                linVel = prevVel + maxAccel * time;
 
                 //Cheicking if velocity reached would be higher than max vel
                 if(linVel > maxLinVelocity)
@@ -402,24 +398,85 @@
                     time = accelTime + cruiseTime;
                 }
 
-            //Calculating ang vel
-                angVel = linVel * spline.getCurvature(u);
-
             //Storing velocities, time, and u value
-                forwardPass.push_back({linVel, angVel, time + prevTime, u});
+                forwardPass.push_back({linVel, u});
 
             prevVel = linVel;
-            prevTime = time;
         }
 
+        double endVel = 0;
         //Backwards pass
+        std::vector<std::vector<double>> backwardPass = forwardPass;
+
+        u = forwardPass.at(forwardPass.size() - 1).at(1);
+        //Caluclating Linear Velocity
+        maxLinVelocity = forwardPass.at(forwardPass.size() - 1).at(0);
+        //(2 times because its a quadratic, only the biggest root is correct in real life)
+        time_1 = (-endVel + sqrt(pow(endVel, 2) - 4 * maxDeccel * (-1 * ds))) / (2 * maxDeccel);
+        time_2 = (-endVel - sqrt(pow(endVel, 2) - 4 * maxDeccel * (-1 * ds))) / (2 * maxDeccel);
+        time = fmax(time_1, time_2);
+        linVel = endVel + maxDeccel * time;
+        
+        //Caluclating ang vel
+        double angVel = linVel * spline.getCurvature(u);
+
+        //Storing Velocities, time taken between points, and u value
+        backwardPass.at(backwardPass.size() - 1) = {linVel, angVel, time, u};
+        prevVel = linVel;
 
         //For loop because we know the number of points now
-        for(int i = forwardPass.size() - 1; i--; i >= 0)
+        for(int i = forwardPass.size() - 2; i--; i >= 0)
         {
+            u = forwardPass.at(i).at(1);
+            maxLinVelocity = forwardPass.at(i).at(0);
 
+            time_1 = (-prevVel + sqrt(pow(prevVel, 2) - 4 * maxDeccel * (-1 * ds))) / (2 * maxDeccel);
+            time_2 = (-prevVel - sqrt(pow(prevVel, 2) - 4 * maxDeccel * (-1 * ds))) / (2 * maxDeccel);
+            time = fmax(time_1, time_2);
+            linVel = prevVel + maxAccel * time;
+
+                //Cheicking if velocity reached would be higher than max vel
+                if(linVel > maxLinVelocity)
+                {
+                    linVel = maxLinVelocity;
+                    //Recalculating time by figuring out time to accel to max vel, and time spent at max vel
+                    double deccelTime = (maxLinVelocity - prevVel) / maxDeccel;
+                    double deccelDistance = (prevVel * deccelTime) + ((maxDeccel * deccelTime) / 2);
+                    double cruiseTime = (ds - deccelDistance) / maxLinVelocity;
+                    time = deccelTime + cruiseTime;
+                }
+
+            angVel = linVel * spline.getCurvature(u);
+
+            backwardPass.at(i) = {linVel, angVel, time, u};
+
+            prevVel = linVel;
         }
 
-        return {{Pose(0, 0, 0), {0}}};
+        //Doing another forward pass to integrate the times (for time-parameterization), and to add the points (for distance-parameterization and positional feedback)
+        double totalTime = 0;
+        std::vector<std::pair<Point, std::vector<double>>> output = {{spline.getPoint(backwardPass.at(0).at(3)), 
+        {
+            backwardPass.at(0).at(0),
+            backwardPass.at(0).at(1),
+            totalTime,
+            backwardPass.at(0).at(3),
+        }}};
+
+        totalTime += backwardPass.at(0).at(2);
+        for(int i = 1; i < backwardPass.size(); i++)
+        {
+            output.push_back({spline.getPoint(backwardPass.at(i).at(3)), 
+            {
+                backwardPass.at(i).at(0),
+                backwardPass.at(i).at(1),
+                totalTime,
+                backwardPass.at(i).at(3),
+            }});
+
+            totalTime += backwardPass.at(i).at(2);
+        }
+
+        return output;
     }   
 
