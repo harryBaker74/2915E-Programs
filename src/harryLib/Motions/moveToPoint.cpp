@@ -26,22 +26,22 @@ namespace subsystems
             this->inMotion = true;
 
             PID::PID angPid = PID::PID(
-                10000,    //Kp
+                15000,    //Kp
                 0,    //Ki
                 250000,    //Kd
                 0,    //Windup Range
                 0     //Max Intergal
             );
             PID::PID linPid = PID::PID(
-                500,
+                300,
                 0.0,
-                10000,
+                300,
                 0.0,
                 0.0
             );
 
             //Exit conditions
-            double errorExit = 7;
+            double errorExit = 3;
             double velExit = 10;
 
             //Angular Falloff Parameter
@@ -101,7 +101,7 @@ namespace subsystems
                 if(exitConditions::semiCircleCheck(this->pose, point, this->pose.heading, errorExit, backwards) || exitConditions::rangeExit(hypot, errorExit))
                     break;
 
-                Controller.print(0, 0, "%.1f, %.1f, %.1f", hypot, pose.x, pose.y);
+                Controller.print(0, 0, "%.2f, %.2f", pose.x, pose.y);
 
                 //Updating distance traveled for async functions
                 this->distanceTraveled += sqrt(pow(this->pose.x - this->prevPose.x, 2) + pow(this->pose.y - this->prevPose.y, 2));

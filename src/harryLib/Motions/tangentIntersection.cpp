@@ -139,7 +139,7 @@ namespace subsystems
                         if(backwards)
                             rpmVel *= -1;
 
-                        double linOutput = linCont.rpmVelToVoltage(currentVel, prevVel, rpmVel);
+                        double linOutput = linCont.rpmVelToVoltage(currentVel, rpmVel);
                         prevVel = currentVel;
 
                     //Wheel voltage calculations

@@ -120,27 +120,49 @@ namespace subsystems
         /**
          * @brief Function to make the robot follow a desired path from the path generator or path scheduler
          */
-        void followPath();
+        void followPath(trajectory path);
 
     };
 
     enum LiftPosition
     {
-        ALLIANCE = -650,
-        WALL = -800,
-        TIP = -400
+        DEFAULT = 0,
+        LOAD = 69,
+        WALL = 290,
+        ALLIANCE = 375,
+        TIP = 400,
+        ZERO = 200
     };
 
     class intake
     {
         pros::Motor intakeMotor;
+        pros::Optical opticalSensor;
+
+        bool sortColour = false;
+        bool sorting = false;
+
+        double sortStartPosOffset = 180;
+        double sortTime = 200;
+
+        double sortStartPos = 0;
+        double sortEndTime = 0;
+
+        int redMin = 0;
+        int redMax = 20;
+        int blueMin = 200;
+        int blueMax = 250;
+
         
         public:
         //Constructor
-        intake(int intakeMotorPort);
+        intake(int intakeMotorPort, int opticalSensorPort);
 
         //Function to set intake voltage
         void setVoltage(double voltage);
+
+        //Function to set ring colour being sorted out
+        void setRingSortColour(bool colour);
 
         //Function to run intake during driver control
         void driverFunctions();
@@ -151,12 +173,19 @@ namespace subsystems
         pros::Motor liftMotor1;
         pros::Motor liftMotor2;
 
+        bool holding = false;
+        LiftPosition targetPos = DEFAULT;
+        int pressCount = 0;
+        bool alliance = false;
+
         public:
         //Constructor
         lift(int liftMotor1Port, int liftMotor2Port);
 
         //Function to set voltage
         void setVoltage(double voltage);
+
+        void holdPosition(LiftPosition pos);
 
         //Function for driver control
         void driverFunctions();

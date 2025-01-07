@@ -64,6 +64,14 @@ struct quinticSpline
     double getCurvature(double u);
 };
 
+struct trajectory
+{
+    std::vector<std::pair<Point, std::vector<double>>> points;
+
+    //Constructor
+    trajectory(std::vector<std::pair<Point, std::vector<double>>> points);
+};
+
 class profile
 {
     public:
@@ -82,7 +90,7 @@ class profile
      * 
      * @return A vector of pairs, with each pair having a pose, and a vector of linear and angular velocities
      */
-    std::vector<std::pair<Point, std::vector<double>>> generateProfile(quinticSpline spline, double ds = 3, double k = 5);
+    trajectory generateProfile(quinticSpline spline, double ds = 3, double k = 5);
     
     double maxVel;
     double maxAccel;

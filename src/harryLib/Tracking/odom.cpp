@@ -65,7 +65,7 @@ namespace Odometery
             rightDrive->get_position(2)
             }, 
             {
-            0//double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
+            double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
             },
             {
                 IMU->get_rotation() * M_PI / 180
@@ -85,7 +85,7 @@ namespace Odometery
             (currentEncoderValues.at(1).at(2) - prevEncoderValues.at(1).at(2))      //Delta RIGHT_MOTOR_BACK
         ) / 3;
 
-        double deltaHorizontal = (
+        double deltaVertical = (
         prevEncoderValues.at(2).at(0) - currentEncoderValues.at(2).at(0));       //Delta TRACKING_WHEEL
 
         double deltaHeading = (
@@ -98,7 +98,7 @@ namespace Odometery
         //Converting Delta Encoders into cm moved
         deltaLeft = ((deltaLeft * M_PI / 180) * DRIVE_GEAR_RATIO) * inToCm(DRIVE_WHEEL_DIAMETER) / 2;
         deltaRight = ((deltaRight * M_PI / 180) * DRIVE_GEAR_RATIO) * inToCm(DRIVE_WHEEL_DIAMETER) / 2;
-        deltaHorizontal = ((deltaHorizontal * M_PI / 180) * TRACKING_GEAR_RATIO) * inToCm(TRACKING_WHEEL_DIAMETER) / 2;
+        deltaVertical = ((deltaVertical * M_PI / 180) * TRACKING_GEAR_RATIO) * inToCm(TRACKING_WHEEL_DIAMETER) / 2;
 
         //Odom Calculations
 
@@ -109,17 +109,12 @@ namespace Odometery
         double localX = 0;
         if(deltaHeading == 0)
         {
-            localY = deltaLeft;
-            localX = deltaHorizontal;
+            localY = deltaVertical;
         }
         else
         {
-            localY = 2 * sin(deltaHeading / 2) * (deltaLeft / deltaHeading - VERTICAL_OFFSET);
-            localX = 2 * sin(deltaHeading / 2) * (deltaHorizontal / deltaHeading + HORIZONTAL_OFFSET);
+            localY = 2 * sin(deltaHeading / 2) * (deltaVertical / deltaHeading - VERTICAL_OFFSET);
         }
-
-        leftEncoders += deltaLeft;
-        Controller.print(0, 0, "%.2f, %.2f", robotPose->x, robotPose->y);
 
         //Rotataing the local axis back to global
         double averageHeading = robotPose->rotation + deltaHeading / 2; //Amount to rotate by

@@ -75,16 +75,16 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             gainSchedular Wr = gainSchedular(4.8, 7, 10, 20); // wR * 100
 
             PID::PID pid(
-                15000,    //Kp
-                1000,    //Ki
+                18000,    //Kp
+                2000,    //Ki
                 140000,    //Kd
-                0.175,    //Windup Range
+                0.1,    //Windup Range
                 0     //Max Intergal
             );
 
 
             //Exit conditions
-            double errorExit = 0.01;
+            double errorExit = 0.02;
             double velExit = 0.015;
 
             
@@ -99,7 +99,7 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             double output = pid.getPid(pose.rotation, targetRotation);
 
             //Setting drivetrain voltage based on Pid Output and Slewing
-            this->setVoltage(output, -output, true, 10);
+            this->setVoltage(output, -output);
 
             //Exit Conditions
             //Error, and Velocity based(only exit when both are low) so we dont need to worry about waiting with low error for a certain amount of time
@@ -115,7 +115,7 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             }
             //Updating distance traveled for async functions
             this->distanceTraveled = (this->pose.rotation - prevRotation) * 180 / M_PI;
-            Controller.print(0, 0, "%f", distanceTraveled);
+            Controller.print(0, 0, "%f", error);
 
             //Delay for scheduling
             pros::delay(10);

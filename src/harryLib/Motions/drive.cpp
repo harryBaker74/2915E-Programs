@@ -95,11 +95,18 @@ namespace subsystems
                     output = sign(output) * maxVoltage;
                 }
 
-                if((fabs(output) + fabs(headingOutput)) > 12000)
-                    output = (12000 - fabs(headingOutput)) * sign(output);
-                
+                double leftVoltage = output + headingOutput;
+                double rightVoltage = output - headingOutput;
+
+                double ratio = fmax(fabs(leftVoltage), fabs(rightVoltage)) / 12000;
+                if(ratio > 1)
+                {
+                    leftVoltage /= ratio;
+                    rightVoltage /= ratio;
+                }
+
                 //Outputting voltage into motors and slewing
-                this->setVoltage(output + headingOutput, output - headingOutput, true, 10);
+                this->setVoltage(leftVoltage, rightVoltage);
 
                 Controller.print(0, 0, "%.2f, %.2f", output, pid.getError());
 

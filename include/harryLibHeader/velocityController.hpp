@@ -14,10 +14,8 @@ namespace vController
 
         vController(bool Ks);
 
-        double rpmVelToVoltage(double currentVelocity, double prevVelocity, double targetVelocity);
+        double rpmVelToVoltage(double currentVelocity, double targetVelocity);
 
-        void startTuner(double velocity);
-
-        void endTuner();
+        void tuner();
     };
 }

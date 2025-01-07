@@ -10,9 +10,13 @@ namespace subsystems
 
     //Intake Class
         //Constructor
-        intake::intake(int intakeMotorPort)
-        :   intakeMotor(pros::Motor (intakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees))
-        {}
+        intake::intake(int intakeMotorPort, int opticalSensorPort)
+        :   intakeMotor(pros::Motor (intakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+            opticalSensor(pros::Optical (opticalSensorPort))
+        {
+            opticalSensor.set_integration_time(5);
+            opticalSensor.set_led_pwm(100);
+        }
 
         //Function to set intake voltage
         void intake::setVoltage(double voltage)
@@ -20,10 +24,47 @@ namespace subsystems
             intakeMotor.move_voltage(floor(voltage));
         }
 
+        void intake::setRingSortColour(bool colour)
+        {
+            sortColour = colour;
+        }
+
         //Function to run intake during driver control
         void intake::driverFunctions()
         {  
+            /*Colour sorting
+            //If we should be currently sorting
+            if(pros::millis() < sortEndTime)
+            {
+                //Reversing intake to slow it down if currently sorting
+                setVoltage(-1000);
+            }
+            //If we shouldnt currently be sorting
+            else
+            {
+                //Detecting ring
+                double current = opticalSensor.get_hue();
+                if((sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (opticalSensor.get_proximity() > 200))
+                {
+                    //Setting sort start and end times if ring is detected
+                    sortStartPos = intakeMotor.get_position() + sortStartPosOffset;
+                    sorting = true;
+                }
+
+                //Setting the end time for reversing once intake has reached correct position
+                if((sortStartPos <= intakeMotor.get_position()) && sorting)
+                {
+                    sortEndTime = pros::millis() + sortTime;
+                    sorting = false;
+                }
+
+                //Normal driver functions for when not sorting
+                setVoltage(((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2))) * 12000);
+            }
+            */
+
             setVoltage(((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2))) * 12000);
+
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43,10 +84,77 @@ namespace subsystems
             liftMotor2.move_voltage(floor(voltage));
         }
 
+        void lift::holdPosition(LiftPosition pos)
+        {
+            targetPos = pos;
+            if(!holding)
+            {
+                pros::Task task{[=, this] {
+                    
+                    holding = true;
+
+                    PID::PID posPID = PID::PID(
+                        200,
+                        0,
+                        100,
+                        0,
+                        0
+                    );
+
+                    double Kv = 1;
+                    double Ks = 0;
+                    double Kg = -2000;
+
+                    while(true)
+                    {
+                        double currentPos = (liftMotor1.get_position() + liftMotor2.get_position()) / 2;
+                        double posError = targetPos - currentPos;
+                        double angle = fabs(sin((currentPos - LiftPosition::ZERO) / 2));
+                        double targetVel = posPID.getPid(posError);
+
+                        double voltage = (Ks * sign(targetVel)) + (Kg * angle) + (Kv * targetVel);
+                        setVoltage(voltage);
+
+                        //Preventing drift that comes from lift being banded up and slop
+                        if(currentPos < 0)
+                        {
+                            liftMotor1.tare_position();
+                            liftMotor2.tare_position();
+                        }
+
+                        pros::delay(10);
+                    }
+                }};
+            }
+        }
+
         //Function to run intake during driver control
         void lift::driverFunctions()
         {  
-            setVoltage(((Controller.get_digital(DIGITAL_L1) - Controller.get_digital(DIGITAL_L2))) * 12000);
+            if(Controller.get_digital_new_press(DIGITAL_L1))
+            {
+                alliance = false;
+                pressCount += 1;
+            }
+
+            if(Controller.get_digital_new_press(DIGITAL_A))
+            {
+                alliance = true;
+                holdPosition(ALLIANCE);
+            }
+            
+            if(pressCount == 3)
+            pressCount = 0;
+        
+            if(!alliance)
+            {
+                if(pressCount == 0)
+                    holdPosition(DEFAULT);
+                else if(pressCount == 1)
+                    holdPosition(LOAD);
+                else if(pressCount == 2)
+                    holdPosition(WALL);
+            }
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,7 +176,7 @@ namespace subsystems
         void mogo::driverFunctions()
         {
             pressCount += Controller.get_digital_new_press(MOGO_CONTROL);
-            pressCount % 2 == 0 ? setState(true) : setState(false); //End autons with a mogo
+            pressCount % 2 == 0 ? setState(false) : setState(true); //End autons with a mogo
         }
         
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

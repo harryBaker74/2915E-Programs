@@ -71,9 +71,12 @@ void opcontrol(void);
 #endif
 
 #ifdef __cplusplus
-#include "harryLibHeader/util.hpp"
-#include "harryLibHeader/devices.hpp"
+/**
+ * You can add C++-only headers here
+ */
 #include <iostream>
+#include "harryLibHeader/robot.hpp"
+#include "harryLibHeader/devices.hpp"
 #endif
 
 #endif  // _PROS_MAIN_H_

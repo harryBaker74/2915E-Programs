@@ -9,7 +9,7 @@
 
     //Tracking wheel offsets(cm)
     #define HORIZONTAL_OFFSET 2.61
-    #define VERTICAL_OFFSET 14.5503391594702
+    #define VERTICAL_OFFSET 0//2.60523824550331
 
     //Controller port
     #define CONTROLLER 8
@@ -18,20 +18,23 @@
     #define INERTIAL 1
 
     //Tracking Wheel Port
-    #define TRACKING_WHEEL 9
+    #define TRACKING_WHEEL 15
 
     //Drivtrain Motor Ports
-    #define LEFT_MOTOR_FRONT -2
-    #define LEFT_MOTOR_MID 3
-    #define LEFT_MOTOR_BACK 4
+    #define LEFT_MOTOR_FRONT -11
+    #define LEFT_MOTOR_MID -9
+    #define LEFT_MOTOR_BACK 10
 
-    #define RIGHT_MOTOR_FRONT -11
-    #define RIGHT_MOTOR_MID -9
-    #define RIGHT_MOTOR_BACK 10
+    #define RIGHT_MOTOR_FRONT -2
+    #define RIGHT_MOTOR_MID 3
+    #define RIGHT_MOTOR_BACK 4
 
-//Other Motors
+//Other Systems
     //Intake Port
     #define INTAKE -5
+
+    //Intake optical
+    #define OPTICAL 21
 
     //Lady Brown Ports
     #define LIFT_1 -7
@@ -40,7 +43,7 @@
 //Solanoids
     //Mogo Port and controlss
     #define MOGO 'A'
-    #define MOGO_CONTROL DIGITAL_A
+    #define MOGO_CONTROL DIGITAL_L2
 
     //Doinker Port and controls
     #define DOINKER 'B'

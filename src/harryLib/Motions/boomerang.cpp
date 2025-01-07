@@ -104,8 +104,10 @@ namespace subsystems
 
 
                     double switchCurve = fabs(distance) / (fabs(distance) + settleDistance);
-                    double linOutput = getWeightedAverage(linPid.getPid(distance) * cos(fabs(pose.rotation - targetRotation)), 
-                                                    fmax(linPid.getPid(distance), minSpeed) * cos(fabs(pose.rotation - targetRotation)), switchCurve) * linMultiplier;
+                    //double linOutput = getWeightedAverage(linPid.getPid(distance) * cos(fabs(pose.rotation - targetRotation)), 
+                                                    //fmax(linPid.getPid(distance), minSpeed) * cos(fabs(pose.rotation - targetRotation)), switchCurve) * linMultiplier;
+
+                    double linOutput = fmax(linPid.getPid(distance), minSpeed) * cos(fabs(pose.rotation - targetRotation));
 
                     Controller.print(0, 0, "%f", cos(fabs(pose.rotation - targetRotation)));
 
