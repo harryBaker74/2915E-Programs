@@ -60,7 +60,7 @@ namespace subsystems
             double headingKp = 10000;
             
             //Exit Conditions
-            double errorExit = 50;
+            double errorExit = 50; //~3cm
             double velExit = 30;
 
             //Static variables for derivatives

@@ -52,15 +52,50 @@ enum auton Auton = LEFT;
 void autonomous() 
 {   
     drivetrain.runOdom(Pose (0, 0, 0));
+    intake.setRingSortColour(true);
+    //ring rush
+    drivetrain.boomerang(Pose(-15, 100, -25), 6000, 0.35, false, false, true);
+    drivetrain.waitUntil(50);
+    rushMech.setState(true);
+    intake.setVoltage(12000);
+    drivetrain.waitUntilEnd();
+    drivetrain.stop(300);
+    intake.setVoltage(1000);
 
+    //Moving to mogo
+    drivetrain.swingToHeading(-52, true, true, false, false);
+    drivetrain.drive(-75, 12000, true);
+    drivetrain.waitUntil(65);
+    mogo.setState(true);
+    drivetrain.waitUntilEnd();
+    intake.setVoltage(12000);
+    rushMech.setState(false);
     
+    //Picking up rings
+    drivetrain.turnToHeading(-87, 800, false, false);
+    drivetrain.drive(80, 8000, false);
+    drivetrain.swingToHeading(-120, true, true, false, false);
+    drivetrain.boomerang(Pose(0, 13, 90), 6000, 0.5, false, false, false);
+    
+    //Shitssing teammate
+    drivetrain.boomerang(Pose(110, 40, 90), 6000, 0.5, false, false, false);
+    drivetrain.turnToHeading(-90, 2000, false, false);
+    mogo.setState(false);
+    drivetrain.drive(-50, 12000, false);
+    drivetrain.turnToHeading(-90, 2000, false, false);
+    
+    //alliance stake
+    drivetrain.boomerang(Pose(100, 10, -90), 6000, 0.5, false, false, false);
+    drivetrain.turnToHeading(0, 800, false, false);
 
+    //other mogo and ring, then ladder
     drivetrain.stop(300);
 }
 
 void opcontrol() 
 {
-    
+    intake.setRingSortColour(true);
+    drivetrain.stopOdom();
     drivetrain.setBrakeMode(MOTOR_BRAKE_COAST);
 	while(true)
     {

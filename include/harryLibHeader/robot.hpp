@@ -127,8 +127,8 @@ namespace subsystems
     enum LiftPosition
     {
         DEFAULT = 0,
-        LOAD = 69,
-        WALL = 290,
+        LOAD = 75,
+        WALL = 310,
         ALLIANCE = 375,
         TIP = 400,
         ZERO = 200
@@ -153,6 +153,8 @@ namespace subsystems
         int blueMin = 200;
         int blueMax = 250;
 
+        int sortStartCheckTime = 0;
+        int checkDelay = 20;
         
         public:
         //Constructor
@@ -162,6 +164,9 @@ namespace subsystems
         void setVoltage(double voltage);
 
         //Function to set ring colour being sorted out
+        /**
+         * @param colour True for sorting out blue, false for sorting out red
+         */
         void setRingSortColour(bool colour);
 
         //Function to run intake during driver control

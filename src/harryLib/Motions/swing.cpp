@@ -25,15 +25,15 @@ namespace subsystems
             {
                 40000,  //Kp
                 0,  //Ki
-                800000,  //Kd
+                80000,  //Kd
                 0,  //Windup Range
                 0   //Max Intergal
             };
 
-            double errorExit = 0.02;
+            double errorExit = 0.04;
             double velExit = 1;
 
-            double minSpeed = 5000;
+            double minSpeed = 0;
             
             double angle = heading;
             if(!radians)

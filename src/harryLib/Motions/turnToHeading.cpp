@@ -76,7 +76,7 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
 
             PID::PID pid(
                 18000,    //Kp
-                2000,    //Ki
+                1000,    //Ki
                 140000,    //Kd
                 0.1,    //Windup Range
                 0     //Max Intergal
@@ -84,8 +84,8 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
 
 
             //Exit conditions
-            double errorExit = 0.02;
-            double velExit = 0.015;
+            double errorExit = 0.03;
+            double velExit = 0.1;
 
             
         //Everything else

@@ -467,7 +467,7 @@
         {
             backwardPass.at(0).at(0),
             backwardPass.at(0).at(1),
-            totalTime,
+            backwardPass.at(0).at(2),//totalTime,
             backwardPass.at(0).at(3),
         }}};
 
@@ -478,7 +478,7 @@
             {
                 backwardPass.at(i).at(0),
                 backwardPass.at(i).at(1),
-                totalTime,
+                backwardPass.at(0).at(2),//totalTime,
                 backwardPass.at(i).at(3),
             }});
 

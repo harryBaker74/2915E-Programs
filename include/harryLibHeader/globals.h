@@ -4,7 +4,7 @@
     //Wheel Size
     #define DRIVE_WHEEL_DIAMETER 2.75
     #define TRACKING_WHEEL_DIAMETER 2.75
-    #define DRIVE_GEAR_RATIO 0.75
+    #define DRIVE_GEAR_RATIO 1
     #define TRACKING_GEAR_RATIO 1
 
     //Tracking wheel offsets(cm)
@@ -15,38 +15,38 @@
     #define CONTROLLER 8
 
     //IMU Port
-    #define INERTIAL 1
+    #define INERTIAL 11
 
     //Tracking Wheel Port
-    #define TRACKING_WHEEL 15
+    #define TRACKING_WHEEL 3
 
     //Drivtrain Motor Ports
-    #define LEFT_MOTOR_FRONT -11
-    #define LEFT_MOTOR_MID -9
-    #define LEFT_MOTOR_BACK 10
+    #define LEFT_MOTOR_FRONT 9
+    #define LEFT_MOTOR_MID -2
+    #define LEFT_MOTOR_BACK -7
 
-    #define RIGHT_MOTOR_FRONT -2
-    #define RIGHT_MOTOR_MID 3
-    #define RIGHT_MOTOR_BACK 4
+    #define RIGHT_MOTOR_FRONT -5
+    #define RIGHT_MOTOR_MID 6
+    #define RIGHT_MOTOR_BACK 8
 
 //Other Systems
     //Intake Port
-    #define INTAKE -5
+    #define INTAKE -4
 
     //Intake optical
-    #define OPTICAL 21
+    #define OPTICAL 20
 
     //Lady Brown Ports
-    #define LIFT_1 -7
-    #define LIFT_2 6
+    #define LIFT_1 -21
+    #define LIFT_2 16
 
 //Solanoids
     //Mogo Port and controlss
-    #define MOGO 'A'
+    #define MOGO 'B'
     #define MOGO_CONTROL DIGITAL_L2
 
     //Doinker Port and controls
-    #define DOINKER 'B'
+    #define DOINKER 'A'
     #define DOINKER_CONTROL DIGITAL_X
 
     //Rush Mech Port and controls

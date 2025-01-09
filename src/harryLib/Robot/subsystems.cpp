@@ -32,27 +32,28 @@ namespace subsystems
         //Function to run intake during driver control
         void intake::driverFunctions()
         {  
-            /*Colour sorting
+            //Colour sorting
             //If we should be currently sorting
             if(pros::millis() < sortEndTime)
             {
                 //Reversing intake to slow it down if currently sorting
-                setVoltage(-1000);
+                setVoltage(-3000);
             }
             //If we shouldnt currently be sorting
             else
             {
                 //Detecting ring
                 double current = opticalSensor.get_hue();
-                if((sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (opticalSensor.get_proximity() > 200))
+                if((sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (opticalSensor.get_proximity() > 220))
                 {
-                    //Setting sort start and end times if ring is detected
+                    //Setting sort start pos if ring is detected
                     sortStartPos = intakeMotor.get_position() + sortStartPosOffset;
+                    sortStartCheckTime = pros::millis() + checkDelay;//Delay for sortStartPos to have time to set correctly
                     sorting = true;
                 }
 
                 //Setting the end time for reversing once intake has reached correct position
-                if((sortStartPos <= intakeMotor.get_position()) && sorting)
+                if((sortStartPos <= intakeMotor.get_position()) && sorting && (pros::millis()>= sortStartCheckTime))
                 {
                     sortEndTime = pros::millis() + sortTime;
                     sorting = false;
@@ -61,8 +62,8 @@ namespace subsystems
                 //Normal driver functions for when not sorting
                 setVoltage(((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2))) * 12000);
             }
-            */
-
+            
+            //Uncomment for when no sorting
             setVoltage(((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2))) * 12000);
 
         }
@@ -86,9 +87,13 @@ namespace subsystems
 
         void lift::holdPosition(LiftPosition pos)
         {
+
             targetPos = pos;
             if(!holding)
             {
+                liftMotor1.tare_position();
+                liftMotor2.tare_position();
+
                 pros::Task task{[=, this] {
                     
                     holding = true;
@@ -103,7 +108,7 @@ namespace subsystems
 
                     double Kv = 1;
                     double Ks = 0;
-                    double Kg = -2000;
+                    double Kg = -3000;
 
                     while(true)
                     {
@@ -115,12 +120,13 @@ namespace subsystems
                         double voltage = (Ks * sign(targetVel)) + (Kg * angle) + (Kv * targetVel);
                         setVoltage(voltage);
 
-                        //Preventing drift that comes from lift being banded up and slop
-                        if(currentPos < 0)
+                        if(currentPos <= 0)
                         {
                             liftMotor1.tare_position();
                             liftMotor2.tare_position();
                         }
+
+                        Controller.print(0, 0, "%f", currentPos);
 
                         pros::delay(10);
                     }
