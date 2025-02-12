@@ -45,6 +45,8 @@ double getWeightedAverage(double numA, double numB, double decimalWeight);
         //Constructor
         Pose(double x, double y, double heading);
 
+        Pose(double x, double y, double heading , double rotation);
+
         /**
          * @brief Function to set this pose to a deisred pose
          * 

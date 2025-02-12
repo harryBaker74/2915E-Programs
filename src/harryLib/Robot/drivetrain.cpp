@@ -50,7 +50,8 @@ namespace subsystems
             trackingWheel.reverse();
 
             //Setting pose to desired start pose
-            this->pose = startPose;
+            this->pose = Pose(startPose.x, startPose.y, startPose.heading * M_PI / 180, startPose.heading * M_PI / 180);
+
 
             //making sure the task actually runs
             odomRunning = true;
@@ -99,6 +100,17 @@ namespace subsystems
         void drivetrain::stopOdom()
         {
             odomRunning = false;
+        }
+
+        void drivetrain::setPose(Pose pose)
+        {
+            this->pose = pose;
+        }
+
+        void drivetrain::setPose(Point point)
+        {
+            this->pose.x = point.x;
+            this->pose.y = point.y;
         }
 
 

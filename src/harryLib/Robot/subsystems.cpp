@@ -20,7 +20,7 @@ namespace subsystems
 
         //Function to set intake voltage
         void intake::setVoltage(double voltage)
-        {
+        {   
             intakeMotor.move_voltage(floor(voltage));
         }
 
@@ -29,12 +29,22 @@ namespace subsystems
             sortColour = colour;
         }
 
+        void intake::waitForRing()
+        {
+            double current = opticalSensor.get_hue();
+            while((!sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (opticalSensor.get_proximity() > 180))
+            {
+                current = opticalSensor.get_hue();
+                pros::delay(10);
+            }
+        }
+
         //Function to run intake during driver control
         void intake::driverFunctions()
         {  
             //Colour sorting
             //If we should be currently sorting
-            if(pros::millis() < sortEndTime)
+            /*if(pros::millis() < sortEndTime)
             {
                 //Reversing intake to slow it down if currently sorting
                 setVoltage(-3000);
@@ -44,16 +54,15 @@ namespace subsystems
             {
                 //Detecting ring
                 double current = opticalSensor.get_hue();
-                if((sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (opticalSensor.get_proximity() > 220))
+                if((sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (opticalSensor.get_proximity() > 180))
                 {
                     //Setting sort start pos if ring is detected
-                    sortStartPos = intakeMotor.get_position() + sortStartPosOffset;
-                    sortStartCheckTime = pros::millis() + checkDelay;//Delay for sortStartPos to have time to set correctly
+                    sortStartTime = pros::millis() + sortStartTimeOffset;
                     sorting = true;
                 }
 
                 //Setting the end time for reversing once intake has reached correct position
-                if((sortStartPos <= intakeMotor.get_position()) && sorting && (pros::millis()>= sortStartCheckTime))
+                if((pros::millis() >= sortStartTime) && sorting)
                 {
                     sortEndTime = pros::millis() + sortTime;
                     sorting = false;
@@ -62,10 +71,63 @@ namespace subsystems
                 //Normal driver functions for when not sorting
                 setVoltage(((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2))) * 12000);
             }
-            
+            */
             //Uncomment for when no sorting
             setVoltage(((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2))) * 12000);
+        }
 
+        void intake::autonFunctions(double voltage)
+        {
+            autonVoltage = voltage;
+
+            if(!auton)
+            {
+                auton = true;
+                pros::Task task{[=, this]{
+                    
+                    while(auton)
+                    {
+                        //Colour sorting
+                        //If we should be currently sorting
+                        if(pros::millis() < sortEndTime)
+                        {
+                            //Reversing intake to slow it down if currently sorting
+                            setVoltage(-3000);
+                        }
+                        //If we shouldnt currently be sorting
+                        else
+                        {
+                            //Detecting ring
+                            double current = opticalSensor.get_hue();
+                            if((sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (opticalSensor.get_proximity() > 180))
+                            {
+                                //Setting sort start pos if ring is detected
+                                sortStartTime = pros::millis() + sortStartTimeOffset;
+                                sorting = true;
+                            }
+
+                            //Setting the end time for reversing once intake has reached correct position
+                            if((pros::millis() >= sortStartTime) && sorting)
+                            {
+                                sortEndTime = pros::millis() + sortTime;
+                                sorting = false;
+                            }
+
+                            //Normal driver functions for when not sorting
+                            setVoltage(autonVoltage);
+                        }
+
+                        pros::delay(20);
+                    }
+
+                    pros::Task::current().remove();
+                }};
+            }
+        }
+
+        void intake::endAutoTask()
+        {
+            auton = false;
         }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,10 +135,13 @@ namespace subsystems
 
     //Lift Class
         //Constructor
-        lift::lift(int liftMotor1Port, int liftMotor2Port)
+        lift::lift(int liftMotor1Port, int liftMotor2Port, int rotationSensorPort)
         :   liftMotor1(pros::Motor (liftMotor1Port, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees)),
-            liftMotor2(pros::Motor (liftMotor2Port, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees))
-        {}
+            liftMotor2(pros::Motor (liftMotor2Port, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees)),
+            rotationSensor(pros::Rotation (rotationSensorPort))
+        {
+            rotationSensor.reverse();
+        }
 
         //Function to set intake voltage
         void lift::setVoltage(double voltage)
@@ -91,28 +156,28 @@ namespace subsystems
             targetPos = pos;
             if(!holding)
             {
-                liftMotor1.tare_position();
-                liftMotor2.tare_position();
+                rotationSensor.reset_position();
 
                 pros::Task task{[=, this] {
                     
                     holding = true;
 
                     PID::PID posPID = PID::PID(
-                        200,
-                        0,
                         100,
+                        0,
+                        200,
                         0,
                         0
                     );
 
                     double Kv = 1;
                     double Ks = 0;
-                    double Kg = -3000;
+                    double Kg = 0;
+
 
                     while(true)
                     {
-                        double currentPos = (liftMotor1.get_position() + liftMotor2.get_position()) / 2;
+                        double currentPos = rotationSensor.get_position() / 100;
                         double posError = targetPos - currentPos;
                         double angle = fabs(sin((currentPos - LiftPosition::ZERO) / 2));
                         double targetVel = posPID.getPid(posError);
@@ -120,13 +185,13 @@ namespace subsystems
                         double voltage = (Ks * sign(targetVel)) + (Kg * angle) + (Kv * targetVel);
                         setVoltage(voltage);
 
-                        if(currentPos <= 0)
-                        {
-                            liftMotor1.tare_position();
-                            liftMotor2.tare_position();
-                        }
-
                         Controller.print(0, 0, "%f", currentPos);
+
+                        // if(currentPos <= 0)
+                        // {
+                        //     liftMotor1.tare_position();
+                        //     liftMotor2.tare_position();
+                        // }
 
                         pros::delay(10);
                     }
@@ -139,27 +204,57 @@ namespace subsystems
         {  
             if(Controller.get_digital_new_press(DIGITAL_L1))
             {
-                alliance = false;
-                pressCount += 1;
+                if(tip)
+                {
+                    alliance = false;
+                    tip = false;
+                    wall = false;
+                    pressCount = 0;    
+                }
+                else if(wall || alliance)
+                {
+                    alliance = false;
+                    tip = false;
+                    wall = false;
+                    pressCount = 1;
+                }
+                else
+                    pressCount += 1;
             }
 
-            if(Controller.get_digital_new_press(DIGITAL_A))
+            if(Controller.get_digital_new_press(DIGITAL_Y))
             {
                 alliance = true;
+                tip = false;
+                wall = false;
                 holdPosition(ALLIANCE);
             }
-            
+            if(Controller.get_digital_new_press(DIGITAL_A))
+            {
+                tip = true;
+                alliance = false;
+                wall = false;
+                holdPosition(TIP);
+            }
+            if(Controller.get_digital(DIGITAL_RIGHT))
+            {
+                wall = true;
+                alliance = false;
+                tip = false;
+                holdPosition(WALL);
+            }
+
             if(pressCount == 3)
-            pressCount = 0;
+                pressCount = 0;
         
-            if(!alliance)
+            if(!alliance && !tip && !wall)
             {
                 if(pressCount == 0)
                     holdPosition(DEFAULT);
                 else if(pressCount == 1)
                     holdPosition(LOAD);
-                else if(pressCount == 2)
-                    holdPosition(WALL);
+                else
+                    holdPosition(DOUBLERING);
             }
         }
 

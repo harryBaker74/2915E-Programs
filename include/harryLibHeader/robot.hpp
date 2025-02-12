@@ -26,8 +26,7 @@ namespace subsystems
 
         pros::IMU IMU;
 
-        Pose pose = Pose(0, 0, 0);
-        Pose prevPose = pose;
+        
 
         bool odomRunning = false;
 
@@ -42,6 +41,10 @@ namespace subsystems
 
 
         public:
+
+        Pose pose = Pose(0, 0, 0);
+        Pose prevPose = pose;
+
         //constructor
         drivetrain(int leftFrontMotorPort, int leftMidMotorPort, int leftBackMotorPort,
                    int rightFrontMotorPort,int rightMidMotorPort,int rightBackMotorPort,
@@ -69,6 +72,16 @@ namespace subsystems
 
         void stopOdom();
 
+        /**
+         * @brief Sets the pose of the robot
+         */
+        void setPose(Pose pose);
+
+        /**
+         * @brief Set the x and y position of the robot, not affecting heading or rotation
+         */
+        void setPose(Point point);
+
         void setBrakeMode(enum pros::motor_brake_mode_e brakeMode);
 
         //////////////////////////////////////////////////////////////////////////////////////////
@@ -91,9 +104,19 @@ namespace subsystems
         void turnToHeading(double heading, int timeout_ms, bool radians = false, bool async = true);
 
         /**
+         * @brief Turns the robot to a point
+         */
+        void turnToPoint(Point point, int timeout_ms, bool async = true);
+
+        /**
          * @brief Function to drive the robot 1 dimensionally, a certain distance
          */
-        void drive(double distance, double maxVoltage = 12000, bool async = true);
+        void drive(double distance, double timeout_ms, double maxVoltage = 12000, bool async = true);
+        
+        /**
+         * @breif drives the distance to the point from current position
+         */
+        void driveToPoint(Point point, double timeout_ms, double maxVoltage = 12000, bool async = true);
         /**
          * @brief Function to move the robot from its current pose to a point. First turns, then drives
          */
@@ -126,11 +149,17 @@ namespace subsystems
 
     enum LiftPosition
     {
-        DEFAULT = 0,
-        LOAD = 75,
-        WALL = 310,
-        ALLIANCE = 375,
-        TIP = 400,
+        DEFAULT = -1,
+        AUTOLOAD = 65,
+        LOAD = 65,
+        DOUBLERING = 150,
+        WALL = 304,
+        ALLIANCE = 350,
+        AUTOALLIANCESLAM =  380,
+        AUTOALLIANCE = 350,
+        GOALRUSH = 400,
+        TIP = 475,
+        GOALLEAVE = 550,
         ZERO = 200
     };
 
@@ -142,7 +171,8 @@ namespace subsystems
         bool sortColour = false;
         bool sorting = false;
 
-        double sortStartPosOffset = 180;
+        double sortStartTime = 0;
+        double sortStartTimeOffset = 50;
         double sortTime = 200;
 
         double sortStartPos = 0;
@@ -155,6 +185,9 @@ namespace subsystems
 
         int sortStartCheckTime = 0;
         int checkDelay = 20;
+
+        double autonVoltage = 0;
+        bool auton = false;
         
         public:
         //Constructor
@@ -169,8 +202,18 @@ namespace subsystems
          */
         void setRingSortColour(bool colour);
 
+        /**
+         * @brief Waits for the ring thats not being sorted to be detected
+         */
+        void waitForRing();
+
         //Function to run intake during driver control
         void driverFunctions();
+
+        //Function to run intake during auton
+        void autonFunctions(double voltage);
+
+        void endAutoTask();
     };
 
     class lift
@@ -178,14 +221,18 @@ namespace subsystems
         pros::Motor liftMotor1;
         pros::Motor liftMotor2;
 
+        pros::Rotation rotationSensor;
+
         bool holding = false;
         LiftPosition targetPos = DEFAULT;
         int pressCount = 0;
+        bool wall = false;
         bool alliance = false;
+        bool tip = false;
 
         public:
         //Constructor
-        lift(int liftMotor1Port, int liftMotor2Port);
+        lift(int liftMotor1Port, int liftMotor2Port, int rotationSensorPort);
 
         //Function to set voltage
         void setVoltage(double voltage);

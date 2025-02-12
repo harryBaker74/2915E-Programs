@@ -77,15 +77,15 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             PID::PID pid(
                 18000,    //Kp
                 1000,    //Ki
-                140000,    //Kd
-                0.1,    //Windup Range
-                0     //Max Intergal
+                205000,    //Kd
+                0.12,    //Windup Range
+                6000     //Max Intergal
             );
 
 
             //Exit conditions
-            double errorExit = 0.03;
-            double velExit = 0.1;
+            double errorExit = 0.015;
+            double velExit = 0.005;
 
             
         //Everything else
@@ -107,6 +107,8 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             double error = pid.getError();
             double errorVel = pid.getDervative() / 0.01; //Derivative is already just the rate of change
 
+            Controller.print(0, 0, "%f", error);
+
             //Checking if all these values are below a certain threshold
             if (exitConditions::rangeExit(error, errorExit) && exitConditions::rangeExit(errorVel, velExit))
             {
@@ -114,14 +116,20 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
                 break;
             }
             //Updating distance traveled for async functions
-            this->distanceTraveled = (this->pose.rotation - prevRotation) * 180 / M_PI;
-            Controller.print(0, 0, "%f", error);
+            this->distanceTraveled += (this->pose.rotation - prevRotation) * 180 / M_PI;
 
             //Delay for scheduling
             pros::delay(10);
         }
+        setVoltage(0, 0);
         this->inMotion = false;
     };
+}
+
+void drivetrain::turnToPoint(Point point, int timeout_ms, bool async)
+{
+    double angle = atan3(point.y - pose.y, point.x - pose.x);
+    turnToHeading(angle, timeout_ms, true, async);
 }
 
 }

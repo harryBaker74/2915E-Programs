@@ -147,6 +147,13 @@ Pose::Pose(double x, double y, double heading)
     this->y = y;
     this->heading = heading;
 }
+Pose::Pose(double x, double y, double heading , double rotation)
+{
+    this->x = x;
+    this->y = y;
+    this->heading = heading;
+    this->rotation = rotation;
+}
 void Pose::set(double x, double y, double heading)
 {
     this->x = x;

@@ -86,9 +86,10 @@ namespace Odometery
         ) / 3;
 
         double deltaVertical = (
-        prevEncoderValues.at(2).at(0) - currentEncoderValues.at(2).at(0));       //Delta TRACKING_WHEEL
+        prevEncoderValues.at(2).at(0) - currentEncoderValues.at(2).at(0)            //Delta TRACKING_WHEEL
+        );       
 
-        double deltaHeading = (
+        double deltaRotation = (
             currentEncoderValues.at(3).at(0) - prevEncoderValues.at(3).at(0)         //Delta IMU Z-Axis
         );
 
@@ -107,22 +108,24 @@ namespace Odometery
         //with the vertical arc's chord becoming the new y axis, and horizontal arc's chord becoming the new x axis.
         double localY = 0;
         double localX = 0;
-        if(deltaHeading == 0)
+        if(deltaRotation == 0)
         {
             localY = deltaVertical;
         }
         else
         {
-            localY = 2 * sin(deltaHeading / 2) * (deltaVertical / deltaHeading - VERTICAL_OFFSET);
+            localY = 2 * sin(deltaRotation / 2) * (deltaVertical / deltaRotation - VERTICAL_OFFSET);
         }
 
         //Rotataing the local axis back to global
-        double averageHeading = robotPose->rotation + deltaHeading / 2; //Amount to rotate by
+        double averageHeading = robotPose->rotation + deltaRotation / 2; //Amount to rotate by
+
+        // Controller.print(0, 0, "%f", robotPose->rotation);
 
         //This rotation matrix might still be wrong i will see on friday
         robotPose->x += localX * cos(averageHeading) + localY * sin(averageHeading);   //Applying rotation matrix
         robotPose->y += (-localX * sin(averageHeading)) + localY * cos(averageHeading);    //Applying rotation matrix
-        robotPose->rotation = currentEncoderValues.at(3).at(0);                         //Pure rotation amount no bounding, in rad
-        robotPose->heading = boundAngle(robotPose->heading + deltaHeading, true);       //Heading bounded between -pi and pi, in rad
+        robotPose->rotation += deltaRotation;                         //Pure rotation amount no bounding, in rad
+        robotPose->heading = boundAngle(robotPose->heading + deltaRotation, true);       //Heading bounded between -pi and pi, in rad
     }
 }
