@@ -28,7 +28,7 @@ namespace boomerang
 
 namespace subsystems
 {
-    void drivetrain::boomerang(Pose targetPose, double minSpeed, double dLead, bool backwards, bool radians, bool async)
+    void drivetrain::boomerang(Pose targetPose, double minSpeed, double dLead, bool backwards, bool radians, bool async, int timeout_ms)
         {
             //Prevent this motion from starting if the robot is already in a motion
             while(inMotion)
@@ -38,7 +38,7 @@ namespace subsystems
             if (async)
             {
                 pros::Task task {[=, this] {
-                    boomerang(targetPose, minSpeed, dLead, backwards, radians, false);
+                    boomerang(targetPose, minSpeed, dLead, backwards, radians, false, timeout_ms);
                     pros::Task::current().remove();
                 }};
             }
@@ -83,7 +83,9 @@ namespace subsystems
                 double prevDistance = infinity(); 
                 bool prevSide = false;
 
-                while(true)
+                int endTime = pros::millis() + timeout_ms;
+
+                while(pros::millis() < endTime)
                 {
 
                     //Updating carrot point

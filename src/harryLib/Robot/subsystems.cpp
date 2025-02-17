@@ -74,6 +74,9 @@ namespace subsystems
             */
             //Uncomment for when no sorting
             setVoltage(((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2))) * 12000);
+
+            if(Controller.get_digital(DIGITAL_L1) || Controller.get_digital(DIGITAL_A) || Controller.get_digital(DIGITAL_Y) || Controller.get_digital(DIGITAL_RIGHT))
+                setVoltage(-12000);
         }
 
         void intake::autonFunctions(double voltage)

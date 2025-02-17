@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "testing",
+    "project_name": "blue goal",
     "target": "v5",
     "templates": {
       "kernel": {
@@ -79,8 +79,8 @@
       }
     },
     "upload_options": {
-      "icon": "alien",
-      "slot": 1
+      "icon": "pizza",
+      "slot": 2
     },
     "use_early_access": false
   }

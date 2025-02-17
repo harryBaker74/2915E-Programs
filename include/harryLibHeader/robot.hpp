@@ -125,7 +125,7 @@ namespace subsystems
          * @brief Function to move the robot from its current pose to the desired pose
          * Uses a Boomerang controller
          */
-        void boomerang(Pose pose, double minSpeed, double dLead, bool backwards, bool radians = false, bool async = true);
+        void boomerang(Pose pose, double minSpeed, double dLead, bool backwards, bool radians = false, bool async = true, int timeout_ms = 10000);
 
         /**
          * @brief Function that makes the robot follow an inputted cubic Bezier curve and linear motion profile
