@@ -492,7 +492,7 @@
         {
             points.push_back(waypoint(spline.getPoint(backwardPass.at(i).at(2)), backwardPass.at(i).at(0), backwardPass.at(i).at(1), backwardPass.at(i).at(2)));
 
-            printf("Pos:(%.2f, %.2f), Lin:%.3f, Ang:%f, U:%.3f, I:%d\n", points.at(i).position.x, points.at(i).position.y, points.at(i).linVel, points.at(i).angVel, points.at(i).u, i);
+            // printf("Pos:(%.2f, %.2f), Lin:%.3f, Ang:%f, U:%.3f, I:%d\n", points.at(i).position.x, points.at(i).position.y, points.at(i).linVel, points.at(i).angVel, points.at(i).u, i);
         }
 
 
