@@ -38,6 +38,7 @@ struct quinticBezier
     Point p4;
     Point p5;
 
+    quinticBezier();
     quinticBezier(Point p0, Point p1, Point p2, Point p3, Point p4, Point p5);
     
     Point getPoint(double t);
@@ -51,7 +52,7 @@ struct quinticBezier
 
 struct quinticSpline
 {
-    std::vector<quinticBezier> curves;
+    std::vector<quinticBezier> curves = {quinticBezier()};
 
     quinticSpline(std::vector<std::vector<Point>> points);
 
@@ -64,11 +65,26 @@ struct quinticSpline
     double getCurvature(double u);
 };
 
-struct trajectory
+struct waypoint
 {
-    std::vector<std::pair<Point, std::vector<double>>> points;
+    public:
+    Point position;
+    double linVel;
+    double angVel;
+    double u;
 
     //Constructor
+    waypoint();
+    waypoint(Point position, double linVel, double angVel, double u);
+
+};
+
+struct trajectory
+{
+    std::vector<waypoint> points = {};
+
+    //Constructor
+    trajectory(std::vector<waypoint> points);
     trajectory(std::vector<std::pair<Point, std::vector<double>>> points);
 };
 

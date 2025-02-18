@@ -50,8 +50,10 @@ enum auton Auton = LEFT;
 
 void autonomous() 
 {
-//Blue side goal rush
 
+
+//Blue side goal rush
+/*
     drivetrain.runOdom(Pose(0, 0, 0));
     intake.setRingSortColour(false);
     lift.holdPosition(subsystems::LiftPosition::AUTOLOAD);
@@ -123,7 +125,7 @@ void autonomous()
     drivetrain.boomerang(Pose(0, 110, 35), 3000, 0.5, true, false, false);
     drivetrain.stop(100);
 
-
+*/
     
 //Red side goal rush
 /*
@@ -873,6 +875,17 @@ void autonomous()
 
 void opcontrol() 
 {
+    quinticSpline test = quinticSpline(
+        {
+            {Point(70, -35), Point(38, -59), Point(-7, -63)},
+            {Point(-55, 5), Point(-54, -20), Point(-42, -39)},
+            {Point(13.1, 23.4), Point(-6.5, 28.2), Point(-18, 28)},
+            {Point(9.7, -8.6), Point(22.4, -10.9), Point(33.6, -4.6)}
+    });
+    
+    trajectory testPath = motionProfile.generateProfile(test, 3, 10);
+
+    /*
     intake.endAutoTask();
     drivetrain.stopOdom();
     drivetrain.setBrakeMode(MOTOR_BRAKE_COAST);
@@ -894,5 +907,5 @@ void opcontrol()
         pto.driverFunctions();
         
         pros::delay(10);
-    }
+    }*/
 }

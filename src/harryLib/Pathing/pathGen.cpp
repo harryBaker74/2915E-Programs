@@ -85,6 +85,17 @@
 
 //Quintic Bezier struct
 //Inspired by cubic bezier framework, with math from https://www.desmos.com/calculator/iy5gzoasrf
+
+    quinticBezier::quinticBezier()
+    {
+        this->p0 = Point(0, 0);
+        this->p1 = Point(0, 0);
+        this->p2 = Point(0, 0);
+        this->p3 = Point(0, 0);
+        this->p4 = Point(0, 0);
+        this->p5 = Point(0, 0);
+    }
+
     quinticBezier::quinticBezier(Point p0, Point p1, Point p2, Point p3, Point p4, Point p5)
     {
         this->p0 = p0;
@@ -163,10 +174,11 @@
         double curveAmount = points.size() - 1;
 
         //Setting first curve manually
+
         curves.at(0) = quinticBezier(points.at(0).at(0), points.at(0).at(1), points.at(0).at(2), points.at(1).at(2), points.at(1).at(1), points.at(1).at(0));
 
         //Going over each point group, creating a curve for each group(except last)
-        for(int pointGroupIndex = 1; pointGroupIndex <= curveAmount; pointGroupIndex++)
+        for(int pointGroupIndex = 1; pointGroupIndex <= curveAmount - 1; pointGroupIndex++)
         {
             //Calculating the handles used for generating the curve
             Point firstCalculatedHandle= (points.at(pointGroupIndex).at(0) * 2) - points.at(pointGroupIndex).at(1);
@@ -231,11 +243,40 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//Waypoint struct
+    waypoint::waypoint()
+    {
+        this->position = Point(0, 0);
+        this->linVel = 0;
+        this->angVel = 0;
+        this->u = 0;
+    }
+
+    waypoint::waypoint(Point position, double linVel, double angVel, double u)
+    {
+        this->position = position;
+        this->linVel = linVel;
+        this->angVel = angVel;
+        this->u = u;
+    }
+
 //Trajectory struct
 
-    trajectory::trajectory(std::vector<std::pair<Point, std::vector<double>>> points)
+    trajectory::trajectory(std::vector<waypoint> points)
     {
         this->points = points;
+    }
+
+
+    trajectory::trajectory(std::vector<std::pair<Point, std::vector<double>>> points)
+    {   
+        this->points.at(0) = waypoint(points.at(0).first, points.at(0).second.at(0), points.at(0).second.at(1), points.at(0).second.at(2));
+
+        for(int i = 1; i < points.size(); i++)
+        {
+            this->points.push_back(waypoint(points.at(i).first, points.at(i).second.at(0), points.at(i).second.at(1), points.at(i).second.at(2)));
+        } 
     }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -358,6 +399,109 @@
 
     }
 
+    trajectory profile::generateProfile(quinticSpline spline, double ds, double k)
+    {
+        //dt = ds / sqrt(pow(deriv.x, 2) + pow(deriv.y, 2))
+        //Delta t based off delta distance, derived from current t
+        //From cooper motion profiling
+        //Note: Only an approximation, more accurate with lower curvature, and lower ds
+
+        //Forward pass
+
+        double startVel = 0;
+
+            std::vector<std::vector<double>> forwardPass = {{}};
+
+            double u = 0;
+            //Caluclating Linear Velocity
+            double maxLinVelocity = fmin(this->maxVel, fabs(k / spline.getCurvature(u)));
+            //vf*vf = vi*vi + 2ad
+            double linVel = fmin(maxLinVelocity, sqrt((startVel * startVel) + 2 * maxAccel * ds));
+
+            //Storing Lin velocity and u value
+            forwardPass.at(0) = {linVel, u};
+            double prevVel = linVel;
+
+            //Getting delta u value based on delta distance 
+                Point derivative = spline.getFirstDerivative(u);
+                u += ds / sqrt(pow(derivative.x, 2) + pow(derivative.y, 2));
+
+            while(u < spline.curves.size())
+            {
+                //Calculating lin vel
+                    maxLinVelocity = fmin(maxVel, fabs(k / spline.getCurvature(u)));
+                    linVel = fmin(maxLinVelocity, sqrt((prevVel * prevVel) + 2 * maxAccel * ds));
+
+                //Storing velocities, time, and u value
+                    forwardPass.push_back({linVel, u});
+
+                //Updating u and prevVel
+                    prevVel = linVel;
+                    derivative = spline.getFirstDerivative(u);
+                    u += ds / sqrt(pow(derivative.x, 2) + pow(derivative.y, 2));
+            }
+
+
+        //Backwards pass
+
+            double endVel = 0;
+            
+            std::vector<std::vector<double>> backwardPass = forwardPass;
+
+            u = forwardPass.at(forwardPass.size() - 1).at(1);
+            
+            //Caluclating Linear Velocity
+                maxLinVelocity = forwardPass.at(forwardPass.size() - 1).at(0);
+            //kinematic vfvi2ad
+                linVel = fmin(maxLinVelocity, sqrt((endVel * endVel) + 2 * maxDeccel * ds));
+            
+            //Caluclating ang vel
+                double angVel = linVel * spline.getCurvature(u);
+
+            //Storing Velocities, time taken between points, and u value
+                backwardPass.at(backwardPass.size() - 1) = {linVel, angVel, u};
+
+                prevVel = linVel;
+
+            //For loop because we know the number of points now
+            for(int i = forwardPass.size() - 1; i--; i >= 0)
+            {
+                //Getting u
+                    u = forwardPass.at(i).at(1);
+
+                //Lin Vel
+                    maxLinVelocity = forwardPass.at(i).at(0);
+                    linVel = std::min(maxLinVelocity, sqrt((prevVel * prevVel) + 2 * maxAccel * ds));
+
+                //Ang vel, reversed for cw+
+                    angVel = (linVel * spline.getCurvature(u)) * -1;
+
+                //Saving
+                    backwardPass.at(i) = {linVel, angVel, u};
+
+                prevVel = linVel;
+            }
+
+        //Storing velocities and postion
+        //Doesnt add time in yet
+
+        
+        std::vector<waypoint> points = {waypoint(spline.getPoint(backwardPass.at(107).at(2)), backwardPass.at(107).at(0), backwardPass.at(107).at(1), backwardPass.at(107).at(2))};
+        
+        for(int i = 1; i < backwardPass.size(); i++)
+        {
+            points.push_back(waypoint(spline.getPoint(backwardPass.at(i).at(2)), backwardPass.at(i).at(0), backwardPass.at(i).at(1), backwardPass.at(i).at(2)));
+
+            printf("Pos:(%.2f, %.2f), Lin:%.3f, Ang:%f, U:%.3f, I:%d\n", points.at(i).position.x, points.at(i).position.y, points.at(i).linVel, points.at(i).angVel, points.at(i).u, i);
+        }
+
+
+
+        return trajectory(points);
+        
+    }
+
+    /*
     trajectory profile::generateProfile(quinticSpline spline, double ds, double k)
     {
         //dt = ds / sqrt(pow(deriv.x, 2) + pow(deriv.y, 2))
@@ -488,3 +632,4 @@
         return trajectory(output);
     }   
 
+*/
