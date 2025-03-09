@@ -29,10 +29,8 @@
     subsystems::pto pto = subsystems::pto(PTO);
 
 //Auton paths and motion profiling
-profile motionProfile = profile(200, 300, 275);
+profile motionProfile = profile(200, 200, 200);
 
-cubicBezier curve1 = cubicBezier(Point(0, 0), Point(0, 45), Point(15, 60), Point(60, 60));
-std::vector<std::vector<double>> profile1 = motionProfile.generateProfile(curve1, 50, 3);
 
 void initialize() 
 {
@@ -50,6 +48,21 @@ enum auton Auton = LEFT;
 
 void autonomous() 
 {
+
+    drivetrain.runOdom(Pose(0, 0, 0, 0));
+
+    quinticSpline test = quinticSpline(
+        {
+            {Point(0, 0), Point(0, 5), Point(0, 10)},
+            {Point(0, 25), Point(0, 20), Point(0, 15)},
+            {Point(50, 60), Point(30, 60), Point(9.2, 56.3)},
+            {Point(95.8, 50.6), Point(82.7, 55.8), Point(74.4, 58.8)}
+    });
+    
+    trajectory testPath = motionProfile.generateProfile(test, 3, 5);
+
+    drivetrain.followPath(testPath, 30);
+
 
 
 //Blue side goal rush
@@ -875,17 +888,6 @@ void autonomous()
 
 void opcontrol() 
 {
-    quinticSpline test = quinticSpline(
-        {
-            {Point(70, -35), Point(38, -59), Point(-7, -63)},
-            {Point(-55, 5), Point(-54, -20), Point(-42, -39)},
-            {Point(13.1, 23.4), Point(-6.5, 28.2), Point(-18, 28)},
-            {Point(9.7, -8.6), Point(22.4, -10.9), Point(33.6, -4.6)}
-    });
-    
-    trajectory testPath = motionProfile.generateProfile(test, 3, 10);
-
-    /*
     intake.endAutoTask();
     drivetrain.stopOdom();
     drivetrain.setBrakeMode(MOTOR_BRAKE_COAST);
@@ -907,5 +909,5 @@ void opcontrol()
         pto.driverFunctions();
         
         pros::delay(10);
-    }*/
+    }
 }

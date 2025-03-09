@@ -11,6 +11,9 @@
     #define HORIZONTAL_OFFSET 2.61
     #define VERTICAL_OFFSET 0//2.60523824550331
 
+    //Track width
+    #define TRACKWIDTH 10.5
+
     //Controller port
     #define CONTROLLER 8
 

@@ -141,9 +141,15 @@ namespace subsystems
         void swingToHeading(double heading, bool side, bool backwards = false, bool radians = false, bool async = true);
 
         /**
-         * @brief Function to make the robot follow a desired path from the path generator or path scheduler
+         * @brief Function to make the robot follow a desired trajectory from the path generator
+         * Uses a ramsete controller
+         * 
+         * @param path Trajectory to follow
+         * @param lookaheadDist The distance to lookahead in the path when trying to find the closest point.
+         * Small lookahead might act strangely and slow down path following.
+         * Large lookahead might cause robot to skip when path crosses over itself, and will take more resources
          */
-        void followPath(trajectory path);
+        void followPath(trajectory path, double lookaheadDist);
 
     };
 

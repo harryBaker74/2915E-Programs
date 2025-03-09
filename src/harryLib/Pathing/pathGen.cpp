@@ -1,5 +1,6 @@
 #include "harryLibHeader/pathGen.hpp"
 #include "harryLibHeader/util.hpp"
+#include "harryLibHeader/globals.h"
 #include "main.h"
 #include <vector>
 
@@ -247,15 +248,15 @@
 //Waypoint struct
     waypoint::waypoint()
     {
-        this->position = Point(0, 0);
+        this->pose = Pose(0, 0, 0, 0);
         this->linVel = 0;
         this->angVel = 0;
         this->u = 0;
     }
 
-    waypoint::waypoint(Point position, double linVel, double angVel, double u)
+    waypoint::waypoint(Pose pose, double linVel, double angVel, double u)
     {
-        this->position = position;
+        this->pose = pose;
         this->linVel = linVel;
         this->angVel = angVel;
         this->u = u;
@@ -263,13 +264,14 @@
 
 //Trajectory struct
 
-    trajectory::trajectory(std::vector<waypoint> points)
+    trajectory::trajectory(std::vector<waypoint> points, double ds)
     {
         this->points = points;
+        this->ds = ds;
     }
 
 
-    trajectory::trajectory(std::vector<std::pair<Point, std::vector<double>>> points)
+    trajectory::trajectory(std::vector<std::pair<Pose, std::vector<double>>> points, double ds)
     {   
         this->points.at(0) = waypoint(points.at(0).first, points.at(0).second.at(0), points.at(0).second.at(1), points.at(0).second.at(2));
 
@@ -277,6 +279,8 @@
         {
             this->points.push_back(waypoint(points.at(i).first, points.at(i).second.at(0), points.at(i).second.at(1), points.at(i).second.at(2)));
         } 
+
+        this->ds = ds;
     }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -473,7 +477,7 @@
                     maxLinVelocity = forwardPass.at(i).at(0);
                     linVel = std::min(maxLinVelocity, sqrt((prevVel * prevVel) + 2 * maxAccel * ds));
 
-                //Ang vel, reversed for cw+
+                //Ang vel, reversed for cw+, converting to from rad/s to cm/s for path following
                     angVel = (linVel * spline.getCurvature(u)) * -1;
 
                 //Saving
@@ -482,154 +486,28 @@
                 prevVel = linVel;
             }
 
-        //Storing velocities and postion
+        //Storing velocities and pose
         //Doesnt add time in yet
 
+        Point position = spline.getPoint(backwardPass.at(backwardPass.size() - 1).at(2));
+        derivative = spline.getFirstDerivative(backwardPass.at(backwardPass.size() - 1).at(2));
+        double heading = atan3(derivative.y, derivative.x);
         
-        std::vector<waypoint> points = {waypoint(spline.getPoint(backwardPass.at(107).at(2)), backwardPass.at(107).at(0), backwardPass.at(107).at(1), backwardPass.at(107).at(2))};
+        std::vector<waypoint> points = {waypoint(Pose(position.x, position.y, heading), backwardPass.at(backwardPass.size() - 1).at(0), backwardPass.at(backwardPass.size() - 1).at(1), backwardPass.at(backwardPass.size() - 1).at(2))};
         
         for(int i = 1; i < backwardPass.size(); i++)
         {
-            points.push_back(waypoint(spline.getPoint(backwardPass.at(i).at(2)), backwardPass.at(i).at(0), backwardPass.at(i).at(1), backwardPass.at(i).at(2)));
+            position = spline.getPoint(backwardPass.at(i).at(2));
+            derivative = spline.getFirstDerivative(backwardPass.at(i).at(2));
+            heading = atan3(derivative.y, derivative.x);
+
+            points.push_back(waypoint(Pose(position.x, position.y, heading), backwardPass.at(i).at(0), backwardPass.at(i).at(1), backwardPass.at(i).at(2)));
 
             // printf("Pos:(%.2f, %.2f), Lin:%.3f, Ang:%f, U:%.3f, I:%d\n", points.at(i).position.x, points.at(i).position.y, points.at(i).linVel, points.at(i).angVel, points.at(i).u, i);
         }
 
 
 
-        return trajectory(points);
+        return trajectory(points, ds);
         
     }
-
-    /*
-    trajectory profile::generateProfile(quinticSpline spline, double ds, double k)
-    {
-        //dt = ds / sqrt(pow(deriv.x, 2) + pow(deriv.y, 2))
-        //Delta t based off delta distance, derived from current t
-        //From cooper motion profiling
-        //Note: Only an approximation, more accurate with lower curvature, and lower ds
-
-        double startVel = 0;
-        //Forward pass
-        std::vector<std::vector<double>> forwardPass = {{}};
-
-        double u = 0;
-        //Caluclating Linear Velocity
-        double maxLinVelocity = fmin(this->maxVel, k / spline.getCurvature(u));
-        //(2 times because its a quadratic, only the biggest root is correct in real life)
-        double time_1 = (-startVel + sqrt(pow(startVel, 2) - 4 * maxAccel * (-1 * ds))) / (2 * maxAccel);
-        double time_2 = (-startVel - sqrt(pow(startVel, 2) - 4 * maxAccel * (-1 * ds))) / (2 * maxAccel);
-        double time = fmax(time_1, time_2);
-        double linVel = startVel + maxAccel * time;
-        
-        //Storing Lin velocity and u value
-        forwardPass.at(0) = {linVel, u};
-        double prevVel = linVel;
-
-        while(u < spline.curves.size())
-        {
-            //Getting delta u value based on delta distance 
-                Point derivative = spline.getFirstDerivative(u);
-                u += ds / sqrt(pow(derivative.x, 2) + pow(derivative.y, 2));
-
-            //Calculating lin vel
-                maxLinVelocity = fmin(maxVel, k / spline.getCurvature(u));
-                time_1 = (-prevVel + sqrt(pow(prevVel, 2) - 4 * maxAccel * (-1 * ds))) / (2 * maxAccel);
-                time_2 = (-prevVel - sqrt(pow(prevVel, 2) - 4 * maxAccel * (-1 * ds))) / (2 * maxAccel);
-                time = fmax(time_1, time_2);
-                linVel = prevVel + maxAccel * time;
-
-                //Cheicking if velocity reached would be higher than max vel
-                if(linVel > maxLinVelocity)
-                {
-                    linVel = maxLinVelocity;
-                    //Recalculating time by figuring out time to accel to max vel, and time spent at max vel
-                    double accelTime = (maxLinVelocity - prevVel) / maxAccel;
-                    double accelDistance = (prevVel * accelTime) + ((maxAccel * accelTime) / 2);
-                    double cruiseTime = (ds - accelDistance) / maxLinVelocity;
-                    time = accelTime + cruiseTime;
-                }
-
-            //Storing velocities, time, and u value
-                forwardPass.push_back({linVel, u});
-
-            prevVel = linVel;
-        }
-
-        double endVel = 0;
-        //Backwards pass
-        std::vector<std::vector<double>> backwardPass = forwardPass;
-
-        u = forwardPass.at(forwardPass.size() - 1).at(1);
-        //Caluclating Linear Velocity
-        maxLinVelocity = forwardPass.at(forwardPass.size() - 1).at(0);
-        //(2 times because its a quadratic, only the biggest root is correct in real life)
-        time_1 = (-endVel + sqrt(pow(endVel, 2) - 4 * maxDeccel * (-1 * ds))) / (2 * maxDeccel);
-        time_2 = (-endVel - sqrt(pow(endVel, 2) - 4 * maxDeccel * (-1 * ds))) / (2 * maxDeccel);
-        time = fmax(time_1, time_2);
-        linVel = endVel + maxDeccel * time;
-        
-        //Caluclating ang vel
-        double angVel = linVel * spline.getCurvature(u);
-
-        //Storing Velocities, time taken between points, and u value
-        backwardPass.at(backwardPass.size() - 1) = {linVel, angVel, time, u};
-        prevVel = linVel;
-
-        //For loop because we know the number of points now
-        for(int i = forwardPass.size() - 2; i--; i >= 0)
-        {
-            u = forwardPass.at(i).at(1);
-            maxLinVelocity = forwardPass.at(i).at(0);
-
-            time_1 = (-prevVel + sqrt(pow(prevVel, 2) - 4 * maxDeccel * (-1 * ds))) / (2 * maxDeccel);
-            time_2 = (-prevVel - sqrt(pow(prevVel, 2) - 4 * maxDeccel * (-1 * ds))) / (2 * maxDeccel);
-            time = fmax(time_1, time_2);
-            linVel = prevVel + maxAccel * time;
-
-                //Cheicking if velocity reached would be higher than max vel
-                if(linVel > maxLinVelocity)
-                {
-                    linVel = maxLinVelocity;
-                    //Recalculating time by figuring out time to accel to max vel, and time spent at max vel
-                    double deccelTime = (maxLinVelocity - prevVel) / maxDeccel;
-                    double deccelDistance = (prevVel * deccelTime) + ((maxDeccel * deccelTime) / 2);
-                    double cruiseTime = (ds - deccelDistance) / maxLinVelocity;
-                    time = deccelTime + cruiseTime;
-                }
-
-            angVel = linVel * spline.getCurvature(u);
-
-            backwardPass.at(i) = {linVel, angVel, time, u};
-
-            prevVel = linVel;
-        }
-
-        //Doing another forward pass to integrate the times (for time-parameterization), and to add the points (for distance-parameterization and positional feedback)
-        double totalTime = 0;
-        std::vector<std::pair<Point, std::vector<double>>> output = {{spline.getPoint(backwardPass.at(0).at(3)), 
-        {
-            backwardPass.at(0).at(0),
-            backwardPass.at(0).at(1),
-            backwardPass.at(0).at(2),//totalTime,
-            backwardPass.at(0).at(3),
-        }}};
-
-        totalTime += backwardPass.at(0).at(2);
-        for(int i = 1; i < backwardPass.size(); i++)
-        {
-            output.push_back({spline.getPoint(backwardPass.at(i).at(3)), 
-            {
-                backwardPass.at(i).at(0),
-                backwardPass.at(i).at(1),
-                backwardPass.at(0).at(2),//totalTime,
-                backwardPass.at(i).at(3),
-            }});
-
-            totalTime += backwardPass.at(i).at(2);
-        }
-
-        return trajectory(output);
-    }   
-
-*/

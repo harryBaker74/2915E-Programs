@@ -68,14 +68,14 @@ struct quinticSpline
 struct waypoint
 {
     public:
-    Point position;
+    Pose pose = Pose(0, 0, 0, 0);
     double linVel;
     double angVel;
     double u;
 
     //Constructor
     waypoint();
-    waypoint(Point position, double linVel, double angVel, double u);
+    waypoint(Pose pose, double linVel, double angVel, double u);
 
 };
 
@@ -83,9 +83,11 @@ struct trajectory
 {
     std::vector<waypoint> points = {};
 
+    double ds;
+
     //Constructor
-    trajectory(std::vector<waypoint> points);
-    trajectory(std::vector<std::pair<Point, std::vector<double>>> points);
+    trajectory(std::vector<waypoint> points, double ds);
+    trajectory(std::vector<std::pair<Pose, std::vector<double>>> points, double ds);
 };
 
 class profile
