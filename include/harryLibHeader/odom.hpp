@@ -5,21 +5,21 @@
 namespace Odometery
 {
 
-    // struct Particle
-    // {
-    //     double x;
-    //     double y;
-    //     double weight;
+    struct Particle
+    {
+        double x;
+        double y;
+        double weight;
 
-    //     //Constructor
-    //     Particle();
-    //     Particle(double x, double y, double weight);
-    // };
+        //Constructor
+        Particle();
+        Particle(double x, double y, double weight);
+    };
 
-    // pros::Distance distanceLeft (DIST_LEFT);
-    // pros::Distance distanceBack (DIST_BACK);
-    // pros::Distance distanceRight (DIST_RIGHT);
-    // std::vector<Particle> particles;
+    extern pros::Distance distanceLeft; 
+    extern pros::Distance distanceFront;
+    extern pros::Distance distanceRight;
+    extern std::vector<Particle> particles;
 
     extern std::vector<std::vector<double>> currentEncoderValues;
     extern std::vector<std::vector<double>> prevEncoderValues;

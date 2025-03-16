@@ -19,7 +19,7 @@
 
     //MCL Distance Sensor ports
     #define DIST_LEFT 30
-    #define DIST_BACK 31
+    #define DIST_FRONT 31
     #define DIST_RIGHT 32
 
     //IMU Port
