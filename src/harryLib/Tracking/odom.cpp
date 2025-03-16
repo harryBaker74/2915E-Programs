@@ -1,5 +1,6 @@
 #include "../include/main.h"
 #include "../include/harryLibHeader/globals.h"
+#include "../include/harryLibHeader/odom.hpp"
 #include <vector>
 
 namespace Odometery

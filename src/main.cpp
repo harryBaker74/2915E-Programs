@@ -18,7 +18,7 @@
 //Creating intake
     subsystems::intake intake = subsystems::intake(INTAKE, OPTICAL);
 //Creating Lift
-    subsystems::lift lift = subsystems::lift(LIFT_1, LIFT_2, ROTATION);
+    subsystems::lift lift = subsystems::lift(LIFT, ROTATION);
 //Creating Mogo
     subsystems::mogo mogo = subsystems::mogo(MOGO);
 //Creating Mogo

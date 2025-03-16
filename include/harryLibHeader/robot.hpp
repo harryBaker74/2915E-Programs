@@ -156,17 +156,17 @@ namespace subsystems
     enum LiftPosition
     {
         DEFAULT = -1,
-        AUTOLOAD = 65,
-        LOAD = 65,
-        DOUBLERING = 150,
-        WALL = 304,
-        ALLIANCE = 350,
-        AUTOALLIANCESLAM =  380,
-        AUTOALLIANCE = 350,
-        GOALRUSH = 400,
-        TIP = 475,
-        GOALLEAVE = 550,
-        ZERO = 200
+        AUTOLOAD = 21,
+        LOAD = 21,
+        DOUBLERING = 85,
+        WALL = 145,
+        ALLIANCE = 170,
+        AUTOALLIANCESLAM =  180,
+        AUTOALLIANCE = 170,
+        GOALRUSH = 180,
+        TIP = 190,
+        GOALLEAVE = 200,
+        ZERO = 105
     };
 
     class intake
@@ -224,8 +224,7 @@ namespace subsystems
 
     class lift
     {
-        pros::Motor liftMotor1;
-        pros::Motor liftMotor2;
+        pros::Motor liftMotor;
 
         pros::Rotation rotationSensor;
 
@@ -238,7 +237,7 @@ namespace subsystems
 
         public:
         //Constructor
-        lift(int liftMotor1Port, int liftMotor2Port, int rotationSensorPort);
+        lift(int liftMotorPort, int rotationSensorPort);
 
         //Function to set voltage
         void setVoltage(double voltage);

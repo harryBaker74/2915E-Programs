@@ -75,7 +75,7 @@ namespace subsystems
             //Uncomment for when no sorting
             setVoltage(((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2))) * 12000);
 
-            if(Controller.get_digital(DIGITAL_L1) || Controller.get_digital(DIGITAL_A) || Controller.get_digital(DIGITAL_Y) || Controller.get_digital(DIGITAL_RIGHT))
+            if(Controller.get_digital(DIGITAL_L1))
                 setVoltage(-12000);
         }
 
@@ -138,19 +138,14 @@ namespace subsystems
 
     //Lift Class
         //Constructor
-        lift::lift(int liftMotor1Port, int liftMotor2Port, int rotationSensorPort)
-        :   liftMotor1(pros::Motor (liftMotor1Port, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees)),
-            liftMotor2(pros::Motor (liftMotor2Port, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees)),
+        lift::lift(int liftMotorPort, int rotationSensorPort)
+        :   liftMotor(pros::Motor (liftMotorPort, pros::v5::MotorGearset::red, pros::v5::MotorEncoderUnits::degrees)),
             rotationSensor(pros::Rotation (rotationSensorPort))
-        {
-            rotationSensor.reverse();
-        }
-
+        {}
         //Function to set intake voltage
         void lift::setVoltage(double voltage)
         {
-            liftMotor1.move_voltage(floor(voltage));
-            liftMotor2.move_voltage(floor(voltage));
+            liftMotor.move_voltage(floor(voltage));
         }
 
         void lift::holdPosition(LiftPosition pos)
@@ -162,13 +157,12 @@ namespace subsystems
                 rotationSensor.reset_position();
 
                 pros::Task task{[=, this] {
-                    
                     holding = true;
 
                     PID::PID posPID = PID::PID(
-                        100,
+                        350,
                         0,
-                        200,
+                        500,
                         0,
                         0
                     );
@@ -180,9 +174,17 @@ namespace subsystems
 
                     while(true)
                     {
-                        double currentPos = rotationSensor.get_position() / 100;
+                        // double currentPos = rotationSensor.get_position() / 100;
+                        double currentPos = liftMotor.get_position();
+                        
                         double posError = targetPos - currentPos;
-                        double angle = fabs(sin((currentPos - LiftPosition::ZERO) / 2));
+                        double angle = fabs(sin(((currentPos - LiftPosition::ZERO) * M_PI / 180)));
+                        
+                        // if ((posError <= 10))// && ((currentPos >= DOUBLERING - 10) && (currentPos <= DOUBLERING + 10)))
+                            // posPID.setKp(150);
+                        // else
+                            // posPID.setKp(400);
+
                         double targetVel = posPID.getPid(posError);
 
                         double voltage = (Ks * sign(targetVel)) + (Kg * angle) + (Kv * targetVel);
@@ -190,11 +192,8 @@ namespace subsystems
 
                         Controller.print(0, 0, "%f", currentPos);
 
-                        // if(currentPos <= 0)
-                        // {
-                        //     liftMotor1.tare_position();
-                        //     liftMotor2.tare_position();
-                        // }
+                        if(liftMotor.get_position() <= 0)
+                            liftMotor.tare_position();
 
                         pros::delay(10);
                     }

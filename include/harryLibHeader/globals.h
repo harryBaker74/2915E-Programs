@@ -17,6 +17,11 @@
     //Controller port
     #define CONTROLLER 8
 
+    //MCL Distance Sensor ports
+    #define DIST_LEFT 30
+    #define DIST_BACK 31
+    #define DIST_RIGHT 32
+
     //IMU Port
     #define INERTIAL 14
 
@@ -25,26 +30,25 @@
 
     //Drivtrain Motor Ports
     #define LEFT_MOTOR_FRONT 1
-    #define LEFT_MOTOR_MID -2
-    #define LEFT_MOTOR_BACK -4
+    #define LEFT_MOTOR_MID 2
+    #define LEFT_MOTOR_BACK -9
 
-    #define RIGHT_MOTOR_FRONT 5
-    #define RIGHT_MOTOR_MID -21
-    #define RIGHT_MOTOR_BACK 15
+    #define RIGHT_MOTOR_FRONT -4
+    #define RIGHT_MOTOR_MID -7
+    #define RIGHT_MOTOR_BACK 8
 
 //Other Systems
     //Intake Port
-    #define INTAKE -11
+    #define INTAKE 3
 
     //Intake optical
     #define OPTICAL 6
 
     //Lady Brown Ports
-    #define LIFT_1 -7
-    #define LIFT_2 8
+    #define LIFT -10
 
     //Lady Brown Rotation
-    #define ROTATION 20
+    #define ROTATION 11
 
 //Solanoids
     //Mogo Port and controlss
