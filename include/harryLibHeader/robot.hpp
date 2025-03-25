@@ -156,15 +156,15 @@ namespace subsystems
     enum LiftPosition
     {
         DEFAULT = -1,
-        AUTOLOAD = 21,
-        LOAD = 21,
-        DOUBLERING = 85,
-        WALL = 145,
-        ALLIANCE = 170,
-        AUTOALLIANCESLAM =  180,
-        AUTOALLIANCE = 170,
-        GOALRUSH = 180,
-        TIP = 190,
+        AUTOLOAD = 19,
+        LOAD = 19,
+        DOUBLERING = 90,
+        WALL = 155,
+        ALLIANCE = 178,
+        AUTOALLIANCESLAM =  178,
+        AUTOALLIANCE = 178,
+        GOALRUSH = 190,
+        TIP = 220,
         GOALLEAVE = 200,
         ZERO = 105
     };
@@ -172,16 +172,28 @@ namespace subsystems
     class intake
     {
         pros::Motor intakeMotor;
-        pros::Optical opticalSensor;
+        pros::Optical intakeOptical;
+
+        pros::Motor liftMotor;
+        pros::Rotation rotationSensor;
+        pros::Optical liftOptical;
+
+        bool holding = false;
+        LiftPosition targetPos = DEFAULT;
+        int pressCount = 0;
+        bool wall = false;
+        bool alliance = false;
+        bool tip = false;
+
 
         bool sortColour = false;
         bool sorting = false;
 
+        bool allianceRing = false;
+
         double sortStartTime = 0;
         double sortStartTimeOffset = 50;
         double sortTime = 200;
-
-        double sortStartPos = 0;
         double sortEndTime = 0;
 
         int redMin = 0;
@@ -189,18 +201,15 @@ namespace subsystems
         int blueMin = 200;
         int blueMax = 250;
 
-        int sortStartCheckTime = 0;
-        int checkDelay = 20;
-
         double autonVoltage = 0;
         bool auton = false;
         
         public:
         //Constructor
-        intake(int intakeMotorPort, int opticalSensorPort);
+        intake(int intakeMotorPort, int intakeOpticalPort, int liftMotorPort, int rotationSensorPort, int liftOpticalPort);
 
         //Function to set intake voltage
-        void setVoltage(double voltage);
+        void setIntakeVoltage(double voltage);
 
         //Function to set ring colour being sorted out
         /**
@@ -220,6 +229,11 @@ namespace subsystems
         void autonFunctions(double voltage);
 
         void endAutoTask();
+
+        //Function to set lift voltage
+        void setLiftVoltage(double voltage);
+
+        void holdPosition(LiftPosition pos);
     };
 
     class lift
@@ -239,10 +253,7 @@ namespace subsystems
         //Constructor
         lift(int liftMotorPort, int rotationSensorPort);
 
-        //Function to set voltage
-        void setVoltage(double voltage);
-
-        void holdPosition(LiftPosition pos);
+        
 
         //Function for driver control
         void driverFunctions();
@@ -251,18 +262,23 @@ namespace subsystems
     class mogo
     {
         pros::adi::Pneumatics mogoSolanoid;
+        pros::Optical opticalSensor;
 
-        int pressCount = 0;
+        int hueMin = 58;
+        int hueMax = 67;
+
+        bool holding = false;
+        bool primed = true;
+        int startCheckTime = 0;
 
         public:
         //Constructor
-        mogo(char mogoSolanoidPort);
+        mogo(char mogoSolanoidPort, int mogoOpticalPort);
 
         //Function to set mogo output
         void setState(bool state);
 
         //Function to run mogo during driver control
-        
         void driverFunctions();
     };
 

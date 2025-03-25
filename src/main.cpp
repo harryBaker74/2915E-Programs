@@ -3,6 +3,7 @@
 #include "../include/harryLibHeader/globals.h"
 #include "../include/harryLibHeader/velocityController.hpp"
 #include "../include/harryLibHeader/pathGen.hpp"
+#include "../include/harryLibHeader/odom.hpp"
 
  //Creating Drivetrain
     subsystems::drivetrain drivetrain = subsystems::drivetrain
@@ -16,11 +17,9 @@
         INERTIAL
     );
 //Creating intake
-    subsystems::intake intake = subsystems::intake(INTAKE, OPTICAL);
-//Creating Lift
-    subsystems::lift lift = subsystems::lift(LIFT, ROTATION);
+    subsystems::intake intake = subsystems::intake(INTAKE, INTAKE_OPTICAL, LIFT, ROTATION, LIFT_OPTICAL);
 //Creating Mogo
-    subsystems::mogo mogo = subsystems::mogo(MOGO);
+    subsystems::mogo mogo = subsystems::mogo(MOGO, MOGO_OPTICAL);
 //Creating Mogo
     subsystems::rushMech rushMech = subsystems::rushMech(RUSH);
 //Creating Mogo
@@ -29,13 +28,19 @@
     subsystems::pto pto = subsystems::pto(PTO);
 
 //Auton paths and motion profiling
-profile motionProfile = profile(200, 200, 200);
+profile motionProfile = profile(100, 50, 50);
+
+Pose startPose(20, 20, 0*M_PI/180, 0*M_PI/180);
+
 
 
 void initialize() 
 {
 	pros::IMU imu = pros::IMU(INERTIAL);
     imu.reset(false);
+
+    //Generating mcl particles
+    Odometery::MCLGenerateParticles(startPose, 1, 500);
 }
 
 enum auton
@@ -48,20 +53,32 @@ enum auton Auton = LEFT;
 
 void autonomous() 
 {
-
-    drivetrain.runOdom(Pose(0, 0, 0, 0));
-
-    quinticSpline test = quinticSpline(
-        {
-            {Point(0, 0), Point(0, 5), Point(0, 10)},
-            {Point(0, 25), Point(0, 20), Point(0, 15)},
-            {Point(50, 60), Point(30, 60), Point(9.2, 56.3)},
-            {Point(95.8, 50.6), Point(82.7, 55.8), Point(74.4, 58.8)}
-    });
+    pros::delay(100);
     
-    trajectory testPath = motionProfile.generateProfile(test, 3, 5);
+    Odometery::MCLUpdate(startPose, 1);
 
-    drivetrain.followPath(testPath, 30);
+    printf("\n\n--------------------------------------------------------------\n\n");
+
+    Point estimate = Odometery::MCLEstimate();
+
+    printf("%f, %f", estimate.x, estimate.y);
+
+    // printf("%.2f, %.2f", point.x, point.y);
+
+    //drivetrain.runOdom(Pose(0, 0, 0, 0));
+
+    // //Generate path
+    // quinticSpline test = quinticSpline(
+    //     {
+    //         {Point(0, 0), Point(0, 27.3), Point(11, 80.3)},
+    //         {Point(-124, 84), Point(-118, 59.2), Point(-84, 31.4)},
+    //         {Point(-5, 59), Point(-60, 75), Point(-79, 144.4)},
+    //         {Point(56, 120), Point(120, 120), Point(28, 94.3)}
+    // });
+
+    // trajectory testPath = motionProfile.generateProfile(test, 2, 2);
+
+    // drivetrain.followPath(testPath, 40);
 
 
 
@@ -897,8 +914,6 @@ void opcontrol()
         drivetrain.driverFunctions();
         //Controlling Intake
         intake.driverFunctions();
-        //Controlling Lift
-        lift.driverFunctions();
         //Controlling Mogo
         mogo.driverFunctions();
         //Controlling Rush Mech

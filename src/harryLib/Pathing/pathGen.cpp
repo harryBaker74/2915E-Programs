@@ -254,12 +254,13 @@
         this->u = 0;
     }
 
-    waypoint::waypoint(Pose pose, double linVel, double angVel, double u)
+    waypoint::waypoint(Pose pose, double linVel, double angVel, double u, double time)
     {
         this->pose = pose;
         this->linVel = linVel;
         this->angVel = angVel;
         this->u = u;
+        this->time = time;
     }
 
 //Trajectory struct
@@ -273,11 +274,11 @@
 
     trajectory::trajectory(std::vector<std::pair<Pose, std::vector<double>>> points, double ds)
     {   
-        this->points.at(0) = waypoint(points.at(0).first, points.at(0).second.at(0), points.at(0).second.at(1), points.at(0).second.at(2));
+        this->points.at(0) = waypoint(points.at(0).first, points.at(0).second.at(0), points.at(0).second.at(1), points.at(0).second.at(2), points.at(0).second.at(3));
 
         for(int i = 1; i < points.size(); i++)
         {
-            this->points.push_back(waypoint(points.at(i).first, points.at(i).second.at(0), points.at(i).second.at(1), points.at(i).second.at(2)));
+            this->points.push_back(waypoint(points.at(i).first, points.at(i).second.at(0), points.at(i).second.at(1), points.at(i).second.at(2), points.at(i).second.at(3)));
         } 
 
         this->ds = ds;
@@ -489,21 +490,24 @@
         //Storing velocities and pose
         //Doesnt add time in yet
 
-        Point position = spline.getPoint(backwardPass.at(backwardPass.size() - 1).at(2));
-        derivative = spline.getFirstDerivative(backwardPass.at(backwardPass.size() - 1).at(2));
+        Point position = spline.getPoint(backwardPass.at(0).at(2));
+        derivative = spline.getFirstDerivative(backwardPass.at(0).at(2));
         double heading = atan3(derivative.y, derivative.x);
+        double time = ds / backwardPass.at(0).at(0); //distance over velocity = time
+
         
-        std::vector<waypoint> points = {waypoint(Pose(position.x, position.y, heading), backwardPass.at(backwardPass.size() - 1).at(0), backwardPass.at(backwardPass.size() - 1).at(1), backwardPass.at(backwardPass.size() - 1).at(2))};
+        std::vector<waypoint> points = {waypoint(Pose(position.x, position.y, heading), backwardPass.at(0).at(0), backwardPass.at(0).at(1), backwardPass.at(0).at(2), time)};
         
         for(int i = 1; i < backwardPass.size(); i++)
         {
             position = spline.getPoint(backwardPass.at(i).at(2));
             derivative = spline.getFirstDerivative(backwardPass.at(i).at(2));
             heading = atan3(derivative.y, derivative.x);
+            time = ds / backwardPass.at(i).at(0); //distance over velocity = time
 
-            points.push_back(waypoint(Pose(position.x, position.y, heading), backwardPass.at(i).at(0), backwardPass.at(i).at(1), backwardPass.at(i).at(2)));
+            points.push_back(waypoint(Pose(position.x, position.y, heading), backwardPass.at(i).at(0), backwardPass.at(i).at(1), backwardPass.at(i).at(2), time));
 
-            // printf("Pos:(%.2f, %.2f), Lin:%.3f, Ang:%f, U:%.3f, I:%d\n", points.at(i).position.x, points.at(i).position.y, points.at(i).linVel, points.at(i).angVel, points.at(i).u, i);
+            printf("Pos:(%.2f, %.2f), Lin:%.3f, Ang:%f, U:%.3f, I:%d, Time:%f\n", position.x, position.y, points.at(i).linVel, points.at(i).angVel, points.at(i).u, i, time);
         }
 
 

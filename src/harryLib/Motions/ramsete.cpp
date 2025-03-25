@@ -16,6 +16,8 @@ namespace subsystems
 
         double beta = 2.0;
         double zeta = 0.7;
+
+        double endTime = path.points.at(foundIndex).time * 1000 + pros::millis();
         
         while(true)
         {
@@ -35,31 +37,44 @@ namespace subsystems
                 }
             }
 
+            
+
             foundIndex = smallestIndex;
+
+            // if(pros::millis() < endTime)
+            // {
+            //     foundIndex = foundIndex;
+            // }
+            // else
+            // {
+            //     foundIndex += 1;
+            //     endTime = path.points.at(foundIndex).time * 1000 + pros::millis();
+            // }
+            
 
             //Ramsete velocity calculations
                 //Calculating local error
                 Pose globalError((path.points.at(foundIndex).pose.x - pose.x), (path.points.at(foundIndex).pose.y - pose.y), (path.points.at(foundIndex).pose.heading - pose.heading));
                 Pose localError(
-                    (globalError.x * cos(pose.rotation)) + (globalError.y * -sin(pose.rotation)),
-                    (globalError.x * sin(pose.rotation)) + (globalError.y * cos(pose.rotation)),
+                    (globalError.x * cos(pose.rotation)) + (globalError.y * -sin(pose.rotation)) / 100, //cm to m
+                    (globalError.x * sin(pose.rotation)) + (globalError.y * cos(pose.rotation)) / 100, //cm to m
                     ((boundAngle(globalError.heading, true)))
                 );
 
                 //Calculating Velocities
-                double pathLinVel = path.points.at(foundIndex).linVel;
+                double pathLinVel = path.points.at(foundIndex).linVel; //cm/s to m/s
                 double pathAngVel = path.points.at(foundIndex).angVel;
 
                 //Divide linVel by 100 to convert from cm/s to m/s so i can use wpilib constants
-                double k = 2 * zeta * sqrt(pow(pathAngVel, 2) + (beta * pow(pathLinVel / 100, 2)));
+                double k = 2 * zeta * sqrt(pow(pathAngVel, 2) + (beta * pow(pathLinVel, 2)));
                 double linVel = (pathLinVel * cos(localError.heading)) + (k * localError.y);
                 double angVel = (pathAngVel) + (k * localError.heading) + ((beta * pathLinVel * sin(localError.heading) * localError.x) / (localError.heading)); 
 
-            //Converting to left right velocities
+            //Converting to left right velocities cm/s
                 double leftVel = pathLinVel + (pathAngVel * (TRACKWIDTH * 2.54) / 2);
-                double rightVel = pathLinVel - (pathAngVel * (TRACKWIDTH * 2.54) / 2);
+                double rightVel = pathLinVel  - (pathAngVel * (TRACKWIDTH * 2.54) / 2);
 
-            //Converting from m/s to rpm for motors 
+            //Converting from cm/s to rpm for motors 
                 leftVel = ((leftVel / (DRIVE_WHEEL_DIAMETER * 2.54 * M_PI)) / DRIVE_GEAR_RATIO) * 60;  
                 rightVel = ((rightVel / (DRIVE_WHEEL_DIAMETER * 2.54 * M_PI)) / DRIVE_GEAR_RATIO) * 60;  
             
@@ -70,7 +85,7 @@ namespace subsystems
 
             // printf("I:%d, Pose:(%.2f, %.2f), Point:(%.2f, %.2f) Vel:(%.2f, %.2f)\n", lastFoundIndex, testPose.x, testPose.y, path.points.at(lastFoundIndex).position.x, path.points.at(lastFoundIndex).position.y, leftVel, rightVel);
             // testPose.set(Pose(testPose.x, testPose.y + 21.9456, 0));
-            Controller.print(0, 0, "%.2f, %.2f", pathLinVel, pathAngVel);
+            Controller.print(0, 0, "%f", fabs(leftVel - rightVel));
 
 
             // pros::delay(10);

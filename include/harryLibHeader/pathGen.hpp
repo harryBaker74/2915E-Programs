@@ -72,10 +72,11 @@ struct waypoint
     double linVel;
     double angVel;
     double u;
+    double time;
 
     //Constructor
     waypoint();
-    waypoint(Pose pose, double linVel, double angVel, double u);
+    waypoint(Pose pose, double linVel, double angVel, double u, double time);
 
 };
 

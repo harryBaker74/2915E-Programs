@@ -80,10 +80,10 @@ namespace Odometery
     /**
      * @brief Recalculates weights of every particle
      */
-    void MCLUpdate(double std);
+    void MCLUpdate(Pose robotPose, double std);
 
     /**
-     * @brief Estimates where the robot is based off of the particles, and sets the global position of the robot to that
+     * @brief Estimates where the robot is based off of the particles
      */
-    void MCLEstimate();
+    Point MCLEstimate();
 }

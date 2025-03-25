@@ -1,5 +1,9 @@
 #pragma once
 
+//Wall Positions
+    #define FIELD_WIDTH 365.76
+    #define FIELD_HEIGHT 365.76
+
 //Drivetrain things
     //Wheel Size
     #define DRIVE_WHEEL_DIAMETER 2.75
@@ -10,6 +14,14 @@
     //Tracking wheel offsets(cm)
     #define HORIZONTAL_OFFSET 2.61
     #define VERTICAL_OFFSET 0//2.60523824550331
+
+    //Mcl offsets from tracking center(cm)
+    #define MCL_LEFT_X_OFFSET 0
+    #define MCL_LEFT_Y_OFFSET 0
+    #define MCL_FRONT_X_OFFSET 0
+    #define MCL_FRONT_Y_OFFSET 0
+    #define MCL_RIGHT_X_OFFSET 0
+    #define MCL_RIGHT_Y_OFFSET 0
 
     //Track width
     #define TRACKWIDTH 10.5
@@ -23,7 +35,7 @@
     #define DIST_RIGHT 32
 
     //IMU Port
-    #define INERTIAL 14
+    #define INERTIAL 5
 
     //Tracking Wheel Port
     #define TRACKING_WHEEL 3
@@ -42,10 +54,16 @@
     #define INTAKE 3
 
     //Intake optical
-    #define OPTICAL 6
+    #define INTAKE_OPTICAL 21
+
+    //Auto clamp
+    #define MOGO_OPTICAL 19
 
     //Lady Brown Ports
     #define LIFT -10
+
+    //Lift Optical
+    #define LIFT_OPTICAL 18
 
     //Lady Brown Rotation
     #define ROTATION 11

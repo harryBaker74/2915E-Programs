@@ -49,8 +49,14 @@ namespace Odometery
 
     double leftEncoders = 0;
     
+    bool flipper = false;
+    Point deltaPos(0, 0);
+
     void OdometeryCalculations(Pose* robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive, pros::Rotation* trackingWheel, pros::IMU* IMU)
     {
+        //Updating mcl check
+        flipper = !flipper;
+
         //Updating model values
 
         //Getting current encoder values
@@ -105,28 +111,42 @@ namespace Odometery
         //Odom Calculations
 
         //Calculating the arcs chord lengths
-        //Can imagine these as being rotated by theta / 2, 
+        //Can imagine these as being rotated by theta / 2, a
         //with the vertical arc's chord becoming the new y axis, and horizontal arc's chord becoming the new x axis.
         double localY = 0;
         double localX = 0;
         if(deltaRotation == 0)
         {
-            localY = deltaVertical;
+            localY = deltaLeft;
         }
         else
         {
-            localY = 2 * sin(deltaRotation / 2) * (deltaVertical / deltaRotation - VERTICAL_OFFSET);
+            localY = 2 * sin(deltaRotation / 2) * (deltaLeft / deltaRotation - 15.3526324995627);
         }
 
         //Rotataing the local axis back to global
         double averageHeading = robotPose->rotation + deltaRotation / 2; //Amount to rotate by
 
-        // Controller.print(0, 0, "%f", robotPose->rotation);
-
         //This rotation matrix might still be wrong i will see on friday
+        deltaPos = deltaPos + Point();
+
         robotPose->x += localX * cos(averageHeading) + localY * sin(averageHeading);   //Applying rotation matrix
         robotPose->y += (-localX * sin(averageHeading)) + localY * cos(averageHeading);    //Applying rotation matrix
         robotPose->rotation += deltaRotation;                         //Pure rotation amount no bounding, in rad
         robotPose->heading = boundAngle(robotPose->heading + deltaRotation, true);       //Heading bounded between -pi and pi, in rad
+
+        //If we should run mcl
+        if(flipper)
+        {
+            // deltaPos = Point(0, 0);
+
+            // MCLResample();
+            // MCLPredict(deltaPos, std::make_pair(0, 0));
+            // MCLUpdate(*robotPose, 0);
+            // Point result = MCLEstimate();
+            // robotPose->x = result.x;
+            // robotPose->y = result.y;
+
+        }
     }
 }
