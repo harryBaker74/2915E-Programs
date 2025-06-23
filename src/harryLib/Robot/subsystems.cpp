@@ -10,9 +10,10 @@ namespace subsystems
 
     //Intake Class
         //Constructor
-        intake::intake(int intakeMotorPort, int intakeOpticalPort, int liftMotorPort, int rotationSensorPort, int liftOpticalPort)
+        intake::intake(int intakeMotorPort, int intakeOpticalPort, char intakeLiftSolanoidPort, int liftMotorPort, int rotationSensorPort, int liftOpticalPort)
         :   intakeMotor(pros::Motor (intakeMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             intakeOptical(pros::Optical (intakeOpticalPort)),
+            intakeLift(pros::adi::Pneumatics(intakeLiftSolanoidPort, false, false)),
             liftMotor(pros::Motor (liftMotorPort, pros::v5::MotorGearset::red, pros::v5::MotorEncoderUnits::degrees)),
             rotationSensor(pros::Rotation (rotationSensorPort)),
             liftOptical(pros::Optical (liftOpticalPort))
@@ -30,6 +31,11 @@ namespace subsystems
             intakeMotor.move_voltage(floor(voltage));
         }
 
+        void intake::setIntakeLiftState(bool state)
+        {
+            intakeLift.set_value(state);
+        }
+
         void intake::setLiftVoltage(double voltage)
         {
             liftMotor.move_voltage(floor(voltage));
@@ -40,17 +46,26 @@ namespace subsystems
             sortColour = colour;
         }
 
-        void intake::waitForRing()
+        void intake::setColourSortState(bool state)
         {
-            double current = intakeOptical.get_hue();
-            while((!sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (intakeOptical.get_proximity() > 180))
+            colourSortingOn = state;
+        }
+
+        void intake::waitForRing(int timeout_ms)
+        {
+            int endTime = pros::millis() + timeout_ms;
+
+            while((!allianceRing) && (pros::millis() <= endTime))
             {
-                current = intakeOptical.get_hue();
                 pros::delay(10);
             }
         }
 
-
+        void intake::setLoadStartingPosition()
+        {
+            startingPosition = double(LOAD);
+            liftPressCount = 0;
+        }
 
         void intake::holdPosition(LiftPosition pos)
         {
@@ -58,15 +73,16 @@ namespace subsystems
             targetPos = pos;
             if(!holding)
             {
+                liftMotor.tare_position();
                 rotationSensor.reset_position();
 
                 pros::Task task{[=, this] {
                     holding = true;
 
                     PID::PID posPID = PID::PID(
-                        350,
+                        100,
                         0,
-                        500,
+                        100,
                         0,
                         0
                     );
@@ -75,25 +91,37 @@ namespace subsystems
                     double Ks = 0;
                     double Kg = 0;
 
-
                     while(true)
                     {
-                        double currentPos = rotationSensor.get_position() / 100;
-                        
-                        double posError = double(targetPos) - currentPos;
+                        // double currentPos = startingPosition + liftMotor.get_position();
+                        double currentPos = startingPosition + (rotationSensor.get_position() / 100);
+                        double posError = (2 * double(targetPos)) - currentPos;
                         double angle = fabs(sin(((currentPos - double(LiftPosition::ZERO)) * M_PI / 180)));
                         
-                        if ((posError <= 10) && (currentPos == DOUBLERING))
-                            posPID.setKp(150);
-                        else
-                            posPID.setKp(350);
+                        // if ((posError <= 10) && (currentPos == double(DOUBLERING)))
+                        //     posPID.setKp(150);
+                        // else
+                        //     posPID.setKp(350);
+
+                        if(currentPos <= 0)
+                            rotationSensor.reset_position();
+                        // else if((currentPos <= 80) && (currentPos >= 5) && (targetPos == DEFAULT) && (liftMotor.get_efficiency() <= 1) && (posError < 0))
+                        //     rotationSensor.reset_position();
 
                         double targetVel = posPID.getPid(posError);
+
+                        Controller.print(0, 0, "%.2f, %.2f",currentPos, double(targetPos));
+
+                        if(Controller.get_digital_new_press(DIGITAL_UP))
+                        {
+                            startingPosition = 0;
+                            rotationSensor.reset_position();
+                        }
 
                         double voltage = (Ks * sign(targetVel)) + (Kg * angle) + (Kv * targetVel);
                         setLiftVoltage(voltage);
 
-                        pros::delay(10);
+                        pros::delay(20);
                     }
                 }};
             }
@@ -105,43 +133,47 @@ namespace subsystems
         void intake::driverFunctions()
         {  
             //Intake Control
+
                 //Colour sorting
                 //If we should be currently sorting
                 if(pros::millis() < sortEndTime)
                 {
-                    //Reversing intake to slow it down if currently sorting
-                    setIntakeVoltage(-3000);
+                        //Reversing intake to slow it down if currently sorting and colour sorting is enabled
+                        setIntakeVoltage(-3000);
                 }
                 //If we shouldnt currently be sorting
                 else
                 {
-                    //Detecting ring
-                    double current = intakeOptical.get_hue();
-                    //Ring to sort
-                    if((sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (intakeOptical.get_proximity() > 180))
+                    if(colourSortingOn)
                     {
-                        //Setting sort start pos if ring is detected
-                        sortStartTime = pros::millis() + sortStartTimeOffset;
-                        sorting = true;
-                        allianceRing = false;
-                    }
-                    //Ring to not sort
-                    else if((!sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (intakeOptical.get_proximity() > 180))
-                    {
-                        allianceRing = true;
-                    }
-                    else
-                        allianceRing = false;
+                        //Detecting ring
+                        double current = intakeOptical.get_hue();
+                        //Ring to sort
+                        if((sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (intakeOptical.get_proximity() > 180))
+                        {
+                            //Setting sort start pos if ring is detected
+                            sortStartTime = pros::millis() + 50;
+                            sorting = true;
+                            allianceRing = false;
+                        }
+                        //Ring to not sort
+                        else if((!sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (intakeOptical.get_proximity() > 180))
+                        {
+                            allianceRing = true;
+                        }
+                        else
+                            allianceRing = false;
 
-                    //Setting the end time for reversing once intake has reached correct position
-                    if((pros::millis() >= sortStartTime) && sorting)
-                    {
-                        sortEndTime = pros::millis() + sortTime;
-                        sorting = false;
+                        //Setting the end time for reversing once intake has reached correct position
+                        if((pros::millis() >= sortStartTime) && sorting)
+                        {
+                            sortEndTime = pros::millis() + sortTime;
+                            sorting = false;
+                        }
                     }
-
                     //Normal driver functions for when not sorting
                     setIntakeVoltage(((Controller.get_digital(DIGITAL_R1) - Controller.get_digital(DIGITAL_R2))) * 12000);
+
                 }
 
                 //Uncomment for when no sorting
@@ -156,29 +188,29 @@ namespace subsystems
                         alliance = false;
                         tip = false;
                         wall = false;
-                        pressCount = 0;    
+                        liftPressCount = 0;    
                     }
                     else if(wall || alliance)
                     {
                         alliance = false;
                         tip = false;
                         wall = false;
-                        pressCount = 1;
+                        liftPressCount = 1;
                     }
                     else
                     {
-                        pressCount += 1;
+                        liftPressCount += 1;
                     }
 
                     
-                    if(pressCount == 3)
-                        pressCount = 0;
+                    if(liftPressCount == 3)
+                    liftPressCount = 0;
                 
                     if(!alliance && !tip && !wall)
                     {
-                        if(pressCount == 0)
+                        if(liftPressCount == 0)
                             holdPosition(DEFAULT);
-                        else if(pressCount == 1)
+                        else if(liftPressCount == 1)
                             holdPosition(LOAD);
                         else
                             holdPosition(DOUBLERING);
@@ -191,7 +223,7 @@ namespace subsystems
                     alliance = true;
                     tip = false;
                     wall = false;
-                    pressCount = 0;
+                    liftPressCount = 0;
                     holdPosition(ALLIANCE);
                 }
                 if(Controller.get_digital_new_press(DIGITAL_A))
@@ -199,7 +231,7 @@ namespace subsystems
                     tip = true;
                     alliance = false;
                     wall = false;
-                    pressCount = 0;
+                    liftPressCount = 0;
                     holdPosition(TIP);
                 }
                 if(Controller.get_digital_new_press(DIGITAL_RIGHT))
@@ -207,17 +239,13 @@ namespace subsystems
                     wall = true;
                     alliance = false;
                     tip = false;
-                    pressCount = 0;
+                    liftPressCount = 0;
                     holdPosition(WALL);
                 }
 
                 //Extra control
-                if(pressCount == 1)
+                if(liftPressCount == 1)
                 {
-                    //Reversing intake if lifting to prevent jamming
-                    if(Controller.get_digital(DIGITAL_L1) || Controller.get_digital(DIGITAL_RIGHT) || Controller.get_digital(DIGITAL_A) || Controller.get_digital(DIGITAL_Y))
-                        setIntakeVoltage(-4000);
-
                     //Lowering lift for colour sorting, raising back up if not colour sorting
                     if(sorting)
                         holdPosition(DEFAULT);
@@ -225,11 +253,16 @@ namespace subsystems
                         holdPosition(LOAD);
                 }
                 
-                if(allianceRing && (liftOptical.get_proximity() > 200) && ((pressCount == 2) || wall))
+                //Hold alliance ring when ring in lb
+                if(allianceRing && (liftOptical.get_proximity() > 200) && ((liftPressCount == 2) || wall))
                 {
                     setIntakeVoltage(-500);
                 }
-        }
+
+                //Turn colour sorting on / off
+                colourSortingPressCount += Controller.get_digital_new_press(DIGITAL_X);
+                colourSortingOn = (colourSortingPressCount % 2 == 0);
+            }
 
         void intake::autonFunctions(double voltage)
         {
@@ -257,10 +290,18 @@ namespace subsystems
                             if((sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (intakeOptical.get_proximity() > 180))
                             {
                                 //Setting sort start pos if ring is detected
-                                sortStartTime = pros::millis() + sortStartTimeOffset;
+                                sortStartTime = pros::millis() + 50;
                                 sorting = true;
-                                holdPosition(LiftPosition::DEFAULT);
+                                allianceRing = false;
                             }
+
+                            //Ring to not sort
+                            else if((!sortColour ? ((blueMin < current) && (blueMax > current)) : ((redMin < current) && (redMax > current))) && (intakeOptical.get_proximity() > 180))
+                            {
+                                allianceRing = true;
+                            }
+                            else
+                                allianceRing = false;
 
                             //Setting the end time for reversing once intake has reached correct position
                             if((pros::millis() >= sortStartTime) && sorting)
@@ -273,7 +314,11 @@ namespace subsystems
                             setIntakeVoltage(autonVoltage);
                         }
 
-                        pros::delay(20);
+                        //Anti Jam
+                        if((fabs(intakeMotor.get_voltage()) >= 1000) && (intakeMotor.get_efficiency() <= 5))
+                            setIntakeVoltage(-12000);
+
+                        pros::delay(10);
                     }
 
                     pros::Task::current().remove();
@@ -343,70 +388,51 @@ namespace subsystems
         
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    //Rush mech class
+    //Doinkers class
         //Constructor
-        rushMech::rushMech(char rushSolanoidPort)
-        :   rushSolanoid(pros::adi::Pneumatics (rushSolanoidPort, false, false))
+        doinkers::doinkers(char leftDoinkerSolanoidPort, char rightDoinkerSolanoidPort)
+        :   leftDoinker(pros::adi::Pneumatics(leftDoinkerSolanoidPort, false, false)),
+            rightDoinker(pros::adi::Pneumatics(rightDoinkerSolanoidPort, false, false))
         {}
 
-        //Function to set mogo output
-        void rushMech::setState(bool state)
+        void doinkers::setStates(bool left, bool right)
         {
-            rushSolanoid.set_value(state);
+            leftDoinker.set_value(right);
+            rightDoinker.set_value(left);
         }
 
-        //Function to run mogo during driver control
-        void rushMech::driverFunctions()
+        void doinkers::driverFunctions()
         {
-            pressCount += Controller.get_digital_new_press(RUSH_CONTROL);
-            pressCount % 2 == 0 ? setState(false) : setState(true);
-        }
-        
+            leftPressCount += Controller.get_digital_new_press(LEFT_DOINKER_CONTROL);
+            rightPressCount += Controller.get_digital_new_press(RIGHT_DOINKER_CONTROL);
+
+            bool leftState = (leftPressCount % 2 != 0);
+            bool rightState = (rightPressCount % 2 != 0);
+
+            setStates(rightState, leftState);
+        }   
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    //Doinker class
+    //Goal grabber class
         //Constructor
-        doinker::doinker(char doinkerSolanoidPort)
-        :   doinkerSolanoid(pros::adi::Pneumatics (doinkerSolanoidPort, false, false))
+        goalGrabber::goalGrabber(char goalGrabberSolanoidPort)
+        :   goalGrabberSolanoid(pros::adi::Pneumatics(goalGrabberSolanoidPort, false))
         {}
 
-        //Function to set mogo output
-        void doinker::setState(bool state)
+        void goalGrabber::setState(bool state)
         {
-            doinkerSolanoid.set_value(state);
+            goalGrabberSolanoid.set_value(state);
         }
 
-        //Function to run mogo during driver control
-        void doinker::driverFunctions()
+        void goalGrabber::driverFunctions()
         {
-            pressCount += Controller.get_digital_new_press(DOINKER_CONTROL);
-            pressCount % 2 == 0 ? setState(false) : setState(true);
-        }
-        
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    //Pto class
-        //Constructor
-        pto::pto(char ptoSolanoidPort)
-        :   ptoSolanoid(pros::adi::Pneumatics (ptoSolanoidPort, false, false))
-        {}
-
-        //Function to set mogo output
-        void pto::setState(bool state)
-        {
-            ptoSolanoid.set_value(state);
+            //Intake lift
+            pressCount += Controller.get_digital_new_press(GOAL_GRABBER_CONTROL);
+            setState(pressCount % 2 != 0);
         }
 
-        //Function to run mogo during driver control
-        void pto::driverFunctions()
-        {
-            pressCount += Controller.get_digital_new_press(PTO_CONTROL);
-            pressCount % 2 == 0 ? setState(false) : setState(true);
-        }
-        
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

@@ -33,6 +33,8 @@ double slew(double targetAmount, double currentAmount, double rateOfChange_ms, d
  */
 double getWeightedAverage(double numA, double numB, double decimalWeight);
 
+
+
 //Pose struct
     struct Pose
     {
@@ -102,3 +104,6 @@ struct Point
 };
 
 double pointToPointDistance(Point p1, Point p2);
+
+//Returns the curvature between 2 poses
+float getCurvature(Pose pose, Pose other);

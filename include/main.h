@@ -74,9 +74,12 @@ void opcontrol(void);
 /**
  * You can add C++-only headers here
  */
+#include "pros/apix.h"
 #include <iostream>
+#include <bits/stdc++.h>
 #include "harryLibHeader/robot.hpp"
 #include "harryLibHeader/devices.hpp"
+#include "robodash/api.h"
 #endif
 
 #endif  // _PROS_MAIN_H_

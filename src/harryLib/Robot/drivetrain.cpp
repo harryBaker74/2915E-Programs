@@ -47,7 +47,6 @@ namespace subsystems
             leftDriveMotors.tare_position_all();
             rightDriveMotors.tare_position_all();
             trackingWheel.reset_position();
-            trackingWheel.reverse();
 
             //Setting pose to desired start pose
             this->pose = Pose(startPose.x, startPose.y, startPose.heading * M_PI / 180, startPose.heading * M_PI / 180);

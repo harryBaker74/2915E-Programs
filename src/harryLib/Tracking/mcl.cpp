@@ -2,6 +2,7 @@
 #include "../include/harryLibHeader/globals.h"
 #include "../include/harryLibHeader/odom.hpp"
 #include <random>
+#include <algorithm>
 
 
 namespace Odometery
@@ -61,7 +62,12 @@ namespace Odometery
         double weight = 1 / particleAmount;//Normalizing weights for each particle
         particles = {Particle(xDistro(gen), yDistro(gen), weight)};
         for(int i = 1; i <= particleAmount; i++)
-            particles.push_back(Particle(xDistro(gen), yDistro(gen), weight));
+        {
+            Point pos = Point(xDistro(gen), yDistro(gen));
+            particles.push_back(Particle(pos.x, pos.y, weight));
+            // printf("%f, %f, %f\n", particles.at(i).x, particles.at(i).y, particles.at(i).weight);
+
+        }
     }
     
     void MCLResample()
@@ -74,11 +80,13 @@ namespace Odometery
         //Set weights to equal for every particle again
         
         //Creating random number generator
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        static std::random_device rd; 
+        std::mt19937 gen(rd()); 
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
         
         //Cumalitve sum stuff
         std::vector<double> cumsum(particles.size());
+        std::vector<double> weightArray(particles.size());
         double total = 0;
         double squareTotal = 0;
         for(int i = 0; i < particles.size(); i++)
@@ -86,13 +94,30 @@ namespace Odometery
             total += particles.at(i).weight;
             squareTotal += pow(particles.at(i).weight, 2);
             cumsum.at(i) = total;
+            weightArray.at(i) = particles.at(i).weight;
         }
 
-        //
+        //Dont resample if not needed
+        if( ! ((1 / squareTotal) <= (particles.size() / 2)))
+        {
+            printf("Cancelled\n");
+            return;
+        }
+            
+
+        //Resampling
+
+        // printf("\n\n---------------------------------------------\n\n");
+        std::vector<Particle> newParticles(particles.size());
+        double weight = 1 / particles.size();
         for(int i = 0; i < particles.size(); i++)
         {
-
+            int index = std::upper_bound(cumsum.begin(), cumsum.end(), dist(gen)) - cumsum.begin();
+            newParticles.at(i) = Particle(particles.at(i).x, particles.at(i).y, weight);
         }
+
+        particles = newParticles;
+
     }
 
     void MCLPredict(Point deltaPos, std::pair<double, double> std)
@@ -100,18 +125,28 @@ namespace Odometery
         // Move particles based on delta x and delta y
 
         //Creating random numebr generator
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
 
         //Creating distributions
         std::normal_distribution<double> xDistro(deltaPos.x, std.first);
         std::normal_distribution<double> yDistro(deltaPos.y, std.second);
 
+        double randX = xDistro(gen);
+        double randY = yDistro(gen);
+
         //Moving Each point
         for(int i = 0; i < particles.size(); i++)
         {
-            particles.at(i).x += xDistro(gen);
-            particles.at(i).y += yDistro(gen);
+            Point pos = Point(xDistro(gen), yDistro(gen));
+
+            // printf("Test:%f\t%f\n", particles.at(i).x, deltaPos.x);
+
+            particles.at(i).x = particles.at(i).x + pos.x;
+            particles.at(i).y = particles.at(i).y + pos.y;
+
+            // printf("After:%f, %f\n", particles.at(i).x, particles.at(i).y);
+
         }
     }
 
@@ -296,29 +331,48 @@ namespace Odometery
             // printf("Left Read:%f, Front Read:%f, Right Read:%f\n", leftRead, frontRead, rightRead);
             // printf("Left Pos:(%.3f, %.3f), Front Pos:(%.3f, %.3f), Right Pos:(%.3f, %.3f)\n", leftPos.x, leftPos.y, frontPos.x, frontPos.y, rightPos.x, rightPos.y);
             
-            double leftActual = distanceLeft.get_distance() / 10;
-            double frontActual = distanceLeft.get_distance() / 10;
-            double rightActual = distanceLeft.get_distance() / 10;
 
             //Calculate probability that each sensor on the particles is reprensentitive of the actual sensors reading
-            double probLeft = exp(-0.5 * pow(((leftActual) - leftRead) / std, 2)) / (sqrt(2 * M_PI) * std);
-            double probFront = exp(-0.5 * pow(((frontActual) - frontRead) / std, 2)) / (sqrt(2 * M_PI) * std);
-            double probRight = exp(-0.5 * pow(((rightActual) - rightRead) / std, 2)) / (sqrt(2 * M_PI) * std);
 
-            //Recalculating weight for particle
-            particles.at(i).weight *= probLeft * probFront * probRight;
+            double leftActual = distanceLeft.get_distance() / 10;
+            double frontActual = distanceFront.get_distance() / 10;
+            double rightActual = distanceRight.get_distance() / 10;
+            double probLeft;
+            double probFront;
+            double probRight;
+
+            //If nothing detected, ignore the sensor
+            if(leftActual != 999)
+            {
+                probLeft = exp(-0.5 * pow(((leftActual) - leftRead) / std, 2)) / (sqrt(2 * M_PI) * std);
+                particles.at(i).weight *= probLeft;
+            }
+            if(frontActual != 999)
+            {
+                probFront = exp(-0.5 * pow(((frontActual) - frontRead) / std, 2)) / (sqrt(2 * M_PI) * std);
+                particles.at(i).weight *= probFront;
+            }
+            if(rightActual != 999)
+            {
+                probRight = exp(-0.5 * pow(((rightActual) - rightRead) / std, 2)) / (sqrt(2 * M_PI) * std);
+                particles.at(i).weight *= probRight;
+            }
             particles.at(i).weight += 1e-300;
 
             // printf("ProbLeft:%f, ProbFront:%f, ProbRight:%f", probLeft, probFront, probRight);
                 
             //Storing weight total
             weightTotal += particles.at(i).weight;
+
+            // printf("%.6f, %.6f, %.6f, %f\n", probLeft, leftRead, particles.at(i).weight); 
         }
 
         //Normalizing weights back down(or up) to 1 total
         for(int i = 0; i < particles.size(); i++)
         {
             particles.at(i).weight /= weightTotal;
+            // printf("(%dms) %f\n", pros::millis(), particles.at(i).weight);
+
             // printf("Prob:%f\n", particles.at(i).weight);
         }
     }

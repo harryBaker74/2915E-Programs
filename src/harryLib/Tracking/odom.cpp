@@ -52,8 +52,11 @@ namespace Odometery
     bool flipper = false;
     Point deltaPos(0, 0);
 
+    Point prevPose = Point(0, 0);
+
     void OdometeryCalculations(Pose* robotPose, pros::MotorGroup* leftDrive, pros::MotorGroup* rightDrive, pros::Rotation* trackingWheel, pros::IMU* IMU)
     {
+        prevPose = Point(*robotPose);
         //Updating mcl check
         flipper = !flipper;
 
@@ -92,7 +95,7 @@ namespace Odometery
             (currentEncoderValues.at(1).at(2) - prevEncoderValues.at(1).at(2))      //Delta RIGHT_MOTOR_BACK
         ) / 3;
 
-        double deltaVertical = (
+        double deltaTracking = (
         prevEncoderValues.at(2).at(0) - currentEncoderValues.at(2).at(0)            //Delta TRACKING_WHEEL
         );       
 
@@ -106,7 +109,7 @@ namespace Odometery
         //Converting Delta Encoders into cm moved
         deltaLeft = ((deltaLeft * M_PI / 180) * DRIVE_GEAR_RATIO) * inToCm(DRIVE_WHEEL_DIAMETER) / 2;
         deltaRight = ((deltaRight * M_PI / 180) * DRIVE_GEAR_RATIO) * inToCm(DRIVE_WHEEL_DIAMETER) / 2;
-        deltaVertical = ((deltaVertical * M_PI / 180) * TRACKING_GEAR_RATIO) * inToCm(TRACKING_WHEEL_DIAMETER) / 2;
+        deltaTracking = ((deltaTracking * M_PI / 180) * TRACKING_GEAR_RATIO) * inToCm(TRACKING_WHEEL_DIAMETER) / 2;
 
         //Odom Calculations
 
@@ -117,36 +120,53 @@ namespace Odometery
         double localX = 0;
         if(deltaRotation == 0)
         {
-            localY = deltaLeft;
+            // localX = deltaHorizontal;
+            localY = deltaLeft;        
         }
         else
         {
-            localY = 2 * sin(deltaRotation / 2) * (deltaLeft / deltaRotation - 15.3526324995627);
+            // localX = 2 * sin(deltaRotation / 2) * (deltaHorizontal / deltaRotation - 4.27445897204689);
+            localY = 2 * sin(deltaRotation / 2) * (deltaLeft / deltaRotation - 14.0995490417136);
         }
+
 
         //Rotataing the local axis back to global
         double averageHeading = robotPose->rotation + deltaRotation / 2; //Amount to rotate by
 
         //This rotation matrix might still be wrong i will see on friday
-        deltaPos = deltaPos + Point();
-
         robotPose->x += localX * cos(averageHeading) + localY * sin(averageHeading);   //Applying rotation matrix
         robotPose->y += (-localX * sin(averageHeading)) + localY * cos(averageHeading);    //Applying rotation matrix
         robotPose->rotation += deltaRotation;                         //Pure rotation amount no bounding, in rad
         robotPose->heading = boundAngle(robotPose->heading + deltaRotation, true);       //Heading bounded between -pi and pi, in rad
 
-        //If we should run mcl
+        deltaPos = deltaPos + (Point(*robotPose) - prevPose);
+
+        Controller.print(0, 0, "%.2f, %.2f", robotPose->x, robotPose->y);
+
+        //Offset calculator
+        // leftEncoders += deltaHorizontal;
+        // Controller.print(0, 0, "%.2f, %.2f", leftEncoders, robotPose->rotation);
+
+        // If we should run mcl
         if(flipper)
         {
-            // deltaPos = Point(0, 0);
-
-            // MCLResample();
-            // MCLPredict(deltaPos, std::make_pair(0, 0));
-            // MCLUpdate(*robotPose, 0);
+            // MCLPredict(deltaPos, std::make_pair(0.25, 0.25));
+            // MCLUpdate(*robotPose, 0.25);
             // Point result = MCLEstimate();
             // robotPose->x = result.x;
             // robotPose->y = result.y;
 
+            // deltaPos = Point(0, 0);
+            // printf("%f, %f\n", localX, cos(averageHeading));
         }
+        else
+        {
+            // MCLResample();
+        }
+
+
+
+        // Controller.print(0, 0, "%.1f, %.1f, %d", robotPose->x, robotPose->y, pros::millis());
+
     }
 }

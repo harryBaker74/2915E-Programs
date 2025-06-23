@@ -4,7 +4,7 @@
 
 namespace subsystems
 {
-    void drivetrain::swingToHeading(double heading, bool side, bool backwards, bool radians, bool async)
+    void drivetrain::swingToHeading(double heading, bool side, bool backwards, bool radians, bool async, int timeout_ms)
     {
         //Prevent multiple motions from running at once
         while (inMotion)
@@ -23,14 +23,14 @@ namespace subsystems
 
             PID::PID pid = PID::PID
             {
-                40000,  //Kp
-                0,  //Ki
-                80000,  //Kd
-                0,  //Windup Range
-                0   //Max Intergal
+                40000,
+                0,
+                75000,
+                0,
+                0
             };
 
-            double errorExit = 0.04;
+            double errorExit = 0.01;
             double velExit = 1;
 
             double minSpeed = 0;
@@ -67,10 +67,12 @@ namespace subsystems
                 if(headingDifference >= 0)
                     targetRotation = pose.rotation + headingDifference;
                 else
-                    targetRotation = pose.rotation + headingDifference + (2* M_PI);
+                    targetRotation = pose.rotation + headingDifference + (2 * M_PI);
             }
 
-            while(true)
+            int endTime = pros::millis() + timeout_ms;
+
+            while(pros::millis() <= endTime)
             {
                 //Getting error
                 double rotationDifference = targetRotation - pose.rotation;
@@ -84,9 +86,7 @@ namespace subsystems
                 }
 
                 //Setting motor voltage based on output, and which side should be moving
-
-
-                setVoltage(output * side, output * (side - 1), true, 10);
+                setVoltage(output * side, output * (side - 1));
             
                 //Exit conditions, velocity + range exit
                 if(exitConditions::rangeExit(pid.getError(), errorExit) && exitConditions::rangeExit(pid.getDervative(), velExit))
@@ -94,10 +94,10 @@ namespace subsystems
                     break;
                 }
 
+                // printf("Output:%.2f, Error:%.2f\n", output, pid.getError());
+
                 //Updating async variables
                 this->distanceTraveled += fabs(pose.rotation - prevPose.rotation);
-
-                Controller.print(0, 0, "%f", pid.getError());
 
                 pros::delay(10);
             }

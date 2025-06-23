@@ -113,6 +113,24 @@ double getWeightedAverage(double numA, double numB, double decimalWeight)
     return (numA * decimalWeight) + (numB * (1 - decimalWeight));
 }
 
+//Returns curvature between 2 poses, from lemlib
+float getCurvature(Pose pose, Pose other) 
+{
+    double thetaCCW = boundAngle(M_PI_2 - pose.heading, true);
+
+    // calculate whether the pose is on the left or right side of the circle
+    float side = sign(sin(pose.heading) * (other.x - pose.x) - cos(pose.heading) * (other.y - pose.y));
+
+    // calculate center point and radius
+    float a = -std::tan(pose.heading);
+    float c = std::tan(pose.heading) * pose.x - pose.y;
+    float x = std::fabs(a * other.x + other.y + c) / std::sqrt((a * a) + 1);
+    float d = std::hypot(other.x - pose.x, other.y - pose.y);
+
+    // return curvature
+    return side * ((2 * x) / (d * d));
+}
+
 //Point struct
 Point::Point()
 {

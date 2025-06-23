@@ -26,8 +26,7 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
         this->distanceTraveled = 0;
         this->inMotion = true;
 
-        //TUNING
-            
+        //TUNING  
             //Guide to tuning
             //Setup
             //Set all pid variables to zero, and comment out the break in the exit condition if statement
@@ -74,18 +73,33 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             gainSchedular Kd = gainSchedular(24, 14, 4.5, 32); // Kd / 10000
             gainSchedular Wr = gainSchedular(4.8, 7, 10, 20); // wR * 100
 
+            //165000 for 90
+            //135000 for 45
+            // for 180
+
             PID::PID pid(
-                18000,    //Kp
-                1000,    //Ki
-                205000,    //Kd
-                0.12,    //Windup Range
-                6000     //Max Intergal
+                // 18000,    //Kp
+                // 1000,    //Ki
+                // 205000,    //Kd
+                // 0.12,    //Windup Range
+                // 6000     //Max Intergal
+                // 21000.0,    //Kp
+                // 4000.0,        //Ki
+                // 165000.0,        //Kd
+                // 0.05,        //Windup Range
+                // 0.0         //Max Intergal
+                13000,
+                3500,
+                115000,
+                0.15,
+                0
             );
 
+            double ks = 2500;
 
             //Exit conditions
             double errorExit = 0.015;
-            double velExit = 0.005;
+            double velExit = 0.01;
 
             
         //Everything else
@@ -95,8 +109,18 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
 
         while(pros::millis() < endTime)
         {
+            counter++;
+
             //Pid Voltage Calculations
             double output = pid.getPid(pose.rotation, targetRotation);
+
+            output += ks * sin(pid.getError());
+
+            //Pid windup velocity range
+            if(fabs(pid.getDervative()) <= 0.01)
+                pid.setKi(1250);
+            else
+                pid.setKi(0);
 
             //Setting drivetrain voltage based on Pid Output and Slewing
             this->setVoltage(output, -output);
@@ -108,6 +132,7 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool radians, boo
             double errorVel = pid.getDervative() / 0.01; //Derivative is already just the rate of change
 
             Controller.print(0, 0, "%f", error);
+            printf("(%d, %f),", counter, error*180/M_PI);
 
             //Checking if all these values are below a certain threshold
             if (exitConditions::rangeExit(error, errorExit) && exitConditions::rangeExit(errorVel, velExit))

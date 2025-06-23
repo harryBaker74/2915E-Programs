@@ -125,7 +125,7 @@ namespace subsystems
          * @brief Function to move the robot from its current pose to the desired pose
          * Uses a Boomerang controller
          */
-        void boomerang(Pose pose, double minSpeed, double dLead, bool backwards, bool radians = false, bool async = true, int timeout_ms = 10000);
+        void boomerang(Pose pose, double maxSpeed, double dLead, bool backwards, bool radians = false, bool async = true, int timeout_ms = 10000);
 
         /**
          * @brief Function that makes the robot follow an inputted cubic Bezier curve and linear motion profile
@@ -138,7 +138,7 @@ namespace subsystems
          * @param side Side of drivetrain to move, true for left
          * @param backwards Direction to move drivetrain side to reach heading
          */
-        void swingToHeading(double heading, bool side, bool backwards = false, bool radians = false, bool async = true);
+        void swingToHeading(double heading, bool side, bool backwards = false, bool radians = false, bool async = true, int timeout_ms = 100000);
 
         /**
          * @brief Function to make the robot follow a desired trajectory from the path generator
@@ -155,61 +155,71 @@ namespace subsystems
 
     enum LiftPosition
     {
-        DEFAULT = -1,
-        AUTOLOAD = 19,
-        LOAD = 19,
-        DOUBLERING = 90,
-        WALL = 155,
-        ALLIANCE = 178,
-        AUTOALLIANCESLAM =  178,
-        AUTOALLIANCE = 178,
-        GOALRUSH = 190,
-        TIP = 220,
-        GOALLEAVE = 200,
-        ZERO = 105
+        DEFAULT = -15,
+        AUTOLOAD = 40,
+        LOAD = 40,
+        DOUBLERING = 125,
+        WALL = 237,
+        ALLIANCE = 249,
+        AUTOALLIANCESLAM =  305,
+        AUTOALLIANCE = 275,
+        GOALRUSH = 265,
+        TIP = 365,
+        GOALLEAVE = 205,
+        ZERO = 110
     };
 
     class intake
     {
         pros::Motor intakeMotor;
+        pros::adi::Pneumatics intakeLift;
         pros::Optical intakeOptical;
 
         pros::Motor liftMotor;
         pros::Rotation rotationSensor;
         pros::Optical liftOptical;
 
-        bool holding = false;
-        LiftPosition targetPos = DEFAULT;
-        int pressCount = 0;
-        bool wall = false;
-        bool alliance = false;
-        bool tip = false;
 
-
+        int intakeLiftPressCount = 0;
         bool sortColour = false;
         bool sorting = false;
-
         bool allianceRing = false;
-
         double sortStartTime = 0;
-        double sortStartTimeOffset = 50;
-        double sortTime = 200;
+        double sortStartTimeOffset = 25;
+        double sortTime = 100;
         double sortEndTime = 0;
-
         int redMin = 0;
         int redMax = 20;
         int blueMin = 200;
         int blueMax = 250;
+
+        int antiJamEndTime = 0;
+
+        bool colourSortingOn = true;
+        int colourSortingPressCount = 0;
+
+        bool holding = false;
+        LiftPosition targetPos = DEFAULT;
+        int liftPressCount = 0;
+        bool wall = false;
+        bool alliance = false;
+        bool tip = false;
+        double startingPosition = 0;
+
+
 
         double autonVoltage = 0;
         bool auton = false;
         
         public:
         //Constructor
-        intake(int intakeMotorPort, int intakeOpticalPort, int liftMotorPort, int rotationSensorPort, int liftOpticalPort);
+        intake(int intakeMotorPort, int intakeOpticalPort, char intakeLiftSolanoidPort, int liftMotorPort, int rotationSensorPort, int liftOpticalPort);
 
         //Function to set intake voltage
         void setIntakeVoltage(double voltage);
+
+        //Function to set intake lift piston state
+        void setIntakeLiftState(bool state);
 
         //Function to set ring colour being sorted out
         /**
@@ -218,9 +228,14 @@ namespace subsystems
         void setRingSortColour(bool colour);
 
         /**
+         * @brief Sets the colour sorting to be on or off
+         */
+        void setColourSortState(bool state);
+
+        /**
          * @brief Waits for the ring thats not being sorted to be detected
          */
-        void waitForRing();
+        void waitForRing(int timeout_ms = 10000);
 
         //Function to run intake during driver control
         void driverFunctions();
@@ -233,7 +248,12 @@ namespace subsystems
         //Function to set lift voltage
         void setLiftVoltage(double voltage);
 
+        //Sets the sarting position for the lift
+        void setLoadStartingPosition();
+
+        //Holds the lift at a certain angle
         void holdPosition(LiftPosition pos);
+
     };
 
     class lift
@@ -282,55 +302,39 @@ namespace subsystems
         void driverFunctions();
     };
 
-    class rushMech
+    class doinkers
     {
-        pros::adi::Pneumatics rushSolanoid;
+        pros::adi::Pneumatics leftDoinker;
+        pros::adi::Pneumatics rightDoinker;
 
-        int pressCount = 0;
+        int leftPressCount = 0;
+        int rightPressCount = 0;
 
         public:
         //Constructor
-        rushMech(char rushMechSolanoidPort);
+        doinkers(char leftDoinkerSolanoidPort, char rightDoinkerSolanoidPort);
 
-        //Function to set state
-        void setState(bool state);
+        //Function to set states
+        void setStates(bool left, bool right);
 
         //Function for driver control
         void driverFunctions();
     };
 
-    class doinker    
+    class goalGrabber
     {
-        pros::adi::Pneumatics doinkerSolanoid;
+        pros::adi::Pneumatics goalGrabberSolanoid;
 
-        int pressCount = 0;
+        int pressCount = 1;
 
         public:
         //Constructor
-        doinker(char doinkerSolanoidPort);
+        goalGrabber(char goalGrabberSolanoidPort);
 
-        //Function to set state
+        //Setting state
         void setState(bool state);
 
-        //Function for driver control
+        //Driver control funtions
         void driverFunctions();
     };
-
-    class pto
-    {
-        pros::adi::Pneumatics ptoSolanoid;
-
-        int pressCount = 0;
-
-        public:
-        //Constructor
-        pto(char ptoSolanoidPort);
-
-        //Function to set state
-        void setState(bool state);
-
-        //Function for driver control
-        void driverFunctions();
-    };
-
 }

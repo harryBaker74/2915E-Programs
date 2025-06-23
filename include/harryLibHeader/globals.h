@@ -16,12 +16,12 @@
     #define VERTICAL_OFFSET 0//2.60523824550331
 
     //Mcl offsets from tracking center(cm)
-    #define MCL_LEFT_X_OFFSET 0
-    #define MCL_LEFT_Y_OFFSET 0
-    #define MCL_FRONT_X_OFFSET 0
-    #define MCL_FRONT_Y_OFFSET 0
-    #define MCL_RIGHT_X_OFFSET 0
-    #define MCL_RIGHT_Y_OFFSET 0
+    #define MCL_LEFT_X_OFFSET -13.97
+    #define MCL_LEFT_Y_OFFSET -1
+    #define MCL_FRONT_X_OFFSET 3.175
+    #define MCL_FRONT_Y_OFFSET 10.795
+    #define MCL_RIGHT_X_OFFSET 13.97
+    #define MCL_RIGHT_Y_OFFSET -1
 
     //Track width
     #define TRACKWIDTH 10.5
@@ -30,15 +30,15 @@
     #define CONTROLLER 8
 
     //MCL Distance Sensor ports
-    #define DIST_LEFT 30
-    #define DIST_FRONT 31
-    #define DIST_RIGHT 32
+    #define DIST_LEFT 6
+    #define DIST_FRONT 15
+    #define DIST_RIGHT 20
 
     //IMU Port
     #define INERTIAL 5
 
     //Tracking Wheel Port
-    #define TRACKING_WHEEL 3
+    #define TRACKING_WHEEL 10
 
     //Drivtrain Motor Ports
     #define LEFT_MOTOR_FRONT 1
@@ -60,27 +60,32 @@
     #define MOGO_OPTICAL 19
 
     //Lady Brown Ports
-    #define LIFT -10
+    #define LIFT -11
 
     //Lift Optical
     #define LIFT_OPTICAL 18
 
     //Lady Brown Rotation
-    #define ROTATION 11
+    #define ROTATION 16
 
-//Solanoids
+//Solanoid systems
     //Mogo Port and controlss
     #define MOGO 'A'
     #define MOGO_CONTROL DIGITAL_L2
 
-    //Doinker Port and controls
-    #define DOINKER 'C'
-    #define DOINKER_CONTROL DIGITAL_B
+    //Left Doinker Port and controls
+    #define LEFT_DOINKER 'C'
+    #define LEFT_DOINKER_CONTROL DIGITAL_B
 
-    //Rush Mech Port and controls
-    #define RUSH 'B'
-    #define RUSH_CONTROL DIGITAL_DOWN
+    //Right Doinker Port and controls
+    #define RIGHT_DOINKER 'B'
+    #define RIGHT_DOINKER_CONTROL DIGITAL_DOWN 
 
-    //PTO Port and controls
-    #define PTO 'D'
-    #define PTO_CONTROL DIGITAL_Y
+    //Intake Lift
+    #define INTAKE_LIFT 'G'
+    #define INTAKE_LIFT_CONTROL DIGITAL_UP
+
+
+    //Goal Grabber
+    #define GOAL_GRABBER 'H'
+    #define GOAL_GRABBER_CONTROL DIGITAL_LEFT
