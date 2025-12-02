@@ -6,7 +6,7 @@
 
 namespace subsystems
 {
-    void drivetrain::moveToPoint(Point point, bool backwards, bool async)
+    void drivetrain::moveToPoint(Point point, bool backwards, int timeout_ms, bool async)
     {
         //Prevent this motion from starting if the robot is already in a motion
         while(inMotion)
@@ -16,7 +16,7 @@ namespace subsystems
         if(async)
         {
             pros::Task task {[=, this] {
-                moveToPoint(point, backwards, false);
+                moveToPoint(point, backwards, timeout_ms, false);
                 pros::Task::current().remove();
             }};
         }
@@ -26,23 +26,23 @@ namespace subsystems
             this->inMotion = true;
 
             PID::PID angPid = PID::PID(
-                15000,    //Kp
+                25000,    //Kp
                 0,    //Ki
-                250000,    //Kd
+                200000,    //Kd
                 0,    //Windup Range
                 0     //Max Intergal
             );
             PID::PID linPid = PID::PID(
-                300,
+                500,
                 0.0,
-                300,
+                5000,
                 0.0,
                 0.0
             );
 
             //Exit conditions
-            double errorExit = 3;
-            double velExit = 10;
+            double errorExit = 2;
+            double velExit = 0.01;
 
             //Angular Falloff Parameter
             //Smaller number means more abrupt falloff, with 0 being no fall off
@@ -51,17 +51,21 @@ namespace subsystems
             //      angK = 2, angVel *= 0.5 for hypot = 2;
             //      angK = 3: angVel *= 0.5 for hypot = 3;
             //      etc.
-            double angK = 10;
+            double angK = 25;
 
             //Prev velocities for velocity controllers
             double prevLeftVel = 0;
             double prevRightVel = 0;
 
             int linMultiplier = backwards ? -1 : 1;
+            bool close = false;
+            double endRotation = 0;
 
             int counter = 0;
 
-            while(true)
+            //Timeout
+            int endTime = pros::millis() + timeout_ms;
+            while(pros::millis() < endTime)
             {
 
                 //Calculating delta cartesian offesets
@@ -78,13 +82,26 @@ namespace subsystems
                 //Calculating distance to point
                 double hypot = sqrt(pow(deltaX, 2) + pow(deltaY, 2));
 
+                //If getting close to point
+                if((hypot < (7.5 * 2.54)) && !close)
+                {
+                    close = true;
+                    endRotation = targetRotation;
+                }
+
                 //Calculating angular velocity multiplier
                 //Makes angular velocity weaker the closer you are to the point, eventually becoming zero when on the point
                 //Stops spinning in circles, idea from Genesis/Daniel
-                double angMultiplier = fabs(hypot) / (fabs(hypot) + angK);
+                // double angMultiplier = fabs(hypot) / (fabs(hypot) + angK);
+
+                
+
+                //Interpolating between angle to point and ending angle as you get closer to the point, prevents spinning in circles
+                if(close)
+                    targetRotation = getWeightedAverage(targetRotation, endRotation, pow(-2, -(fabs(hypot*hypot)/angK)) + 1);
 
                 //Calculating voltage
-                double angOutput = angPid.getPid(pose.rotation, targetRotation) * angMultiplier;
+                double angOutput = angPid.getPid(pose.rotation, targetRotation);
                 double linOutput = std::fmin(linPid.getPid(hypot), std::fmax(12000 * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90)) - angOutput, 0)) * linMultiplier;
 
                 //Preventing over saturation, prioritising turning over driving
@@ -94,11 +111,15 @@ namespace subsystems
                 //Powering motors with slewing
                 double leftVoltage = linOutput + angOutput;
                 double rightVoltage = linOutput - angOutput;
-                this->setVoltage(leftVoltage, rightVoltage, true, 10);
+                this->setVoltage(leftVoltage, rightVoltage);
+
+
+                // double adjustedAngle = boundAngle(M_PI_2 - endTheta, true);
+                // bool robotSide = (pose.y - point.y) * -sin(adjustedAngle) <= (pose.x - point.x) * cos(adjustedAngle) + earlyExitRange;
 
                 //Exit Conditions, Semi circle exit
                 //Should add velocity exit here in the future
-                if(exitConditions::semiCircleCheck(this->pose, point, this->pose.heading, errorExit, backwards) || exitConditions::rangeExit(hypot, errorExit))
+                if(exitConditions::rangeExit(hypot, errorExit))
                     break;
 
                 Controller.print(0, 0, "%.2f, %.2f", pose.x, pose.y);

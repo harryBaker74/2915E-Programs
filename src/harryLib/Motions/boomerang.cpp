@@ -62,9 +62,9 @@ namespace subsystems
                 );
 
                 PID::PID linPid = PID::PID(
-                    1500,//400.0,
+                    1000,//400.0,
                     0.0,
-                    7500,//5000.0,
+                    5000,//5000.0,
                     0.0,
                     0.0
                 );
@@ -79,10 +79,10 @@ namespace subsystems
                 //Calculating carrot
                 Point carrot = boomerang::getCarrot(this->pose, targetPose, dLead);
 
-                double linExit = 4;
-                double angExit = 0.01;
-                double earlyExitRange = 1.5;
-                double horizontalDrift = 8;
+                // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                double linExit = 10;
+                double angExit = 0;
+                double earlyExitRange = 0;
 
                 int linMultiplier = backwards ? -1 : 1;
 
@@ -98,10 +98,13 @@ namespace subsystems
                     float distanceToTarget = pointToPointDistance(pose, targetPose);
 
                     //If close to target point, activate settling behaviour
-                    if(distanceToTarget <= (7.5 * 2.54) && !close)
+                    if(distanceToTarget <= (10 * 2.54) && !close)
                     {
                         close = true;
-                        // maxSpeed = fmax(fabs(prevLinOut), 5669);
+                    }
+                    else if(distanceToTarget > (10 * 2.54) && close)
+                    {
+                        close = false;
                     }
 
                     //Calculating carrot
@@ -112,7 +115,7 @@ namespace subsystems
                         carrot = Point(targetPose);
 
 
-                    //Calculating angular and linear error#
+                    //Calculating angular and linear error
                     double targetHeading = M_PI_2 - atan2(carrot.y - pose.y, carrot.x - pose.x);
                     double targetRotation = pose.rotation + boundAngle(targetHeading + (backwards * M_PI) - pose.heading, true);
                     double endingRotation = pose.rotation + boundAngle(targetPose.heading + (backwards * M_PI) - pose.heading, true);
@@ -123,18 +126,6 @@ namespace subsystems
                     //Updating angError if we're close
                     if (close)
                         angError = endingRotation - pose.rotation;
-
-                    //From lemlib
-                    //Use cos for settling, sign(cos) otherwise
-                    //maxSliSpeed helps when not settling
-                    // if(close)
-                    //     linError *= cos(angError);
-                    // else
-                    //     linError *= sign(cos(angError));
-
-
-                    
-
 
                     //Getting outputs form pids
                     double linOutput = linPid.getPid(linError);
@@ -151,9 +142,6 @@ namespace subsystems
                     double maxLinSpeed = maxSpeed * fmin(fmax(cos(2 * (targetRotation - pose.rotation)), 0.1), fmax(cos(fabs(endingRotation- pose.rotation)), 0.1));
                     linOutput = std::clamp(linOutput, -maxLinSpeed, maxLinSpeed);
 
-                    printf("LinO:%.2f, maxSpeed:%.2f, maxLin:%.2f\n", linOutput, maxSpeed, maxLinSpeed);
-
-
                     //Prioritizing ang over lin
                     double overturn = fabs(angOutput) + fabs(linOutput) - maxSpeed;
                     if(overturn > 0)
@@ -166,9 +154,6 @@ namespace subsystems
                         linOutput = fmin(linOutput, 0);
 
                     //setting left and right and ratioing them correctly
-
-
-
                     double leftOutput = linOutput + angOutput;
                     double rightOutput = linOutput - angOutput;
                     double ratio = fmax(fabs(leftOutput), fabs(rightOutput)) / maxSpeed;
@@ -189,13 +174,19 @@ namespace subsystems
                     //Robot, carrot side exit conditions
                     double adjustedAngle = boundAngle(M_PI_2 - targetPose.heading, true);
                     bool robotSide = (pose.y - targetPose.y) * -sin(adjustedAngle) <= (pose.x - targetPose.x) * cos(adjustedAngle) + earlyExitRange;
-                    bool carrotSide =  (actualCarrot.y - targetPose.y) * -sin(adjustedAngle) <= (actualCarrot.x - targetPose.x) * cos(adjustedAngle) + earlyExitRange;
-                    bool sameSide = robotSide == carrotSide;
+                    // bool carrotSide =  (actualCarrot.y - targetPose.y) * -sin(adjustedAngle) <= (actualCarrot.x - targetPose.x) * cos(adjustedAngle) + earlyExitRange;
+                    // bool sameSide = robotSide == carrotSide;
 
-                    if (!sameSide && prevSameSide && close) 
-                         break;
 
-                    prevSameSide = sameSide;
+
+                    // if (!sameSide && prevSameSide && close) 
+                    //      break;
+
+                    //If passed side and within range(semi circle exit)
+                    if((prevSameSide != robotSide) && (pointToPointDistance(pose, targetPose) <= linExit))
+                        break;
+                    
+                                        prevSameSide = robotSide;
 
 
                     this->distanceTraveled += sqrt(pow(this->pose.x - this->prevPose.x, 2) + pow(this->pose.y - this->prevPose.y, 2));
@@ -203,7 +194,10 @@ namespace subsystems
                     pros::delay(20);
                 }
                 this->inMotion = false;
-                printf("\n\n\n\n\n\n--------------------------------------------------------------------------------------------------------\n\n\n\n\n\n");
+
+
+                // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
                 // double horizontalDrift = 12;

@@ -101,7 +101,10 @@ namespace subsystems
         /**
         * @brief Turns the robot on a point to face a direction
         */
+        void turnToHeading(double heading, int timeout_ms, bool clockwise, bool radians = false, bool async = true);
         void turnToHeading(double heading, int timeout_ms, bool radians = false, bool async = true);
+        void turnToHeading(double heading, bool clockwise, int timeout_ms);
+
 
         /**
          * @brief Turns the robot to a point
@@ -111,16 +114,17 @@ namespace subsystems
         /**
          * @brief Function to drive the robot 1 dimensionally, a certain distance
          */
-        void drive(double distance, double timeout_ms, double maxVoltage = 12000, bool async = true);
+        void drive(double distance, double heading , double timeout_ms, double maxVoltage, double errorExit, bool async);
+        void drive(double distance, double heading, double maxVoltage = 127);
         
         /**
-         * @breif drives the distance to the point from current position
+         * @breif drives the distance to the point from current position 
          */
-        void driveToPoint(Point point, double timeout_ms, double maxVoltage = 12000, bool async = true);
+        void driveToPoint(Point point, bool backwards, double timeout_ms, double maxVoltage = 12000, bool async = true);
         /**
          * @brief Function to move the robot from its current pose to a point. First turns, then drives
          */
-        void moveToPoint(Point point, bool backwards = false, bool async = true);
+        void moveToPoint(Point point, bool backwards = false, int timeout_ms = 5000, bool async = true);
         /**
          * @brief Function to move the robot from its current pose to the desired pose
          * Uses a Boomerang controller
@@ -171,170 +175,54 @@ namespace subsystems
 
     class intake
     {
-        pros::Motor intakeMotor;
-        pros::adi::Pneumatics intakeLift;
-        pros::Optical intakeOptical;
+        pros::Motor lowerMotor;
+        pros::Motor upperMotor;
+        pros::adi::Pneumatics hoodSolanoid;
 
-        pros::Motor liftMotor;
-        pros::Rotation rotationSensor;
-        pros::Optical liftOptical;
+        int hoodPressCount = 0;
 
-
-        int intakeLiftPressCount = 0;
-        bool sortColour = false;
-        bool sorting = false;
-        bool allianceRing = false;
-        double sortStartTime = 0;
-        double sortStartTimeOffset = 25;
-        double sortTime = 100;
-        double sortEndTime = 0;
-        int redMin = 0;
-        int redMax = 20;
-        int blueMin = 200;
-        int blueMax = 250;
-
-        int antiJamEndTime = 0;
-
-        bool colourSortingOn = true;
-        int colourSortingPressCount = 0;
-
-        bool holding = false;
-        LiftPosition targetPos = DEFAULT;
-        int liftPressCount = 0;
-        bool wall = false;
-        bool alliance = false;
-        bool tip = false;
-        double startingPosition = 0;
-
-
-
-        double autonVoltage = 0;
-        bool auton = false;
-        
         public:
         //Constructor
-        intake(int intakeMotorPort, int intakeOpticalPort, char intakeLiftSolanoidPort, int liftMotorPort, int rotationSensorPort, int liftOpticalPort);
+        intake(int lowerMotorPort, int upperMotorPort, char hoodSolanoidPort);
 
-        //Function to set intake voltage
-        void setIntakeVoltage(double voltage);
-
-        //Function to set intake lift piston state
-        void setIntakeLiftState(bool state);
-
-        //Function to set ring colour being sorted out
-        /**
-         * @param colour True for sorting out blue, false for sorting out red
-         */
-        void setRingSortColour(bool colour);
-
-        /**
-         * @brief Sets the colour sorting to be on or off
-         */
-        void setColourSortState(bool state);
-
-        /**
-         * @brief Waits for the ring thats not being sorted to be detected
-         */
-        void waitForRing(int timeout_ms = 10000);
+        //Function to set intake voltage and piston state
+        void setIntakeState(double lowerVoltage, double upperVoltage, bool hoodSolanoidState);
 
         //Function to run intake during driver control
         void driverFunctions();
-
-        //Function to run intake during auton
-        void autonFunctions(double voltage);
-
-        void endAutoTask();
-
-        //Function to set lift voltage
-        void setLiftVoltage(double voltage);
-
-        //Sets the sarting position for the lift
-        void setLoadStartingPosition();
-
-        //Holds the lift at a certain angle
-        void holdPosition(LiftPosition pos);
-
     };
 
-    class lift
+    class matchload
     {
-        pros::Motor liftMotor;
+        pros::adi::Pneumatics matchloadSolanoid;
 
-        pros::Rotation rotationSensor;
+        int matchloadPressCount = 0;
 
-        bool holding = false;
-        LiftPosition targetPos = DEFAULT;
+        public:
+        //Constructor
+        matchload(char matchloadSolanoidPort);
+
+        //Function to set output
+        void setState(bool matchloadState);
+
+        //Function to run during driver control
+        void driverFunctions();
+    };
+
+    class descore
+    {
+        pros::adi::Pneumatics descoreSolanoid;
+
         int pressCount = 0;
-        bool wall = false;
-        bool alliance = false;
-        bool tip = false;
 
         public:
         //Constructor
-        lift(int liftMotorPort, int rotationSensorPort);
+        descore(char descoreSolanoidPort);
 
-        
-
-        //Function for driver control
-        void driverFunctions();
-    };
-
-    class mogo
-    {
-        pros::adi::Pneumatics mogoSolanoid;
-        pros::Optical opticalSensor;
-
-        int hueMin = 58;
-        int hueMax = 67;
-
-        bool holding = false;
-        bool primed = true;
-        int startCheckTime = 0;
-
-        public:
-        //Constructor
-        mogo(char mogoSolanoidPort, int mogoOpticalPort);
-
-        //Function to set mogo output
+        //Function to set output
         void setState(bool state);
 
-        //Function to run mogo during driver control
-        void driverFunctions();
-    };
-
-    class doinkers
-    {
-        pros::adi::Pneumatics leftDoinker;
-        pros::adi::Pneumatics rightDoinker;
-
-        int leftPressCount = 0;
-        int rightPressCount = 0;
-
-        public:
-        //Constructor
-        doinkers(char leftDoinkerSolanoidPort, char rightDoinkerSolanoidPort);
-
-        //Function to set states
-        void setStates(bool left, bool right);
-
-        //Function for driver control
-        void driverFunctions();
-    };
-
-    class goalGrabber
-    {
-        pros::adi::Pneumatics goalGrabberSolanoid;
-
-        int pressCount = 1;
-
-        public:
-        //Constructor
-        goalGrabber(char goalGrabberSolanoidPort);
-
-        //Setting state
-        void setState(bool state);
-
-        //Driver control funtions
+        //Function to run during driver control
         void driverFunctions();
     };
 }

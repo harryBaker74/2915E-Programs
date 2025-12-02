@@ -75,7 +75,7 @@ namespace Odometery
             rightDrive->get_position(2)
             }, 
             {
-            double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
+            0// double(trackingWheel->get_position() * CENTIDEGREES_TO_ENCODER)
             },
             {
                 IMU->get_rotation() * M_PI / 180
@@ -126,7 +126,7 @@ namespace Odometery
         else
         {
             // localX = 2 * sin(deltaRotation / 2) * (deltaHorizontal / deltaRotation - 4.27445897204689);
-            localY = 2 * sin(deltaRotation / 2) * (deltaLeft / deltaRotation - 14.0995490417136);
+            localY = 2 * sin(deltaRotation / 2) * (deltaLeft / deltaRotation - HORIZONTAL_OFFSET);
         }
 
 
@@ -141,7 +141,7 @@ namespace Odometery
 
         deltaPos = deltaPos + (Point(*robotPose) - prevPose);
 
-        Controller.print(0, 0, "%.2f, %.2f", robotPose->x, robotPose->y);
+        // Controller.print(0, 0, "%.2f, %.2f", robotPose->x, robotPose->y);
 
         //Offset calculator
         // leftEncoders += deltaHorizontal;
@@ -166,7 +166,7 @@ namespace Odometery
 
 
 
-        // Controller.print(0, 0, "%.1f, %.1f, %d", robotPose->x, robotPose->y, pros::millis());
+        // Controller.print(0, 0, "%.2f, %.2f", robotPose->x, robotPose->y);
 
     }
 }
