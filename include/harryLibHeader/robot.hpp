@@ -175,7 +175,8 @@ namespace subsystems
 
     class intake
     {
-        pros::Motor lowerMotor;
+        pros::Motor lowerMotor1;
+        pros::Motor lowerMotor2;
         pros::Motor upperMotor;
         pros::adi::Pneumatics hoodSolanoid;
 
@@ -183,7 +184,7 @@ namespace subsystems
 
         public:
         //Constructor
-        intake(int lowerMotorPort, int upperMotorPort, char hoodSolanoidPort);
+        intake(int lowerMotor1Port, int lowerMotor2Port, int upperMotorPort, char hoodSolanoidPort);
 
         //Function to set intake voltage and piston state
         void setIntakeState(double lowerVoltage, double upperVoltage, bool hoodSolanoidState);

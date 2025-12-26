@@ -50,10 +50,16 @@
     #define RIGHT_MOTOR_BACK -20
 
 //Other Systems
-    //Intake Port
-    #define LOWER_INTAKE 16
+    //Intake Ports
+    //This is  lower stage 11w motor
+    #define LOWER_INTAKE_1 16
+    //This is lower stage 5.5w motor
+    #define LOWER_INTAKE_2 0
+
+    //This is upper stage 5.5w
     #define UPPER_INTAKE -15
-//Solanoid systems
+    
+    //Solanoid systems
     #define MATCHLOAD 'h'
     #define HOOD 'g'
     #define DESCORE 'f'

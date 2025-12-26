@@ -26,18 +26,18 @@ namespace subsystems
             this->inMotion = true;
 
             PID::PID angPid = PID::PID(
-                25000,    //Kp
-                0,    //Ki
-                200000,    //Kd
-                0,    //Windup Range
-                0     //Max Intergal
+                700,
+                0,
+                6000,
+                0,
+                0
             );
             PID::PID linPid = PID::PID(
-                500,
-                0.0,
-                5000,
-                0.0,
-                0.0
+                10,  //Kp
+                0.3,  //Ki
+                80,  //Kd
+                2,  //Windup Range
+                0   //Max Integral
             );
 
             //Exit conditions
@@ -53,15 +53,9 @@ namespace subsystems
             //      etc.
             double angK = 25;
 
-            //Prev velocities for velocity controllers
-            double prevLeftVel = 0;
-            double prevRightVel = 0;
-
             int linMultiplier = backwards ? -1 : 1;
-            bool close = false;
-            double endRotation = 0;
-
-            int counter = 0;
+            // bool close = false;
+            // double endRotation = 0;
 
             //Timeout
             int endTime = pros::millis() + timeout_ms;
@@ -83,35 +77,38 @@ namespace subsystems
                 double hypot = sqrt(pow(deltaX, 2) + pow(deltaY, 2));
 
                 //If getting close to point
-                if((hypot < (7.5 * 2.54)) && !close)
-                {
-                    close = true;
-                    endRotation = targetRotation;
-                }
+                // if((hypot < (7.5 * 2.54)) && !close)
+                // {
+                //     close = true;
+                // }
 
                 //Calculating angular velocity multiplier
                 //Makes angular velocity weaker the closer you are to the point, eventually becoming zero when on the point
                 //Stops spinning in circles, idea from Genesis/Daniel
                 // double angMultiplier = fabs(hypot) / (fabs(hypot) + angK);
+                //Same thing but with a different function, has a quicker drop off
+                double angMultiplier = pow(-2, -(fabs(hypot*hypot)/angK)) + 1;
 
                 
 
                 //Interpolating between angle to point and ending angle as you get closer to the point, prevents spinning in circles
-                if(close)
-                    targetRotation = getWeightedAverage(targetRotation, endRotation, pow(-2, -(fabs(hypot*hypot)/angK)) + 1);
+                // if(close)
+                //     targetRotation = getWeightedAverage(targetRotation, endRotation, pow(-2, -(fabs(hypot*hypot)/angK)) + 1);
 
                 //Calculating voltage
-                double angOutput = angPid.getPid(pose.rotation, targetRotation);
-                double linOutput = std::fmin(linPid.getPid(hypot), std::fmax(12000 * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90)) - angOutput, 0)) * linMultiplier;
+                double angOutput = angPid.getPid(pose.rotation, targetRotation) * angMultiplier;
+                // double linOutput = std::fmin(linPid.getPid(hypot), 12000 * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90))) * linMultiplier;
+                double linOutput = linPid.getPid(hypot) * cos(fabs(targetRotation - this->pose.rotation)) * linMultiplier;
 
                 //Preventing over saturation, prioritising turning over driving
                 if((fabs(linOutput) + fabs(angOutput)) > 12000)
                     linOutput = (12000 - fabs(angOutput)) * linMultiplier;
                 
-                //Powering motors with slewing
+                //Powering motors
                 double leftVoltage = linOutput + angOutput;
                 double rightVoltage = linOutput - angOutput;
-                this->setVoltage(leftVoltage, rightVoltage);
+                //Scaling to -12000 -> 12000
+                this->setVoltage(leftVoltage / 127 * 12000, rightVoltage / 127 * 12000);
 
 
                 // double adjustedAngle = boundAngle(M_PI_2 - endTheta, true);

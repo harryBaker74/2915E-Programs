@@ -10,8 +10,9 @@ namespace subsystems
 
     //Intake Class
         //Constructor
-        intake::intake(int lowerMotorPort, int upperMotorPort, char hoodSolanoidPort)
-        :   lowerMotor(pros::Motor (lowerMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+        intake::intake(int lowerMotor1Port, int lowerMotor2Port, int upperMotorPort, char hoodSolanoidPort)
+        :   lowerMotor1(pros::Motor (lowerMotor1Port, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
+            lowerMotor2(pros::Motor(lowerMotor2Port, pros::v5::MotorGearset::green, pros::v5::MotorEncoderUnits::degrees)),
             upperMotor(pros::Motor (upperMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             hoodSolanoid(pros::adi::Pneumatics (hoodSolanoidPort, false))
         {}
@@ -19,7 +20,8 @@ namespace subsystems
         //Function to set intake voltage
         void intake::setIntakeState(double lowerVoltage, double upperVoltage, bool hoodSolanoidState)
         {   
-            lowerMotor.move_voltage(floor(lowerVoltage));
+            lowerMotor1.move_voltage(floor(lowerVoltage));
+            lowerMotor2.move_voltage(floor(lowerVoltage));
             upperMotor.move_voltage(floor(upperVoltage));
             hoodSolanoid.set_value(hoodSolanoidState);
         }
@@ -27,25 +29,26 @@ namespace subsystems
         //Function to run intake during driver control
         void intake::driverFunctions()
         {
+            //Hood control, toggle
             hoodPressCount += Controller.get_digital_new_press(DIGITAL_Y);
 
             // Intake Control
             double lowerVoltage = 0;
             double upperVoltage = 0;
 
-            // Intakeing from front to top
+            // Intaking from bot to top
             if(Controller.get_digital(DIGITAL_R1))
             {
                 lowerVoltage = 12000;
                 upperVoltage = 12000;
             }
-            // Outtaking from front to bot
+            // Outtaking from top to bot
             else if(Controller.get_digital(DIGITAL_R2))
             {
                 lowerVoltage = -12000;
                 upperVoltage = -12000;
             }
-            // Scoring mid
+            // Redirecting and scoring mid
             else if(Controller.get_digital(DIGITAL_L1))
             {   
                 lowerVoltage = 12000;

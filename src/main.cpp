@@ -18,7 +18,7 @@
     );
 
 //Creating subsystems
-    subsystems::intake intake = subsystems::intake(LOWER_INTAKE, UPPER_INTAKE, HOOD);
+    subsystems::intake intake = subsystems::intake(LOWER_INTAKE_1, LOWER_INTAKE_2, UPPER_INTAKE, HOOD);
     subsystems::matchload matchload = subsystems::matchload(MATCHLOAD);
     subsystems::descore descore = subsystems::descore(DESCORE);
 
