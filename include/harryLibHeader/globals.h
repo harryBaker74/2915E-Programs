@@ -12,16 +12,13 @@
     #define TRACKING_GEAR_RATIO 1
 
     //Tracking wheel offsets(cm)
-    #define HORIZONTAL_OFFSET 17.145
+    #define HORIZONTAL_OFFSET 14.03//17.145
     #define VERTICAL_OFFSET 0//2.60523824550331
 
     //Mcl offsets from tracking center(cm)
-    #define MCL_LEFT_X_OFFSET -13.97
-    #define MCL_LEFT_Y_OFFSET -1
-    #define MCL_FRONT_X_OFFSET 3.175
-    #define MCL_FRONT_Y_OFFSET 10.795
-    #define MCL_RIGHT_X_OFFSET 13.97
-    #define MCL_RIGHT_Y_OFFSET -1
+    #define MCL_LEFT_OFFSET 12.1
+    #define MCL_BACK_OFFSET 11.4
+    #define MCL_RIGHT_OFFSET 12.1
 
     //Track width
     #define TRACKWIDTH 10.5
@@ -30,36 +27,36 @@
     #define CONTROLLER 8
 
     //MCL Distance Sensor ports
-    #define DIST_LEFT 6
-    #define DIST_FRONT 15
-    #define DIST_RIGHT 20
+    #define DIST_LEFT 15
+    #define DIST_BACK 18
+    #define DIST_RIGHT 12
 
     //IMU Port
-    #define INERTIAL 17
+    #define INERTIAL 2
 
     //Tracking Wheel Port
     #define TRACKING_WHEEL 1
 
     //Drivtrain Motor Ports
-    #define LEFT_MOTOR_FRONT 11
-    #define LEFT_MOTOR_MID -12
-    #define LEFT_MOTOR_BACK -13
+    #define LEFT_MOTOR_FRONT -16
+    #define LEFT_MOTOR_MID -17
+    #define LEFT_MOTOR_BACK -19
 
-    #define RIGHT_MOTOR_FRONT 18
-    #define RIGHT_MOTOR_MID 19
-    #define RIGHT_MOTOR_BACK -20
+    #define RIGHT_MOTOR_FRONT 10
+    #define RIGHT_MOTOR_MID 21
+    #define RIGHT_MOTOR_BACK 20
 
 //Other Systems
     //Intake Ports
     //This is  lower stage 11w motor
-    #define LOWER_INTAKE_1 16
+    #define LOWER_INTAKE_1 -14
     //This is lower stage 5.5w motor
-    #define LOWER_INTAKE_2 0
+    #define LOWER_INTAKE_2 -9
 
     //This is upper stage 5.5w
-    #define UPPER_INTAKE -15
+    #define UPPER_INTAKE 11
     
     //Solanoid systems
-    #define MATCHLOAD 'h'
-    #define HOOD 'g'
+    #define MATCHLOAD 'g'
+    #define HOOD 'h'
     #define DESCORE 'f'

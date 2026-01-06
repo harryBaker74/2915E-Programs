@@ -119,7 +119,7 @@ void drivetrain::turnToHeading(double heading, int timeout_ms, bool clockwise, b
                 0
             );
 
-            double maxTurnSpeed = 60;
+            double maxTurnSpeed = 80;
 
             //Exit conditions
             double errorExit = 0.1;

@@ -64,7 +64,7 @@ namespace subsystems
                 PID::PID linPid = PID::PID(
                     1000,//400.0,
                     0.0,
-                    5000,//5000.0,
+                    4500,
                     0.0,
                     0.0
                 );
@@ -167,6 +167,7 @@ namespace subsystems
                     setVoltage(leftOutput, rightOutput);
 
 
+
                     //lin exit conditions
                     //Angular exit conditions
                     if(fabs(linPid.getError()) < linExit && fabs(angPid.getError()) < angExit && close)
@@ -186,15 +187,17 @@ namespace subsystems
                     if((prevSameSide != robotSide) && (pointToPointDistance(pose, targetPose) <= linExit))
                         break;
                     
-                                        prevSameSide = robotSide;
+                    prevSameSide = robotSide;
 
+                    printf("%.2f, %.2f\n", pose.x, pose.y);
 
                     this->distanceTraveled += sqrt(pow(this->pose.x - this->prevPose.x, 2) + pow(this->pose.y - this->prevPose.y, 2));
 
                     pros::delay(20);
                 }
                 this->inMotion = false;
-
+                printf("---------------------------------------------------\n\n\n");
+                setVoltage(0, 0);
 
                 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
                 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -39,7 +39,7 @@ namespace subsystems
             );
 
             PID::PID angPid = PID::PID{
-                500,  //Kp
+                350,  //Kp
                 0,  //Ki
                 3000,  //Kd
                 0,  //Windup Range

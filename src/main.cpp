@@ -14,7 +14,10 @@
         RIGHT_MOTOR_MID, 
         RIGHT_MOTOR_BACK,
         TRACKING_WHEEL,
-        INERTIAL
+        INERTIAL,
+        DIST_LEFT,
+        DIST_RIGHT,
+        DIST_BACK
     );
 
 //Creating subsystems
@@ -232,6 +235,73 @@ void leftLong8()
     drivetrain.drive(-50, 0, 127);
 }
 
+void sawp()
+{
+    drivetrain.runOdom(Pose(190, 65, -90, -90));
+
+        // sig sawp
+
+        //Pushing teammate off line, and taking preload
+            intake.setIntakeState(12000, 12000, true);
+            drivetrain.moveToPoint(Point(170, 65), false, 500, false);
+            drivetrain.boomerang(Pose(299, 65, 90, 90), 12000, 0.5, true, false, false, 1200);
+
+
+        //Matchloading
+            matchload.setState(true);
+            drivetrain.turnToHeading(-180, false, 700);
+            drivetrain.boomerang(Pose(306, 35, 180, 180), 6000, 0.5, false, false, false, 700);
+            drivetrain.stop(600);
+
+            //Distance reset
+            drivetrain.distanceReset(0, 1);
+
+        //Scoring long goal
+            drivetrain.boomerang(Pose(305, 120, 0, 0), 12000, 0.5, true, false, false, 1100);
+            intake.setIntakeState(12000, 12000, false);
+            drivetrain.stop(1300);
+            drivetrain.distanceReset(0, 1);
+
+        //Picking up mid balls
+            matchload.setState(false);
+            drivetrain.turnToHeading(-90, true, 1000);
+
+            //Ressetting position after turning on the long goal
+            //116.7 y, 275 x
+            drivetrain.pose.x = 275;
+            drivetrain.pose.y = 116.7;
+
+            intake.setIntakeState(12000, 12000, true);
+            drivetrain.boomerang(Pose(235, 125, -90, -90), 12000, 0.5, false, false, true, 800);
+            drivetrain.waitUntil(5);
+            matchload.setState(true);
+            drivetrain.waitUntilEnd();
+            matchload.setState(false);
+            drivetrain.boomerang(Pose(115, 125, -90, -90), 9000, 0.5, false, false, true, 1300);
+            drivetrain.waitUntil(43);
+            matchload.setState(true);
+            drivetrain.waitUntilEnd();
+
+        //Scoring mid goal
+            drivetrain.turnToHeading(-135, false, 700);
+            drivetrain.boomerang(Pose(150, 151.5, 45, 45), 12000, 0.5, true, false, false, 800);
+            intake.setIntakeState(12000, -12000, true);
+            pros::delay(850);
+            intake.setIntakeState(12000, 12000, true);
+
+        //Matchloading
+            drivetrain.boomerang(Pose(60, 60, -135, -135), 12000, 0.5, false, false, false, 1200);
+            drivetrain.turnToHeading(-180, false, 800);
+            // drivetrain.boomerang(Pose(61, 30, -180, -180), 12000, 0.5, false, false, false, 800);
+
+            // //Distance reset
+            // drivetrain.distanceReset(1, 0);
+        //Scoring Long goal
+            drivetrain.boomerang(Pose(60, 125, 0, 0), 12000, 0.5, true, false, false, 1000);
+            intake.setIntakeState(12000, 12000, false);
+            drivetrain.stop(1000);
+}
+
 rd::Selector selector {{
     {"Right long Goal", rightLong8},
     {"Left long Goal", leftLong8}
@@ -247,66 +317,29 @@ void initialize()
 void autonomous()
 {
     // leftMidLongGoal();
-    selector.run_auton();
-    // rightLong8();
-    // leftLong8();
-
-    // drivetrain.runOdom(Pose(0, 0, 0, 0));
-    // intake.setIntakeState(12000, 12000, false);
-
-    // //Pick up 3
-    // drivetrain.moveToPoint(Point(0, 30), false, 1000, false);
-    // drivetrain.stop(100);
-    // drivetrain.turnToHeading(35, true, 1000);
-    // drivetrain.moveToPoint(Point(50, 90), false, 1000, false);
-    // drivetrain.stop(200);
-
-    // //Long goal
-    // drivetrain.turnToHeading(0, false, 1000);
-    // drivetrain.moveToPoint(Point(60, 20), true, 1000, false);
-    // drivetrain.stop(200);
-    // drivetrain.turnToHeading(90, true, 1000);
-    // drivetrain.moveToPoint(Point(90, 10), false, 1000, false);
-    // drivetrain.stop(200);
-    // drivetrain.turnToHeading(180, true, 1000);
-    // drivetrain.moveToPoint(Point(90, 60), true, 1000, false);
-    // intake.setIntakeState(12000, 12000, true);
-    // drivetrain.stop(200);
-    // pros::delay(1000);
+    // selector.run_auton();
 
 
-    // //Matchload
-    // matchload.setState(true);
-    // intake.setIntakeState(12000, 12000, false);
-    // drivetrain.moveToPoint(Point(87, -20), false, 1000, false);
-    // drivetrain.stop(200);
-    // pros::delay(500);
+    //Left side 9 ball, 6 in long, 3 in mid
     
 
-    // //Long goal
-    // drivetrain.moveToPoint(Point(90, 60), true, 1000, false);
-    // intake.setIntakeState(12000, 12000, true);
+    //Picking up triple
 
-    // drivetrain.stop(200);
-    // matchload.setState(false);
-    // pros::delay(1000);
+    //Picking up double
 
-    // //Descore
-    // drivetrain.moveToPoint(Point(90, 20), false, 1000, false);
-    // drivetrain.stop(200);
-    // drivetrain.turnToHeading(135, false, 1000);
-    // drivetrain.moveToPoint(Point(60, 40), true, 1000, false);
-    // drivetrain.stop(200);
-    // descore.setState(false);
-    // drivetrain.turnToHeading(180, true, 1000);
-    // drivetrain.moveToPoint(Point(60, 100), true, 1000, false);
-    // drivetrain.stop(200);
+    //Scoring long goal
+
+    //Matchloading
+
+    //Scoring mid
+
+    //Pushing long goal for control
 
 }
 
 void opcontrol() 
 {
-    drivetrain.stopOdom();
+    // drivetrain.stopOdom();
     drivetrain.setBrakeMode(MOTOR_BRAKE_COAST);
     while(true)
     {

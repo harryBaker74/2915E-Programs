@@ -26,9 +26,9 @@ namespace subsystems
             this->inMotion = true;
 
             PID::PID angPid = PID::PID(
-                700,
+                350,
                 0,
-                6000,
+                3000,
                 0,
                 0
             );
@@ -51,7 +51,7 @@ namespace subsystems
             //      angK = 2, angVel *= 0.5 for hypot = 2;
             //      angK = 3: angVel *= 0.5 for hypot = 3;
             //      etc.
-            double angK = 25;
+            double angK = 18;
 
             int linMultiplier = backwards ? -1 : 1;
             // bool close = false;
@@ -61,7 +61,6 @@ namespace subsystems
             int endTime = pros::millis() + timeout_ms;
             while(pros::millis() < endTime)
             {
-
                 //Calculating delta cartesian offesets
                 double deltaX = point.x - pose.x;
                 double deltaY = point.y - pose.y;
@@ -87,9 +86,10 @@ namespace subsystems
                 //Stops spinning in circles, idea from Genesis/Daniel
                 // double angMultiplier = fabs(hypot) / (fabs(hypot) + angK);
                 //Same thing but with a different function, has a quicker drop off
-                double angMultiplier = pow(-2, -(fabs(hypot*hypot)/angK)) + 1;
+                // double angMultiplier = pow(-2, -(fabs(hypot*hypot)/angK)) + 1;
+                // double angMultiplier = fabs(pow(hypot, 5)) / (fabs(pow(hypot, 5)) + pow(angK, 3));
+                double angMultiplier = (1 / (1 + pow(M_E, (-(hypot - angK)))));
 
-                
 
                 //Interpolating between angle to point and ending angle as you get closer to the point, prevents spinning in circles
                 // if(close)
@@ -98,18 +98,19 @@ namespace subsystems
                 //Calculating voltage
                 double angOutput = angPid.getPid(pose.rotation, targetRotation) * angMultiplier;
                 // double linOutput = std::fmin(linPid.getPid(hypot), 12000 * cos(std::fmin(fabs(targetRotation - this->pose.rotation), 90))) * linMultiplier;
-                double linOutput = linPid.getPid(hypot) * cos(fabs(targetRotation - this->pose.rotation)) * linMultiplier;
+                // double deltaTheta = pow(fabs(targetRotation - this->pose.rotation), 3);
+                // double linOutput = linPid.getPid(hypot) * linMultiplier * ((-(deltaTheta) / (deltaTheta + pow(0.15, 3))) + 1);
+                double linOutput = linPid.getPid(hypot) * linMultiplier * (1 / (1 + pow(M_E, 20 * (targetRotation - this->pose.rotation - 0.3))));
 
                 //Preventing over saturation, prioritising turning over driving
                 if((fabs(linOutput) + fabs(angOutput)) > 12000)
                     linOutput = (12000 - fabs(angOutput)) * linMultiplier;
-                
+
                 //Powering motors
                 double leftVoltage = linOutput + angOutput;
                 double rightVoltage = linOutput - angOutput;
                 //Scaling to -12000 -> 12000
                 this->setVoltage(leftVoltage / 127 * 12000, rightVoltage / 127 * 12000);
-
 
                 // double adjustedAngle = boundAngle(M_PI_2 - endTheta, true);
                 // bool robotSide = (pose.y - point.y) * -sin(adjustedAngle) <= (pose.x - point.x) * cos(adjustedAngle) + earlyExitRange;
@@ -119,15 +120,17 @@ namespace subsystems
                 if(exitConditions::rangeExit(hypot, errorExit))
                     break;
 
-                Controller.print(0, 0, "%.2f, %.2f", pose.x, pose.y);
-
                 //Updating distance traveled for async functions
                 this->distanceTraveled += sqrt(pow(this->pose.x - this->prevPose.x, 2) + pow(this->pose.y - this->prevPose.y, 2));
+                
+                printf("%.2f, %.2f\n", pose.x, pose.y);
 
                 //Delay for other tasks
                 pros::delay(10);
             }
             this->inMotion = false;
+            printf("---------------------------------------------------\n\n\n");
+            this->setVoltage(0, 0);
         }
     }
 }

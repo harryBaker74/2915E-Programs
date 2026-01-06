@@ -26,6 +26,11 @@ namespace subsystems
 
         pros::IMU IMU;
 
+        //Distance sensors for resets
+        pros::Distance distanceLeft; 
+        pros::Distance distanceBack;
+        pros::Distance distanceRight;
+
         
 
         bool odomRunning = false;
@@ -48,7 +53,8 @@ namespace subsystems
         //constructor
         drivetrain(int leftFrontMotorPort, int leftMidMotorPort, int leftBackMotorPort,
                    int rightFrontMotorPort,int rightMidMotorPort,int rightBackMotorPort,
-                   int trackingWheelPort, int inertialPort);
+                   int trackingWheelPort, int inertialPort, 
+                   int leftDistPort, int rightDistPort, int backDistPort);
 
         //Driver
         /**
@@ -69,6 +75,8 @@ namespace subsystems
         void setVoltage(double left, double right, bool doSlew = false, double timestep = 10);
 
         void runOdom(Pose startPose);
+
+        void distanceReset(int sensor, int resetSide);
 
         void stopOdom();
 

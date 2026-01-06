@@ -5,10 +5,9 @@
 
 namespace Odometery
 {
-    //Values for the robot model
+   
+
     
-
-
     std::vector <std::vector<double>> currentEncoderValues = {{0,0,0},{0,0,0},{0},{0}};
     std::vector <std::vector<double>> prevEncoderValues = {{0,0,0},{0,0,0},{0},{0}};
 
@@ -143,8 +142,8 @@ namespace Odometery
 
         // Controller.print(0, 0, "%.2f, %.2f", robotPose->x, robotPose->y);
 
-        //Offset calculator
-        // leftEncoders += deltaHorizontal;
+        //Offset calculator, Run odom in driver and do at least 10 turns while staying in the same spot and record values. Offset is leftEncoders / robotPose->rotation.
+        // leftEncoders += deltaLeft;
         // Controller.print(0, 0, "%.2f, %.2f", leftEncoders, robotPose->rotation);
 
         // If we should run mcl
@@ -169,4 +168,5 @@ namespace Odometery
         // Controller.print(0, 0, "%.2f, %.2f", robotPose->x, robotPose->y);
 
     }
+
 }

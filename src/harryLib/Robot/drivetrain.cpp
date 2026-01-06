@@ -17,7 +17,8 @@ namespace subsystems
         //constructor
         drivetrain::drivetrain( int leftFrontMotorPort, int leftMidMotorPort, int leftBackMotorPort,
                                 int rightFrontMotorPort, int rightMidMotorPort, int rightBackMotorPort, 
-                                int trackingWheelPort, int inertialPort)
+                                int trackingWheelPort, int inertialPort,
+                                int leftDistPort, int rightDistPort, int backDistPort)
 
         :   leftFrontMotor(pros::Motor (leftFrontMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)), 
             leftMidMotor(pros::Motor (leftMidMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
@@ -26,7 +27,10 @@ namespace subsystems
             rightMidMotor(pros::Motor (rightMidMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             rightBackMotor(pros::Motor (rightBackMotorPort, pros::v5::MotorGearset::blue, pros::v5::MotorEncoderUnits::degrees)),
             trackingWheel(pros::Rotation(trackingWheelPort)),
-            IMU(pros::IMU(inertialPort))
+            IMU(pros::IMU(inertialPort)),
+            distanceLeft(pros::Distance(leftDistPort)),
+            distanceRight(pros::Distance(rightDistPort)),
+            distanceBack(pros::Distance(backDistPort))
         {
             leftDriveMotors.append(leftMidMotor);
             leftDriveMotors.append(leftBackMotor);
@@ -51,7 +55,8 @@ namespace subsystems
             //Setting pose to desired start pose
             this->pose = Pose(startPose.x, startPose.y, startPose.heading * M_PI / 180, startPose.heading * M_PI / 180);
 
-
+            leftDriveMotors.set_brake_mode(MOTOR_BRAKE_HOLD);
+            rightDriveMotors.set_brake_mode(MOTOR_BRAKE_HOLD);
 
             //making sure the task actually runs
             odomRunning = true;
@@ -92,6 +97,54 @@ namespace subsystems
                 pros::Task::current().remove();
             }};
         }
+
+        /**
+         * @brief Resets postion using sensors off of walls
+         * 
+         * @param sensor 0 = left, 1 = right, 2 = back
+         * @param resetSide 0 = left wall, 1 = right wall, 2 = top wall, 3 = bottom wall
+         */
+        void drivetrain::distanceReset(int sensor, int resetSide)
+        {
+            //Getting reading
+            double reading = 0;
+            switch (sensor)
+            {
+                //Left sensor
+                case 0:
+                    reading = (distanceLeft.get_distance() / 10) + MCL_LEFT_OFFSET;
+                    break;
+                //Right sensor
+                case 1:
+                    reading = (distanceRight.get_distance() / 10) + MCL_RIGHT_OFFSET;
+                    break;
+                //Back sensor
+                default:
+                    reading = (distanceBack.get_distance() / 10) + MCL_BACK_OFFSET;
+                    break;
+            }
+
+            //Setting position
+            switch (resetSide)
+            {
+                //Off left wall
+                case 0:
+                    pose.x = reading;
+                    break;
+                //Off right wall
+                case 1:
+                    pose.x = FIELD_WIDTH - reading;
+                    break;
+                //Off top wall
+                case 2:
+                    pose.y = FIELD_HEIGHT - reading;
+                    break;
+                //Off bottom wall
+                default:
+                    pose.y = reading;
+                    break;
+            }
+        }  
 
         /**
          * @brief Function to stop the odometery calculations.
