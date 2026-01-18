@@ -35,7 +35,7 @@
     #define INERTIAL 2
 
     //Tracking Wheel Port
-    #define TRACKING_WHEEL 1
+    #define TRACKING_WHEEL 3
 
     //Drivtrain Motor Ports
     #define LEFT_MOTOR_FRONT -16
@@ -55,6 +55,9 @@
 
     //This is upper stage 5.5w
     #define UPPER_INTAKE 11
+
+    //Optical for colour sort
+    #define OPTICAL 1
     
     //Solanoid systems
     #define MATCHLOAD 'g'

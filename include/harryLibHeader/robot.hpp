@@ -30,7 +30,6 @@ namespace subsystems
         pros::Distance distanceLeft; 
         pros::Distance distanceBack;
         pros::Distance distanceRight;
-
         
 
         bool odomRunning = false;
@@ -188,11 +187,24 @@ namespace subsystems
         pros::Motor upperMotor;
         pros::adi::Pneumatics hoodSolanoid;
 
+        //Optical for colour sorting
+        pros::Optical optical;
+
         int hoodPressCount = 0;
 
+        const int redMin = 0;
+        const int redMax = 10;
+        const int blueMin = 215;
+        const int blueMax = 240;
+        const int proxMin = 150;
+
+        const int sortTime = 200;
+        int endSortTime = 0;
+
         public:
+        int sortColour = 0;
         //Constructor
-        intake(int lowerMotor1Port, int lowerMotor2Port, int upperMotorPort, char hoodSolanoidPort);
+        intake(int lowerMotor1Port, int lowerMotor2Port, int upperMotorPort, int opticalPort, char hoodSolanoidPort);
 
         //Function to set intake voltage and piston state
         void setIntakeState(double lowerVoltage, double upperVoltage, bool hoodSolanoidState);
